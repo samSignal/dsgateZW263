@@ -9,10 +9,12 @@ export default function AdmissionsDashboardPage() {
   const qc = useQueryClient();
   const [filters, setFilters] = useState({ status: '', search: '' });
 
-  const { data: applications = [], isLoading } = useQuery({
+  const { data: responseData = {} as any, isLoading } = useQuery({
     queryKey: ['admissions-list', filters],
     queryFn: () => api.get('/admissions-office/applications', { params: filters }).then(r => r.data)
   });
+
+  const applications = Array.isArray(responseData) ? responseData : (responseData?.data || []);
 
   const getStatusColor = (status: string) => {
     const colors: any = {

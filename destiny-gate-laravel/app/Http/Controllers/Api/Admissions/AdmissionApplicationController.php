@@ -23,7 +23,12 @@ class AdmissionApplicationController extends Controller
 
     public function submit(Request $request)
     {
-        $data = $request->validate($this->finalRules());
+        try {
+            $data = $request->validate($this->finalRules());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Admission submission validation failed: ' . json_encode($e->errors()));
+            throw $e;
+        }
         $token = $request->input('tracking_token');
 
         DB::beginTransaction();
@@ -164,6 +169,22 @@ class AdmissionApplicationController extends Controller
                 'updated_at' => now(),
             ]);
 
+            // Extract and clean the non-nullable draft values
+            $draftFirstName = !empty($payload['student_first_name']) ? $payload['student_first_name'] : null;
+            $draftLastName = !empty($payload['student_last_name']) ? $payload['student_last_name'] : null;
+            $draftBirthCert = !empty($payload['birth_certificate_number']) ? $payload['birth_certificate_number'] : null;
+
+            // If empty, unset from payload so it doesn't try to update or save nulls
+            if (is_null($draftFirstName)) {
+                unset($payload['student_first_name']);
+            }
+            if (is_null($draftLastName)) {
+                unset($payload['student_last_name']);
+            }
+            if (is_null($draftBirthCert)) {
+                unset($payload['birth_certificate_number']);
+            }
+
             if ($token) {
                 $app = $this->applicationByToken($token);
                 if (!$app) {
@@ -181,9 +202,9 @@ class AdmissionApplicationController extends Controller
                 $appNumber = $this->generateApplicationNumber();
                 $token = $this->generateTrackingToken();
                 $id = DB::table('admission_applications')->insertGetId(array_merge([
-                    'student_first_name' => $request->input('student_first_name', 'Draft'),
-                    'student_last_name' => $request->input('student_last_name', 'Applicant'),
-                    'birth_certificate_number' => $request->input('birth_certificate_number', 'DRAFT-' . Str::upper(Str::random(6))),
+                    'student_first_name' => $draftFirstName ?? 'Draft',
+                    'student_last_name' => $draftLastName ?? 'Applicant',
+                    'birth_certificate_number' => $draftBirthCert ?? ('DRAFT-' . Str::upper(Str::random(6))),
                 ], $payload, [
                     'application_number' => $appNumber,
                     'tracking_token' => $token,

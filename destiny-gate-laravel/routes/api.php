@@ -62,6 +62,11 @@ use App\Http\Controllers\Api\Academics\TeacherSubjectAllocationController as Aca
 use App\Http\Controllers\Api\Academics\StudentSubjectController;
 use App\Http\Controllers\Api\Academics\AcademicSubjectReportController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AdmissionsManagement\AdmissionDashboardController;
+use App\Http\Controllers\Api\AdmissionsManagement\AdmissionApplicantController;
+use App\Http\Controllers\Api\AdmissionsManagement\AdmissionInterviewController;
+use App\Http\Controllers\Api\AdmissionsManagement\AdmissionDocumentController;
+use App\Http\Controllers\Api\AdmissionsManagement\AdmissionTimelineController;
 
 // ── Public ──────────────────────────────────────────────
 Route::post('/login',                    [AuthApiController::class, 'login']);
@@ -192,6 +197,28 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/applications/{id}/notifications', [\App\Http\Controllers\Api\Admissions\AdmissionNotificationController::class, 'index']);
         Route::post('/applications/{id}/email',  [\App\Http\Controllers\Api\Admissions\AdmissionNotificationController::class, 'sendEmail']);
         Route::post('/applications/{id}/whatsapp', [\App\Http\Controllers\Api\Admissions\AdmissionNotificationController::class, 'queueWhatsApp']);
+    });
+
+    // Internal Admissions Management Dashboard
+    Route::middleware('role:admin,headmaster,admissions_office')->prefix('app/admissions')->group(function () {
+        Route::get('/dashboard', [AdmissionDashboardController::class, 'dashboardStats']);
+
+        Route::get('/applicants', [AdmissionApplicantController::class, 'index']);
+        Route::get('/applicants/{id}', [AdmissionApplicantController::class, 'show']);
+        Route::patch('/applicants/{id}/status', [AdmissionApplicantController::class, 'updateStatus']);
+        Route::patch('/applicants/{id}/remarks', [AdmissionApplicantController::class, 'addRemarks']);
+        Route::post('/applicants/{id}/approve', [AdmissionApplicantController::class, 'approve']);
+        Route::post('/applicants/{id}/reject', [AdmissionApplicantController::class, 'reject']);
+        Route::post('/applicants/{id}/request-documents', [AdmissionApplicantController::class, 'requestDocuments']);
+
+        Route::post('/interviews/schedule', [AdmissionInterviewController::class, 'schedule']);
+        Route::patch('/interviews/{id}', [AdmissionInterviewController::class, 'update']);
+        Route::post('/interviews/{id}/cancel', [AdmissionInterviewController::class, 'cancel']);
+
+        Route::post('/documents/{id}/verify', [AdmissionDocumentController::class, 'verify']);
+        Route::post('/documents/{id}/request-replacement', [AdmissionDocumentController::class, 'requestReplacement']);
+
+        Route::get('/applicants/{id}/timeline', [AdmissionTimelineController::class, 'history']);
     });
 
     // ── Academic Structure (admin + headmaster) ────────

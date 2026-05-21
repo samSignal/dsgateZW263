@@ -49,7 +49,26 @@ export default function OnlineApplicationPage() {
   const submit = async () => {
     setSaving(true);
     try {
-      const result = await admissionsApi.submit({ ...form, tracking_token: token || form.tracking_token, current_step: 6 });
+      if (!form.applying_form_id) {
+        toast.error('Applying Form ID is required before submission.');
+        return;
+      }
+      if (!form.academic_year_id) {
+        toast.error('Academic Year ID is required before submission.');
+        return;
+      }
+      if (!token && !form.tracking_token) {
+        toast.error('Save the draft first to receive a tracking token.');
+        return;
+      }
+      // Prepare payload with correct backend field names
+      const payload = {
+        ...form,
+        applying_form_id: Number(form.applying_form_id),
+        // Backend expects `academic_year` instead of `academic_year_id`
+        academic_year: form.academic_year_id ? Number(form.academic_year_id) : undefined,
+      };
+      const result = await admissionsApi.submit(payload);
       setToken(result.tracking_token);
       setForm((current) => ({ ...current, tracking_token: result.tracking_token, application_number: result.application_number }));
       localStorage.removeItem("dgi-admission-draft");

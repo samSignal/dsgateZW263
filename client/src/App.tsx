@@ -21,6 +21,23 @@ import AdmissionsDashboardPage from "./pages/AdmissionsDashboardPage";
 import ReviewApplicationPage from "./pages/ReviewApplicationPage";
 import ApplicationTimelinePage from "./pages/ApplicationTimelinePage";
 import AdmissionNotificationsPage from "./pages/AdmissionNotificationsPage";
+import AdmissionsLayout from "./pages/AdmissionsManagement/AdmissionsLayout";
+import AdmissionsDashboardPageNew from "./pages/AdmissionsManagement/AdmissionsDashboardPage";
+import ApplicantsListPage from "./pages/AdmissionsManagement/ApplicantsListPage";
+import ApplicantDetailsPage from "./pages/AdmissionsManagement/ApplicantDetailsPage";
+import InterviewManagementPage from "./pages/AdmissionsManagement/InterviewManagementPage";
+import AdmissionsTimelinePageNew from "./pages/AdmissionsManagement/AdmissionsTimelinePage";
+
+const renderAdmissionsRoutes = () => (
+  <>
+    <Route path="/app/admissions/dashboard"><AdmissionsLayout><AdmissionsDashboardPageNew /></AdmissionsLayout></Route>
+    <Route path="/app/admissions/applicants"><AdmissionsLayout><ApplicantsListPage /></AdmissionsLayout></Route>
+    <Route path="/app/admissions/applicants/:id"><AdmissionsLayout><ApplicantDetailsPage /></AdmissionsLayout></Route>
+    <Route path="/app/admissions/interviews"><AdmissionsLayout><InterviewManagementPage /></AdmissionsLayout></Route>
+    <Route path="/app/admissions/timeline/:id"><AdmissionsLayout><AdmissionsTimelinePageNew /></AdmissionsLayout></Route>
+    <Route path="/app/admissions"><AdmissionsLayout><AdmissionsDashboardPageNew /></AdmissionsLayout></Route>
+  </>
+);
 
 function Router() {
   const { user, loading } = useAuth();
@@ -60,6 +77,7 @@ function Router() {
           <Route path="/admissions-office/applications/:id" component={ReviewApplicationPage} />
           <Route path="/admissions-office/timeline" component={ApplicationTimelinePage} />
           <Route path="/admissions-office/notifications" component={AdmissionNotificationsPage} />
+          {renderAdmissionsRoutes()}
           <Route path="/dashboard" component={AdminDashboard} />
         </>
       )}
@@ -70,6 +88,7 @@ function Router() {
           <Route path="/headmaster/*" component={HeadmasterDashboard} />
           <Route path="/admissions-office" component={AdmissionsDashboardPage} />
           <Route path="/admissions-office/applications/:id" component={ReviewApplicationPage} />
+          {renderAdmissionsRoutes()}
           <Route path="/dashboard" component={HeadmasterDashboard} />
         </>
       )}
@@ -96,6 +115,7 @@ function Router() {
           <Route path="/admissions-office/applications/:id" component={ReviewApplicationPage} />
           <Route path="/admissions-office/timeline" component={ApplicationTimelinePage} />
           <Route path="/admissions-office/notifications" component={AdmissionNotificationsPage} />
+          {renderAdmissionsRoutes()}
           <Route path="/dashboard" component={AdmissionsDashboardPage} />
         </>
       )}

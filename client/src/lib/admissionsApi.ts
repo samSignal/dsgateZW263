@@ -80,12 +80,12 @@ export const admissionsApi = {
       body: JSON.stringify(payload),
     });
   },
-  submit(payload: AdmissionApplication) {
-    return request<{ message: string; application_number: string; tracking_token: string; tracking_link: string; continue_link: string }>("/admissions/submit", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-  },
+    submit(payload: AdmissionApplication) {
+      return request<{ message: string; application_number: string; tracking_token: string; tracking_link: string; continue_link: string }>("/admissions/apply", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    },
   resume(token: string, dateOfBirth?: string) {
     return request<{ application: AdmissionApplication; documents: AdmissionDocument[]; required_documents: string[]; resume_step: number }>(`/admissions/continue/${encodeURIComponent(token)}`, {
       method: "POST",

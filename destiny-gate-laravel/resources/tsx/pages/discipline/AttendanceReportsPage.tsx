@@ -1,0 +1,16 @@
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '../../lib/api';
+import { Card, CardHeader, Input, PageHeader, Spinner, Table, Td } from '../../components/UI';
+
+export default function AttendanceReportsPage() {
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const { data: daily = [], isLoading } = useQuery<any[]>({ queryKey: ['att-daily', date], queryFn: () => api.get('/discipline/attendance/reports/daily-stream', { params: { date } }).then(r => r.data) });
+  const { data: absentees = [] } = useQuery<any[]>({ queryKey: ['att-absent', date], queryFn: () => api.get('/discipline/attendance/reports/absentees', { params: { date } }).then(r => r.data) });
+  const { data: late = [] } = useQuery<any[]>({ queryKey: ['att-late', date], queryFn: () => api.get('/discipline/attendance/reports/late', { params: { date } }).then(r => r.data) });
+  const { data: repeated = [] } = useQuery<any[]>({ queryKey: ['att-repeated'], queryFn: () => api.get('/discipline/attendance/reports/repeated-absenteeism').then(r => r.data) });
+  const { data: monthly = [] } = useQuery<any[]>({ queryKey: ['att-month', month], queryFn: () => api.get('/discipline/attendance/reports/monthly', { params: { month } }).then(r => r.data) });
+  if (isLoading) return <Spinner />;
+  return <div><PageHeader title="Attendance Reports" subtitle="Daily, monthly, late-coming, and absenteeism reports" action={<button onClick={() => window.print()} className="rounded-lg border px-3 py-2 text-sm font-semibold">Print</button>} /><div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-2"><Input type="date" value={date} onChange={e => setDate(e.target.value)} /><Input type="month" value={month} onChange={e => setMonth(e.target.value)} /></div><div className="grid grid-cols-1 gap-5 xl:grid-cols-2"><Card><CardHeader title="Daily by Stream" /><Table headers={['Class', 'Session', 'Total', 'Present', 'Absent', 'Late']}>{daily.map(r => <tr key={r.session_id}><Td>{r.form_name} {r.stream_name}</Td><Td>{r.session_type}</Td><Td>{r.total}</Td><Td>{r.present}</Td><Td>{r.absent}</Td><Td>{r.late}</Td></tr>)}</Table></Card><Card><CardHeader title="Absentees" /><Table headers={['Student', 'Class', 'Session', 'Reason']}>{absentees.map(r => <tr key={r.id}><Td>{r.student_name}</Td><Td>{r.form_name} {r.stream_name}</Td><Td>{r.session_type}</Td><Td>{r.reason ?? '-'}</Td></tr>)}</Table></Card><Card><CardHeader title="Late Coming" /><Table headers={['Student', 'Class', 'Arrival', 'Reason']}>{late.map(r => <tr key={r.id}><Td>{r.student_name}</Td><Td>{r.form_name} {r.stream_name}</Td><Td>{r.arrival_time ?? '-'}</Td><Td>{r.reason ?? '-'}</Td></tr>)}</Table></Card><Card><CardHeader title="Repeated Absenteeism" /><Table headers={['Student', 'Absences', 'Late Count']}>{repeated.map(r => <tr key={r.student_id}><Td>{r.student_name}</Td><Td>{r.absences}</Td><Td>{r.late_count}</Td></tr>)}</Table></Card><Card><CardHeader title="Monthly Summary" /><Table headers={['Date', 'Total', 'Present', 'Absent', 'Late']}>{monthly.map(r => <tr key={r.date}><Td>{r.date}</Td><Td>{r.total}</Td><Td>{r.present}</Td><Td>{r.absent}</Td><Td>{r.late}</Td></tr>)}</Table></Card></div></div>;
+}

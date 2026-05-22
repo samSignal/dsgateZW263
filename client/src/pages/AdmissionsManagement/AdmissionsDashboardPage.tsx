@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { Users, FileText, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
+import { FileText, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
 import { getApiUrl } from "@/_core/hooks/useAuth"; // Fallback to window/env
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input"; // Assuming an Input component exists
+import { Select } from "@/components/ui/select"; // Assuming a Select component exists
 
-// Assuming we have a standard fetch call since we don't have a direct API client imported
-const fetchDashboardStats = async () => {
+import { useLocation } from "wouter";
+const fetchDashboardStats = async (filters = {}) => {
     const token = localStorage.getItem('token');
-    const res = await fetch(`/api/app/admissions/dashboard`, {
+    const query = new URLSearchParams(filters).toString();
+    const url = `/api/app/admissions/dashboard${query ? `?${query}` : ''}`;
+    const res = await fetch(url, {
         headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'
@@ -17,10 +21,50 @@ const fetchDashboardStats = async () => {
 };
 
 const AdmissionsDashboardPage: React.FC = () => {
+  const [, setLocation] = useLocation();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Filter state
+  const [semester, setSemester] = useState('');
+  const [academicYear, setAcademicYear] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const applyFilters = () => {
+    setLoading(true);
+    const filters: any = {};
+    if (semester) filters.semester = semester;
+    if (academicYear) filters.academic_year = academicYear;
+    if (startDate) filters.start_date = startDate;
+    if (endDate) filters.end_date = endDate;
+    fetchDashboardStats(filters)
+      .then(res => {
+        setData(res.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  };
+
   useEffect(() => {
+    // Initial load without filters
+    fetchDashboardStats()
+      .then(res => {
+        setData(res.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  // Re‑fetch when filters change (optional automatic)
+  // useEffect(() => { applyFilters(); }, [semester, academicYear, startDate, endDate]);
+
     fetchDashboardStats()
       .then(res => {
           setData(res.data);
@@ -50,10 +94,27 @@ const AdmissionsDashboardPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight text-[#0B4619]">Dashboard Overview</h2>
         <p className="text-gray-500">Welcome to the Admissions Management System.</p>
+      </div>
+
+
+      {/* Filters Section */}
+      <div className="mb-6 grid gap-4 md:grid-cols-4">
+        <Select value={semester} onValueChange={setSemester} placeholder="Select Semester">
+          <option value="">All Semesters</option>
+          <option value="Fall">Fall</option>
+          <option value="Spring">Spring</option>
+          <option value="Summer">Summer</option>
+        </Select>
+        <Input type="text" placeholder="Academic Year (e.g., 2024)" value={academicYear} onChange={e => setAcademicYear(e.target.value)} />
+        <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+        <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+        <Button onClick={applyFilters} className="col-span-4 md:col-span-1 bg-[#0B4619] hover:bg-[#135a24] text-white">
+          Apply Filters
+        </Button>
       </div>
 
       {/* KPI Cards */}
@@ -90,8 +151,10 @@ const AdmissionsDashboardPage: React.FC = () => {
                             <p className="font-medium text-gray-900">{app.student_first_name} {app.student_last_name}</p>
                             <p className="text-sm text-gray-500">{app.application_number} • {app.status}</p>
                         </div>
-                        <div className="text-sm text-gray-400">
-                            {new Date(app.created_at).toLocaleDateString()}
+                        <div className="flex space-x-2">
+                            <Button size="sm" onClick={() => setLocation(`/app/admissions/applicants/${app.id}`)}>
+                                View Details
+                            </Button>
                         </div>
                     </div>
                 ))}

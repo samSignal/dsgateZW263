@@ -14,7 +14,16 @@ export default function TeacherDashboard() {
 
   return (
     <div>
-      <PageHeader title="Teacher Dashboard" subtitle={`Welcome, ${data?.staff?.first_name} ${data?.staff?.last_name}`} />
+      <PageHeader
+        title="Teacher Dashboard"
+        subtitle={`Welcome, ${data?.staff?.first_name} ${data?.staff?.last_name}`}
+        action={
+          <div className="flex gap-2">
+            <Link to="/app/reports/rankings/stream"><Btn variant="outline">Rankings</Btn></Link>
+            <Link to="/app/reports"><Btn variant="outline">Results</Btn></Link>
+          </div>
+        }
+      />
       {msg && <Alert type="success" message={msg} />}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>

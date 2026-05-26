@@ -9,6 +9,24 @@ use Illuminate\Support\Facades\Auth;
 
 class TimetableController extends Controller
 {
+    private function decorateEntry(?object $entry): ?object
+    {
+        if (!$entry) return null;
+        $first = $entry->teacher_first_name ?? $entry->first_name ?? null;
+        $last = $entry->teacher_last_name ?? $entry->last_name ?? null;
+        $entry->teacher_name = trim(($first ?? '') . ' ' . ($last ?? ''));
+        return $entry;
+    }
+
+    private function decorateEntries(iterable $entries): array
+    {
+        $rows = [];
+        foreach ($entries as $entry) {
+            $rows[] = $this->decorateEntry($entry);
+        }
+        return $rows;
+    }
+
     private function withJoins()
     {
         return DB::table('school_timetables as st')
@@ -28,7 +46,8 @@ class TimetableController extends Controller
                 'streams.name as stream_name',
                 'subjects.name as subject_name',
                 'subjects.code as subject_code',
-                DB::raw("CONCAT(sm.first_name,' ',sm.last_name) as teacher_name"),
+                'sm.first_name as teacher_first_name',
+                'sm.last_name as teacher_last_name',
                 'tp.name as period_name',
                 'tp.period_number',
                 'tr.room_name',
@@ -39,7 +58,9 @@ class TimetableController extends Controller
     /* ── index ────────────────────────────────────────────────────────────── */
     public function index(Request $request)
     {
-        $q = $this->withJoins()->orderByRaw("FIELD(st.day_of_week,'monday','tuesday','wednesday','thursday','friday','saturday')")->orderBy('tp.period_number');
+        $q = $this->withJoins()
+            ->orderByRaw("CASE st.day_of_week WHEN 'monday' THEN 1 WHEN 'tuesday' THEN 2 WHEN 'wednesday' THEN 3 WHEN 'thursday' THEN 4 WHEN 'friday' THEN 5 WHEN 'saturday' THEN 6 ELSE 7 END")
+            ->orderBy('tp.period_number');
 
         if ($request->academic_year_id) $q->where('st.academic_year_id', $request->academic_year_id);
         if ($request->term_id)          $q->where('st.term_id', $request->term_id);
@@ -47,7 +68,7 @@ class TimetableController extends Controller
         if ($request->teacher_id)       $q->where('st.teacher_id', $request->teacher_id);
         if ($request->form_id)          $q->where('st.form_id', $request->form_id);
 
-        return response()->json($q->get());
+        return response()->json($this->decorateEntries($q->get()));
     }
 
     /* ── store ────────────────────────────────────────────────────────────── */
@@ -103,7 +124,7 @@ class TimetableController extends Controller
                 'updated_at'       => now(),
             ]);
             DB::commit();
-            return response()->json(['message' => 'Timetable entry created.', 'entry' => $this->withJoins()->where('st.id', $id)->first()], 201);
+            return response()->json(['message' => 'Timetable entry created.', 'entry' => $this->decorateEntry($this->withJoins()->where('st.id', $id)->first())], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json(['message' => 'Failed: ' . $e->getMessage()], 500);
@@ -151,7 +172,7 @@ class TimetableController extends Controller
             'updated_at'     => now(),
         ]);
 
-        return response()->json($this->withJoins()->where('st.id', $id)->first());
+        return response()->json($this->decorateEntry($this->withJoins()->where('st.id', $id)->first()));
     }
 
     /* ── destroy ──────────────────────────────────────────────────────────── */
@@ -171,10 +192,13 @@ class TimetableController extends Controller
         if ($request->academic_year_id) $q->where('st.academic_year_id', $request->academic_year_id);
         if ($request->term_id)          $q->where('st.term_id', $request->term_id);
 
-        $entries  = $q->orderByRaw("FIELD(st.day_of_week,'monday','tuesday','wednesday','thursday','friday')")->orderBy('tp.period_number')->get();
+        $entries  = $q
+            ->orderByRaw("CASE st.day_of_week WHEN 'monday' THEN 1 WHEN 'tuesday' THEN 2 WHEN 'wednesday' THEN 3 WHEN 'thursday' THEN 4 WHEN 'friday' THEN 5 ELSE 6 END")
+            ->orderBy('tp.period_number')
+            ->get();
         $periods  = DB::table('timetable_periods')->where('is_active', true)->orderBy('period_number')->get();
 
-        return response()->json(['stream' => $stream, 'periods' => $periods, 'entries' => $entries]);
+        return response()->json(['stream' => $stream, 'periods' => $periods, 'entries' => $this->decorateEntries($entries)]);
     }
 
     /* ── teacher timetable ────────────────────────────────────────────────── */
@@ -187,10 +211,13 @@ class TimetableController extends Controller
         if ($request->academic_year_id) $q->where('st.academic_year_id', $request->academic_year_id);
         if ($request->term_id)          $q->where('st.term_id', $request->term_id);
 
-        $entries = $q->orderByRaw("FIELD(st.day_of_week,'monday','tuesday','wednesday','thursday','friday')")->orderBy('tp.period_number')->get();
+        $entries = $q
+            ->orderByRaw("CASE st.day_of_week WHEN 'monday' THEN 1 WHEN 'tuesday' THEN 2 WHEN 'wednesday' THEN 3 WHEN 'thursday' THEN 4 WHEN 'friday' THEN 5 ELSE 6 END")
+            ->orderBy('tp.period_number')
+            ->get();
         $periods = DB::table('timetable_periods')->where('is_active', true)->orderBy('period_number')->get();
 
-        return response()->json(['teacher' => $teacher, 'periods' => $periods, 'entries' => $entries]);
+        return response()->json(['teacher' => $teacher, 'periods' => $periods, 'entries' => $this->decorateEntries($entries)]);
     }
 
     /* ── room timetable ───────────────────────────────────────────────────── */
@@ -203,10 +230,13 @@ class TimetableController extends Controller
         if ($request->academic_year_id) $q->where('st.academic_year_id', $request->academic_year_id);
         if ($request->term_id)          $q->where('st.term_id', $request->term_id);
 
-        $entries = $q->orderByRaw("FIELD(st.day_of_week,'monday','tuesday','wednesday','thursday','friday')")->orderBy('tp.period_number')->get();
+        $entries = $q
+            ->orderByRaw("CASE st.day_of_week WHEN 'monday' THEN 1 WHEN 'tuesday' THEN 2 WHEN 'wednesday' THEN 3 WHEN 'thursday' THEN 4 WHEN 'friday' THEN 5 ELSE 6 END")
+            ->orderBy('tp.period_number')
+            ->get();
         $periods = DB::table('timetable_periods')->where('is_active', true)->orderBy('period_number')->get();
 
-        return response()->json(['room' => $room, 'periods' => $periods, 'entries' => $entries]);
+        return response()->json(['room' => $room, 'periods' => $periods, 'entries' => $this->decorateEntries($entries)]);
     }
 
     /* ── dashboard summary ────────────────────────────────────────────────── */

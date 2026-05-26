@@ -8,6 +8,23 @@ use Illuminate\Support\Facades\DB;
 
 class ReportRankingController extends Controller
 {
+    private function deprecatedJson($payload, string $successor)
+    {
+        return response()
+            ->json($payload)
+            ->header('Deprecation', 'true')
+            ->header('Link', '<' . $successor . '>; rel="successor-version"');
+    }
+
+    private function studentNameExpr(): \Illuminate\Database\Query\Expression
+    {
+        $driver = DB::connection()->getDriverName();
+        if ($driver === 'mysql') {
+            return DB::raw("CONCAT(s.first_name,' ',s.last_name) as student_name");
+        }
+        return DB::raw("TRIM(COALESCE(s.first_name,'') || ' ' || COALESCE(s.last_name,'')) as student_name");
+    }
+
     public function streamRankings(Request $request)
     {
         $data = $request->validate([
@@ -16,17 +33,83 @@ class ReportRankingController extends Controller
             'stream_id' => 'required',
         ]);
 
-        return response()->json(DB::table('report_cards as rc')
-            ->join('students as s', 'rc.student_id', '=', 's.id')
-            ->join('forms as f', 'rc.form_id', '=', 'f.id')
-            ->join('streams as st', 'rc.stream_id', '=', 'st.id')
-            ->where('rc.academic_year_id', $data['academic_year_id'])
-            ->where('rc.term_id', $data['term_id'])
-            ->where('rc.stream_id', $data['stream_id'])
-            ->select('rc.id', 'rc.report_number', 'rc.student_id', DB::raw("CONCAT(s.first_name,' ',s.last_name) as student_name"), 's.student_number', 'f.name as form_name', 'st.name as stream_name', 'rc.overall_average', 'rc.overall_grade', 'rc.class_position', 'rc.stream_total_students', 'rc.performance_trend', 'rc.status')
-            ->orderBy('rc.class_position')
-            ->orderByDesc('rc.overall_average')
-            ->get());
+        $yearId = (int) $data['academic_year_id'];
+        $termId = (int) $data['term_id'];
+        $streamId = (int) $data['stream_id'];
+
+        $total = (int) DB::table('results_rankings')
+            ->where('academic_year_id', $yearId)
+            ->where('term_id', $termId)
+            ->where('ranking_type', 'stream')
+            ->where('ranking_id', $streamId)
+            ->whereNull('subject_id')
+            ->count();
+
+        $rows = DB::table('results_rankings as rr')
+            ->join('students as s', 'rr.student_id', '=', 's.id')
+            ->leftJoin('results_aggregates as ra', function ($join) {
+                $join->on('ra.student_id', '=', 'rr.student_id')
+                    ->on('ra.academic_year_id', '=', 'rr.academic_year_id')
+                    ->on('ra.term_id', '=', 'rr.term_id');
+            })
+            ->leftJoin('forms as f', 'ra.form_id', '=', 'f.id')
+            ->leftJoin('streams as st', 'ra.stream_id', '=', 'st.id')
+            ->leftJoin('report_cards as rc', function ($join) {
+                $join->on('rc.student_id', '=', 'rr.student_id')
+                    ->on('rc.academic_year_id', '=', 'rr.academic_year_id')
+                    ->on('rc.term_id', '=', 'rr.term_id');
+            })
+            ->where('rr.academic_year_id', $yearId)
+            ->where('rr.term_id', $termId)
+            ->where('rr.ranking_type', 'stream')
+            ->where('rr.ranking_id', $streamId)
+            ->whereNull('rr.subject_id')
+            ->select(
+                'rc.id',
+                'rc.report_number',
+                'rr.student_id',
+                $this->studentNameExpr(),
+                's.student_number',
+                'f.name as form_name',
+                'st.name as stream_name',
+                'ra.term_average as overall_average',
+                DB::raw('null as overall_grade'),
+                'rr.rank as class_position',
+                DB::raw((string) $total . ' as stream_total_students'),
+                DB::raw('null as performance_trend'),
+                DB::raw("'computed' as status"),
+                'rr.is_withheld'
+            )
+            ->orderBy('rr.rank')
+            ->orderByDesc('rr.score')
+            ->orderBy('rr.student_id')
+            ->get();
+
+        $scales = DB::table('grading_scales')
+            ->where('is_active', true)
+            ->orderByDesc('min_percentage')
+            ->get();
+        foreach ($rows as $row) {
+            if ($row->is_withheld) {
+                $row->overall_average = null;
+                $row->overall_grade = null;
+                $row->class_position = null;
+                continue;
+            }
+            $avg = $row->overall_average !== null ? (float) $row->overall_average : null;
+            $grade = null;
+            if ($avg !== null) {
+                foreach ($scales as $s) {
+                    if ($avg >= (float) $s->min_percentage && $avg <= (float) $s->max_percentage) {
+                        $grade = $s->grade;
+                        break;
+                    }
+                }
+            }
+            $row->overall_grade = $grade;
+        }
+
+        return $this->deprecatedJson($rows, '/api/stream-native/rankings');
     }
 
     public function subjectRankings(Request $request)
@@ -38,52 +121,131 @@ class ReportRankingController extends Controller
             'subject_id' => 'nullable',
         ]);
 
-        $q = DB::table('report_card_subjects as rcs')
-            ->join('report_cards as rc', 'rcs.report_card_id', '=', 'rc.id')
-            ->join('students as s', 'rc.student_id', '=', 's.id')
-            ->join('subjects as sub', 'rcs.subject_id', '=', 'sub.id')
-            ->where('rc.academic_year_id', $data['academic_year_id'])
-            ->where('rc.term_id', $data['term_id'])
-            ->where('rc.stream_id', $data['stream_id'])
-            ->select('rcs.subject_id', 'sub.name as subject_name', 'sub.code as subject_code', 'rc.student_id', DB::raw("CONCAT(s.first_name,' ',s.last_name) as student_name"), 's.student_number', 'rcs.subject_average', 'rcs.subject_grade', 'rcs.subject_position');
+        $yearId = (int) $data['academic_year_id'];
+        $termId = (int) $data['term_id'];
+        $streamId = (int) $data['stream_id'];
+        $subjectId = !empty($data['subject_id']) ? (int) $data['subject_id'] : null;
 
-        if (!empty($data['subject_id'])) $q->where('rcs.subject_id', $data['subject_id']);
+        $q = DB::table('results_rankings as rr')
+            ->join('students as s', 'rr.student_id', '=', 's.id')
+            ->join('subjects as sub', 'rr.subject_id', '=', 'sub.id')
+            ->leftJoin('transcript_subject_history as tsh', function ($join) {
+                $join->on('tsh.student_id', '=', 'rr.student_id')
+                    ->on('tsh.academic_year_id', '=', 'rr.academic_year_id')
+                    ->on('tsh.term_id', '=', 'rr.term_id')
+                    ->on('tsh.subject_id', '=', 'rr.subject_id');
+            })
+            ->where('rr.academic_year_id', $yearId)
+            ->where('rr.term_id', $termId)
+            ->where('rr.ranking_type', 'subject_stream')
+            ->where('rr.ranking_id', $streamId)
+            ->select(
+                'rr.subject_id',
+                'sub.name as subject_name',
+                'sub.code as subject_code',
+                'rr.student_id',
+                $this->studentNameExpr(),
+                's.student_number',
+                'tsh.subject_average',
+                'tsh.grade as subject_grade',
+                'rr.rank as subject_position',
+                'rr.is_withheld'
+            );
 
-        return response()->json($q->orderBy('sub.name')->orderBy('rcs.subject_position')->orderByDesc('rcs.subject_average')->get());
+        if ($subjectId !== null) {
+            $q->where('rr.subject_id', $subjectId);
+        }
+
+        $rows = $q
+            ->orderBy('sub.name')
+            ->orderBy('rr.subject_id')
+            ->orderBy('rr.rank')
+            ->orderByDesc('rr.score')
+            ->orderBy('rr.student_id')
+            ->get();
+
+        foreach ($rows as $row) {
+            if ($row->is_withheld) {
+                $row->subject_average = null;
+                $row->subject_grade = null;
+                $row->subject_position = null;
+            }
+        }
+
+        return $this->deprecatedJson($rows, '/api/stream-native/rankings');
     }
 
     public function topPerformers(Request $request)
     {
-        $q = DB::table('report_cards as rc')
-            ->join('students as s', 'rc.student_id', '=', 's.id')
-            ->join('forms as f', 'rc.form_id', '=', 'f.id')
-            ->join('streams as st', 'rc.stream_id', '=', 'st.id')
-            ->select('rc.id', 'rc.report_number', DB::raw("CONCAT(s.first_name,' ',s.last_name) as student_name"), 's.student_number', 'f.name as form_name', 'st.name as stream_name', 'rc.overall_average', 'rc.overall_grade', 'rc.class_position')
-            ->whereNotNull('rc.overall_average')
-            ->orderByDesc('rc.overall_average')
-            ->limit((int) ($request->limit ?? 10));
+        $yearId = $request->academic_year_id ? (int) $request->academic_year_id : null;
+        $termId = $request->term_id ? (int) $request->term_id : null;
+        $streamId = $request->stream_id ? (int) $request->stream_id : null;
+        $limit = (int) ($request->limit ?? 10);
 
-        if ($request->academic_year_id) $q->where('rc.academic_year_id', $request->academic_year_id);
-        if ($request->term_id) $q->where('rc.term_id', $request->term_id);
-        if ($request->stream_id) $q->where('rc.stream_id', $request->stream_id);
+        abort_if(!$yearId || !$termId, 422, 'academic_year_id and term_id are required.');
 
-        return response()->json($q->get());
+        $q = DB::table('results_aggregates as ra')
+            ->join('students as s', 'ra.student_id', '=', 's.id')
+            ->leftJoin('forms as f', 'ra.form_id', '=', 'f.id')
+            ->leftJoin('streams as st', 'ra.stream_id', '=', 'st.id')
+            ->leftJoin('results_rankings as rr', function ($join) {
+                $join->on('rr.student_id', '=', 'ra.student_id')
+                    ->on('rr.academic_year_id', '=', 'ra.academic_year_id')
+                    ->on('rr.term_id', '=', 'ra.term_id')
+                    ->on('rr.ranking_id', '=', 'ra.stream_id')
+                    ->where('rr.ranking_type', '=', 'stream')
+                    ->whereNull('rr.subject_id');
+            })
+            ->leftJoin('report_cards as rc', function ($join) {
+                $join->on('rc.student_id', '=', 'ra.student_id')
+                    ->on('rc.academic_year_id', '=', 'ra.academic_year_id')
+                    ->on('rc.term_id', '=', 'ra.term_id');
+            })
+            ->where('ra.academic_year_id', $yearId)
+            ->where('ra.term_id', $termId)
+            ->whereNotNull('ra.term_average')
+            ->where('ra.is_withheld', false)
+            ->select(
+                'rc.id',
+                'rc.report_number',
+                $this->studentNameExpr(),
+                's.student_number',
+                'f.name as form_name',
+                'st.name as stream_name',
+                'ra.term_average as overall_average',
+                DB::raw('null as overall_grade'),
+                'rr.rank as class_position'
+            )
+            ->orderByDesc('ra.term_average')
+            ->orderBy('ra.student_id')
+            ->limit($limit);
+
+        if ($streamId) $q->where('ra.stream_id', $streamId);
+
+        $rows = $q->get();
+        $scales = DB::table('grading_scales')
+            ->where('is_active', true)
+            ->orderByDesc('min_percentage')
+            ->get();
+        foreach ($rows as $row) {
+            $avg = $row->overall_average !== null ? (float) $row->overall_average : null;
+            $grade = null;
+            if ($avg !== null) {
+                foreach ($scales as $s) {
+                    if ($avg >= (float) $s->min_percentage && $avg <= (float) $s->max_percentage) {
+                        $grade = $s->grade;
+                        break;
+                    }
+                }
+            }
+            $row->overall_grade = $grade;
+        }
+
+        return $this->deprecatedJson($rows, '/api/stream-native/results/top-performers');
     }
 
     public function performanceTrends(Request $request)
     {
-        $q = DB::table('report_cards as rc')
-            ->join('forms as f', 'rc.form_id', '=', 'f.id')
-            ->join('streams as st', 'rc.stream_id', '=', 'st.id')
-            ->select('rc.performance_trend', 'f.name as form_name', 'st.name as stream_name', DB::raw('COUNT(*) as total'))
-            ->groupBy('rc.performance_trend', 'f.name', 'st.name')
-            ->orderBy('f.name')
-            ->orderBy('st.name');
-
-        if ($request->academic_year_id) $q->where('rc.academic_year_id', $request->academic_year_id);
-        if ($request->term_id) $q->where('rc.term_id', $request->term_id);
-        if ($request->stream_id) $q->where('rc.stream_id', $request->stream_id);
-
-        return response()->json($q->get());
+        return $this->deprecatedJson([], '/api/stream-native/results/top-performers');
     }
 }

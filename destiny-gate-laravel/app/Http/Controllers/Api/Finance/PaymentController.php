@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +31,8 @@ class PaymentController extends Controller
             ->join('users', 'fp.received_by', '=', 'users.id')
             ->select(
                 'fp.*',
-                DB::raw("CONCAT(students.first_name,' ',students.last_name) as student_name"),
+                'students.first_name',
+                'students.last_name',
                 'students.student_number',
                 'academic_years.name as academic_year_name',
                 'terms.name as term_name',
@@ -59,6 +61,10 @@ class PaymentController extends Controller
         $page    = (int)($request->page ?? 1);
         $total   = (clone $q)->count();
         $items   = $q->offset(($page - 1) * $perPage)->limit($perPage)->get();
+        foreach ($items as $item) {
+            $item->student_name = trim(($item->first_name ?? '') . ' ' . ($item->last_name ?? ''));
+            StudentStreamResolver::attachResolvedFields($item);
+        }
 
         return response()->json([
             'data'         => $items,
@@ -202,21 +208,21 @@ class PaymentController extends Controller
             ->join('academic_years', 'fp.academic_year_id', '=', 'academic_years.id')
             ->join('terms', 'fp.term_id', '=', 'terms.id')
             ->join('users', 'fp.received_by', '=', 'users.id')
-            ->leftJoin('classes', 'students.class_id', '=', 'classes.id')
             ->select(
                 'fp.*',
-                DB::raw("CONCAT(students.first_name,' ',students.last_name) as student_name"),
+                'students.first_name',
+                'students.last_name',
                 'students.student_number',
                 'students.admission_number',
                 'academic_years.name as academic_year_name',
                 'terms.name as term_name',
-                'users.name as received_by_name',
-                'classes.class_name',
-                'classes.stream'
+                'users.name as received_by_name'
             )
             ->where('fp.id', $id)->first();
 
         abort_if(!$payment, 404, 'Payment not found.');
+        $payment->student_name = trim(($payment->first_name ?? '') . ' ' . ($payment->last_name ?? ''));
+        StudentStreamResolver::attachResolvedFields($payment);
 
         $allocations = DB::table('payment_allocations as pa')
             ->join('student_bills as sb', 'pa.student_bill_id', '=', 'sb.id')

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -47,13 +48,17 @@ class FinanceReportController extends Controller
             ->join('students', 'fp.student_id', '=', 'students.id')
             ->join('users', 'fp.received_by', '=', 'users.id')
             ->select('fp.*',
-                DB::raw("CONCAT(students.first_name,' ',students.last_name) as student_name"),
+                'students.first_name as student_first_name',
+                'students.last_name as student_last_name',
                 'students.student_number',
                 'users.name as received_by_name'
             )
             ->whereDate('fp.payment_date', $date)
             ->orderByDesc('fp.id')
             ->get();
+        foreach ($payments as $p) {
+            $p->student_name = trim(($p->student_first_name ?? '') . ' ' . ($p->student_last_name ?? ''));
+        }
 
         $total = $payments->sum('amount');
         $byMethod = $payments->groupBy('payment_method')->map(fn($g) => $g->sum('amount'));
@@ -90,7 +95,8 @@ class FinanceReportController extends Controller
             ->join('students', 'fp.student_id', '=', 'students.id')
             ->join('users', 'fp.received_by', '=', 'users.id')
             ->select('fp.*',
-                DB::raw("CONCAT(students.first_name,' ',students.last_name) as student_name"),
+                'students.first_name as student_first_name',
+                'students.last_name as student_last_name',
                 'students.student_number',
                 'users.name as received_by_name'
             )
@@ -98,6 +104,9 @@ class FinanceReportController extends Controller
             ->where('fp.term_id', $request->term_id)
             ->orderByDesc('fp.payment_date')
             ->get();
+        foreach ($payments as $p) {
+            $p->student_name = trim(($p->student_first_name ?? '') . ' ' . ($p->student_last_name ?? ''));
+        }
 
         $total    = $payments->sum('amount');
         $byMethod = $payments->groupBy('payment_method')->map(fn($g) => $g->sum('amount'));
@@ -111,27 +120,33 @@ class FinanceReportController extends Controller
     {
         $q = DB::table('student_bills as sb')
             ->join('students', 'sb.student_id', '=', 'students.id')
-            ->leftJoin('classes', 'students.class_id', '=', 'classes.id')
-            ->leftJoin('forms', 'classes.form_id', '=', 'forms.id')
             ->select(
                 'students.id as student_id',
-                DB::raw("CONCAT(students.first_name,' ',students.last_name) as student_name"),
+                'students.first_name as student_first_name',
+                'students.last_name as student_last_name',
                 'students.student_number',
-                'classes.class_name',
-                'forms.name as form_name',
                 DB::raw('SUM(sb.balance) as total_balance'),
                 DB::raw('SUM(sb.amount) as total_billed'),
                 DB::raw('SUM(sb.amount_paid) as total_paid')
             )
             ->whereIn('sb.status', ['unpaid', 'partial'])
-            ->groupBy('students.id', 'students.first_name', 'students.last_name', 'students.student_number', 'classes.class_name', 'forms.name')
+            ->groupBy('students.id', 'students.first_name', 'students.last_name', 'students.student_number')
             ->orderByDesc('total_balance');
 
         if ($request->academic_year_id) $q->where('sb.academic_year_id', $request->academic_year_id);
         if ($request->term_id)          $q->where('sb.term_id', $request->term_id);
-        if ($request->form_id)          $q->where('forms.id', $request->form_id);
 
-        return response()->json($q->get());
+        $rows = $q->get();
+        foreach ($rows as $row) {
+            $row->student_name = trim(($row->student_first_name ?? '') . ' ' . ($row->student_last_name ?? ''));
+            StudentStreamResolver::attachResolvedFields($row);
+        }
+
+        if ($request->form_id) {
+            $rows = $rows->filter(fn ($row) => (int) $row->form_id === (int) $request->form_id)->values();
+        }
+
+        return response()->json($rows);
     }
 
     /* ── Fully Paid ───────────────────────────────────────────────────────── */
@@ -139,8 +154,6 @@ class FinanceReportController extends Controller
     public function fullyPaid(Request $request)
     {
         $q = DB::table('students')
-            ->leftJoin('classes', 'students.class_id', '=', 'classes.id')
-            ->leftJoin('forms', 'classes.form_id', '=', 'forms.id')
             ->whereNotExists(function ($sub) use ($request) {
                 $sub->from('student_bills')
                     ->whereColumn('student_bills.student_id', 'students.id')
@@ -156,10 +169,20 @@ class FinanceReportController extends Controller
                 if ($request->term_id)          $sub->where('student_bills.term_id', $request->term_id);
             })
             ->where('students.status', 'active')
-            ->select('students.id', DB::raw("CONCAT(students.first_name,' ',students.last_name) as student_name"), 'students.student_number', 'classes.class_name', 'forms.name as form_name')
+            ->select('students.id', 'students.first_name', 'students.last_name', 'students.student_number')
             ->orderBy('students.first_name');
 
-        return response()->json($q->get());
+        $rows = $q->get();
+        foreach ($rows as $row) {
+            $row->student_name = trim(($row->first_name ?? '') . ' ' . ($row->last_name ?? ''));
+            StudentStreamResolver::attachResolvedFields($row);
+        }
+
+        if ($request->form_id) {
+            $rows = $rows->filter(fn ($row) => (int) $row->form_id === (int) $request->form_id)->values();
+        }
+
+        return response()->json($rows);
     }
 
     /* ── Partially Paid ───────────────────────────────────────────────────── */
@@ -174,26 +197,55 @@ class FinanceReportController extends Controller
     public function balancesByForm(Request $request)
     {
         $q = DB::table('student_bills as sb')
-            ->join('students', 'sb.student_id', '=', 'students.id')
-            ->join('classes', 'students.class_id', '=', 'classes.id')
-            ->join('forms', 'classes.form_id', '=', 'forms.id')
             ->select(
-                'forms.id as form_id',
-                'forms.name as form_name',
-                'forms.level',
+                'sb.student_id',
                 DB::raw('SUM(sb.amount) as total_billed'),
                 DB::raw('SUM(sb.amount_paid) as total_paid'),
-                DB::raw('SUM(sb.balance) as total_balance'),
-                DB::raw('COUNT(DISTINCT sb.student_id) as student_count')
+                DB::raw('SUM(sb.balance) as total_balance')
             )
             ->where('sb.status', '!=', 'cancelled')
-            ->groupBy('forms.id', 'forms.name', 'forms.level')
-            ->orderBy('forms.level');
+            ->groupBy('sb.student_id');
 
         if ($request->academic_year_id) $q->where('sb.academic_year_id', $request->academic_year_id);
         if ($request->term_id)          $q->where('sb.term_id', $request->term_id);
 
-        return response()->json($q->get());
+        $byStudent = $q->get();
+
+        $groups = [];
+        foreach ($byStudent as $row) {
+            StudentStreamResolver::attachResolvedFields($row);
+            $formId = $row->form_id;
+            $key = $formId ? (string) $formId : 'null';
+            if (!isset($groups[$key])) {
+                $groups[$key] = (object) [
+                    'form_id' => $row->form_id,
+                    'form_name' => $row->form_name,
+                    'level' => null,
+                    'total_billed' => 0,
+                    'total_paid' => 0,
+                    'total_balance' => 0,
+                    'student_count' => 0,
+                ];
+            }
+            $groups[$key]->total_billed += (float) $row->total_billed;
+            $groups[$key]->total_paid += (float) $row->total_paid;
+            $groups[$key]->total_balance += (float) $row->total_balance;
+            $groups[$key]->student_count++;
+        }
+
+        $formIds = collect($groups)->pluck('form_id')->filter()->values()->all();
+        $levelsById = empty($formIds)
+            ? collect()
+            : DB::table('forms')->whereIn('id', $formIds)->pluck('level', 'id');
+
+        foreach ($groups as $group) {
+            if ($group->form_id) {
+                $group->level = $levelsById[(int) $group->form_id] ?? null;
+            }
+        }
+
+        $rows = collect($groups)->values()->sortBy(fn ($r) => $r->level ?? PHP_INT_MAX)->values();
+        return response()->json($rows);
     }
 
     /* ── Student Statement ────────────────────────────────────────────────── */
@@ -201,11 +253,11 @@ class FinanceReportController extends Controller
     public function studentStatement(int $studentId, Request $request)
     {
         $student = DB::table('students')
-            ->leftJoin('classes', 'students.class_id', '=', 'classes.id')
-            ->select('students.*', 'classes.class_name', 'classes.stream')
+            ->select('students.*')
             ->where('students.id', $studentId)->first();
 
         abort_if(!$student, 404, 'Student not found.');
+        $student = StudentStreamResolver::attachResolvedFields($student);
 
         $q = DB::table('student_account_transactions')
             ->where('student_id', $studentId)

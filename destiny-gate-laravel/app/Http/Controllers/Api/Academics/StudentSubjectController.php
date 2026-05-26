@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Academics;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -11,11 +12,14 @@ class StudentSubjectController extends Controller
 {
     private function studentStream(int $studentId)
     {
-        $student = DB::table('students as s')->join('classes as c', 's.class_id', '=', 'c.id')->select('s.*', 'c.class_name', 'c.stream')->where('s.id', $studentId)->first();
+        $student = DB::table('students as s')->where('s.id', $studentId)->first();
         abort_if(!$student, 404, 'Student not found.');
-        $formId = DB::table('forms')->where('name', $student->class_name)->value('id');
-        $streamId = DB::table('streams')->where('form_id', $formId)->where('name', $student->stream)->value('id');
-        return [$student, $formId, $streamId];
+
+        $resolved = StudentStreamResolver::resolveStudent($student);
+        abort_if(!$resolved->stream_id || !$resolved->form_id, 422, 'Student has no stream mapping.');
+
+        return [$student, (int) $resolved->form_id, (int) $resolved->stream_id];
+
     }
 
     private function query()
@@ -26,15 +30,28 @@ class StudentSubjectController extends Controller
             ->join('subjects as sub', 'ss.subject_id', '=', 'sub.id')
             ->join('academic_years as ay', 'ss.academic_year_id', '=', 'ay.id')
             ->join('terms as t', 'ss.term_id', '=', 't.id')
-            ->select('ss.*', DB::raw("CONCAT(s.first_name,' ',s.last_name) as student_name"), 's.student_number', 'sub.name as subject_name', 'sub.code as subject_code', 'ay.name as academic_year_name', 't.name as term_name');
+            ->select(
+                'ss.*',
+                's.first_name as student_first_name',
+                's.last_name as student_last_name',
+                's.student_number',
+                'sub.name as subject_name',
+                'sub.code as subject_code',
+                'ay.name as academic_year_name',
+                't.name as term_name'
+            );
     }
 
     public function index(Request $request)
     {
-        $q = $this->query()->orderBy('student_name')->orderBy('subject_name');
+        $q = $this->query()->orderBy('student_first_name')->orderBy('student_last_name')->orderBy('subject_name');
         if ($request->student_id) $q->where('ss.student_id', $request->student_id);
         if ($request->status) $q->where('ss.enrollment_status', $request->status);
-        return response()->json($q->get());
+        $rows = $q->get();
+        foreach ($rows as $row) {
+            $row->student_name = trim(($row->student_first_name ?? '') . ' ' . ($row->student_last_name ?? ''));
+        }
+        return response()->json($rows);
     }
 
     public function store(Request $request)
@@ -98,7 +115,11 @@ class StudentSubjectController extends Controller
 
     public function studentSubjects(int $studentId)
     {
-        return response()->json($this->query()->where('ss.student_id', $studentId)->where('ss.enrollment_status', 'active')->get());
+        $rows = $this->query()->where('ss.student_id', $studentId)->where('ss.enrollment_status', 'active')->get();
+        foreach ($rows as $row) {
+            $row->student_name = trim(($row->student_first_name ?? '') . ' ' . ($row->student_last_name ?? ''));
+        }
+        return response()->json($rows);
     }
 
     public function autoEnrollCompulsorySubjects(Request $request, int $studentId)

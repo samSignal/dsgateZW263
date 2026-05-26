@@ -292,7 +292,7 @@ export const studentFees = mysqlTable(
     academicYear: varchar("academicYear", { length: 20 }).notNull(),
     term: mysqlEnum("term", ["term1", "term2", "term3"]).notNull(),
     amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-    amountPaid: decimal("amountPaid", { precision: 12, scale: 2 }).default(0).notNull(),
+    amountPaid: decimal("amountPaid", { precision: 12, scale: 2 }).default("0").notNull(),
     balance: decimal("balance", { precision: 12, scale: 2 }).notNull(),
     dueDate: date("dueDate").notNull(),
     status: mysqlEnum("status", ["pending", "partial", "paid", "overdue"]).default("pending").notNull(),

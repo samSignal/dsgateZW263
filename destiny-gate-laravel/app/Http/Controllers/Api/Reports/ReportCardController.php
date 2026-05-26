@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Reports;
 
 use App\Http\Controllers\Controller;
 use App\Support\FinancialClearance;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -45,23 +46,8 @@ class ReportCardController extends Controller
 
     private function studentInfo(int $studentId): object
     {
-        $student = DB::table('students as s')
-            ->leftJoin('classes as c', 's.class_id', '=', 'c.id')
-            ->leftJoin('forms as f', 'c.class_name', '=', 'f.name')
-            ->leftJoin('streams as st', function ($join) {
-                $join->on('st.form_id', '=', 'f.id')->on('st.name', '=', 'c.stream');
-            })
-            ->where('s.id', $studentId)
-            ->select(
-                's.*',
-                'c.class_name',
-                'c.stream as class_stream',
-                'f.id as form_id',
-                'f.name as form_name',
-                'st.id as stream_id',
-                'st.name as stream_name'
-            )
-            ->first();
+        $student = DB::table('students')->where('id', $studentId)->first();
+        $student = $student ? StudentStreamResolver::attachResolvedFields($student) : null;
 
         abort_if(!$student || !$student->form_id || !$student->stream_id, 422, 'Student is not linked to a valid form and stream.');
         return $student;
@@ -69,21 +55,11 @@ class ReportCardController extends Controller
 
     private function streamStudentIds(int $formId, int $streamId): array
     {
-        $stream = DB::table('streams as st')->join('forms as f', 'st.form_id', '=', 'f.id')
-            ->where('st.id', $streamId)
-            ->select('f.name as form_name', 'st.name as stream_name')
-            ->first();
-
+        $stream = DB::table('streams')->where('id', $streamId)->first();
         if (!$stream) return [];
+        abort_if((int) $stream->form_id !== (int) $formId, 422, 'Stream does not belong to the selected form.');
 
-        return DB::table('students as s')
-            ->join('classes as c', 's.class_id', '=', 'c.id')
-            ->where('c.class_name', $stream->form_name)
-            ->where('c.stream', $stream->stream_name)
-            ->where('s.status', 'active')
-            ->pluck('s.id')
-            ->map(fn ($id) => (int) $id)
-            ->toArray();
+        return StudentStreamResolver::studentIdsForStream($streamId);
     }
 
     private function subjectAverage(int $studentId, int $subjectId, int $academicYearId, int $termId): ?float
@@ -393,7 +369,11 @@ class ReportCardController extends Controller
 
     public function show(int $id)
     {
-        return response()->json($this->reportPayload($id));
+        $payload = $this->reportPayload($id);
+        return response()
+            ->json($payload)
+            ->header('Deprecation', 'true')
+            ->header('Link', '</api/stream-native/report-card/student/' . ($payload['student_id'] ?? '{studentId}') . '/term>; rel="successor-version"');
     }
 
     public function approve(int $id)
@@ -424,7 +404,11 @@ class ReportCardController extends Controller
         if ($request->term_id) $q->where('term_id', $request->term_id);
         $id = $q->value('id');
         abort_if(!$id, 404, 'Report not found.');
-        return response()->json($this->reportPayload((int) $id));
+        $payload = $this->reportPayload((int) $id);
+        return response()
+            ->json($payload)
+            ->header('Deprecation', 'true')
+            ->header('Link', '</api/stream-native/report-card/student/' . $studentId . '/term>; rel="successor-version"');
     }
 
     public function downloadPdf(int $id)
@@ -476,9 +460,22 @@ class ReportCardController extends Controller
             ->join('streams as st', 'rc.stream_id', '=', 'st.id')
             ->leftJoin('users as u', 'rc.generated_by', '=', 'u.id')
             ->where('rc.id', $id)
-            ->select('rc.*', DB::raw("CONCAT(s.first_name,' ',s.last_name) as student_name"), 's.student_number', 's.admission_number', 's.email', 'ay.name as academic_year_name', 't.name as term_name', 'f.name as form_name', 'st.name as stream_name', 'u.name as generated_by_name')
+            ->select(
+                'rc.*',
+                's.first_name as student_first_name',
+                's.last_name as student_last_name',
+                's.student_number',
+                's.admission_number',
+                's.email',
+                'ay.name as academic_year_name',
+                't.name as term_name',
+                'f.name as form_name',
+                'st.name as stream_name',
+                'u.name as generated_by_name'
+            )
             ->first();
         abort_if(!$report, 404, 'Report not found.');
+        $report->student_name = trim(($report->student_first_name ?? '') . ' ' . ($report->student_last_name ?? ''));
 
         $subjects = DB::table('report_card_subjects as rcs')
             ->join('subjects as sub', 'rcs.subject_id', '=', 'sub.id')

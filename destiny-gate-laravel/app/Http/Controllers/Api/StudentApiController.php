@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -31,13 +32,7 @@ class StudentApiController extends Controller
     public function index(Request $request)
     {
         $query = DB::table('students')
-            ->leftJoin('classes', 'students.class_id', '=', 'classes.id')
-            ->select(
-                'students.*',
-                'classes.class_name',
-                'classes.stream',
-                DB::raw("CONCAT(classes.class_name, IFNULL(CONCAT(' ', classes.stream), '')) as class_display")
-            );
+            ->select('students.*');
 
         if ($request->search) {
             $s = '%' . $request->search . '%';
@@ -59,6 +54,7 @@ class StudentApiController extends Controller
                          ->offset(($page - 1) * $perPage)
                          ->limit($perPage)
                          ->get();
+        $items = StudentStreamResolver::attachResolvedFieldsToCollection($items);
 
         return response()->json([
             'data'         => $items,
@@ -130,10 +126,10 @@ class StudentApiController extends Controller
             DB::commit();
 
             $student = DB::table('students')
-                ->leftJoin('classes', 'students.class_id', '=', 'classes.id')
-                ->select('students.*', 'classes.class_name')
+                ->select('students.*')
                 ->where('students.id', $studentId)
                 ->first();
+            $student = StudentStreamResolver::attachResolvedFields($student);
 
             return response()->json([
                 'message'        => 'Student enrolled successfully.',
@@ -155,12 +151,12 @@ class StudentApiController extends Controller
     public function show(int $id)
     {
         $student = DB::table('students')
-            ->leftJoin('classes', 'students.class_id', '=', 'classes.id')
-            ->select('students.*', 'classes.class_name', 'classes.stream')
+            ->select('students.*')
             ->where('students.id', $id)
             ->first();
 
         abort_if(!$student, 404, 'Student not found.');
+        $student = StudentStreamResolver::attachResolvedFields($student);
 
         $guardians = DB::table('guardians')->where('student_id', $id)->get();
         $fees      = DB::table('student_fees')->where('student_id', $id)->get();
@@ -216,7 +212,7 @@ class StudentApiController extends Controller
 
         return response()->json([
             'message' => 'Student updated.',
-            'student' => DB::table('students')->find($id),
+            'student' => StudentStreamResolver::attachResolvedFields(DB::table('students')->where('id', $id)->first()),
         ]);
     }
 

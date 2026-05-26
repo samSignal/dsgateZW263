@@ -13,7 +13,16 @@ export default function ReportGenerationPage() {
   const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => api.get('/terms').then(r => r.data) });
   const { data: forms = [] } = useQuery({ queryKey: ['forms'], queryFn: () => api.get('/forms').then(r => r.data) });
   const { data: streams = [] } = useQuery({ queryKey: ['streams'], queryFn: () => api.get('/streams').then(r => r.data) });
-  const { data: top = [] } = useQuery({ queryKey: ['report-top', form], queryFn: () => api.get('/reports/top-performers', { params: { academic_year_id: form.academic_year_id || undefined, term_id: form.term_id || undefined } }).then(r => r.data) });
+  const topEnabled = !!form.academic_year_id && !!form.term_id;
+  const { data: topRes } = useQuery({
+    queryKey: ['stream-native-top-performers', form.academic_year_id, form.term_id],
+    queryFn: () =>
+      api
+        .get('/stream-native/results/top-performers', { params: { academic_year_id: Number(form.academic_year_id), term_id: Number(form.term_id), limit: 10 } })
+        .then(r => r.data),
+    enabled: topEnabled,
+  });
+  const top = (topRes?.data ?? []) as any[];
 
   const generateStudent = useMutation({
     mutationFn: () => api.post('/reports/student/generate', form),
@@ -32,10 +41,10 @@ export default function ReportGenerationPage() {
   return <div>
     <PageHeader title="Report Card Generation" subtitle="Generate professional term reports from approved assessments, attendance, behaviour, and fees" action={<Link to="/app/reports/batch"><Btn variant="outline">Batch Print</Btn></Link>} />
     <Grid cols={4}>
-      <StatCard label="Top Average" value={(top as any[])[0]?.overall_average ? `${(top as any[])[0].overall_average}%` : '-'} color="green" />
+      <StatCard label="Top Average" value={(top as any[])[0]?.term_average ? `${(top as any[])[0].term_average}%` : '-'} color="green" />
       <StatCard label="Top Performer" value={(top as any[])[0]?.student_name ?? '-'} color="amber" />
-      <StatCard label="Reports Ready" value={(top as any[]).length} color="blue" />
-      <StatCard label="At Risk" value={(top as any[]).filter((r: any) => Number(r.overall_average) < 50).length} color="red" />
+      <StatCard label="Leaderboard" value={(top as any[]).length} color="blue" />
+      <StatCard label="At Risk (Top)" value={(top as any[]).filter((r: any) => Number(r.term_average) < 50).length} color="red" />
     </Grid>
     <Card style={{ marginTop: 16 }}>
       <CardHeader title="Generate Reports" />
@@ -56,8 +65,18 @@ export default function ReportGenerationPage() {
     </Card>
     <Card style={{ marginTop: 16 }}>
       <CardHeader title="Top Performers" />
-      <Table headers={['Student', 'Class', 'Average', 'Grade', 'Position', 'Preview']}>
-        {(top as any[]).map(r => <tr key={r.id}><Td>{r.student_name}<div className="text-xs text-slate-500">{r.student_number}</div></Td><Td>{r.form_name} {r.stream_name}</Td><Td>{r.overall_average}%</Td><Td>{r.overall_grade}</Td><Td>{r.class_position}</Td><Td><Link to={`/app/reports/${r.id}`}><Btn size="sm" variant="outline">Open</Btn></Link></Td></tr>)}
+      <Table headers={['Student', 'Class', 'Average', 'GPA', 'Grade', 'Preview']}>
+        {(top as any[]).map(r => (
+          <tr key={r.student_id}>
+            <Td>{r.student_name}<div className="text-xs text-slate-500">{r.student_number ?? r.admission_number}</div></Td>
+            <Td>{r.form_name ?? r.resolved_form_name} {r.stream_name ?? r.resolved_stream_name}</Td>
+            <Td>{r.term_average ?? '-'}%</Td>
+            <Td>{r.gpa ?? '-'}</Td>
+            <Td>{r.overall_grade ?? '-'}</Td>
+            <Td><Link to={`/app/reports/sn-${r.student_id}-${form.academic_year_id}-${form.term_id}`}><Btn size="sm" variant="outline">Open</Btn></Link></Td>
+          </tr>
+        ))}
+        {topEnabled && top.length === 0 && <tr><Td colSpan={6} style={{ textAlign: 'center', color: '#64748b' }}>No computed results yet for this term.</Td></tr>}
       </Table>
     </Card>
   </div>;

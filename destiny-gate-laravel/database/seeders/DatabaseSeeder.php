@@ -122,6 +122,7 @@ class DatabaseSeeder extends Seeder
             ['name'=>'Form 5','level'=>5,'description'=>'Senior Secondary - Year 2','created_at'=>now(),'updated_at'=>now()],
             ['name'=>'Form 6','level'=>6,'description'=>'Advanced Level',           'created_at'=>now(),'updated_at'=>now()],
         ]);
+        $this->call(CategorySeeder::class);
 
         // ---- Teacher-Subject Assignments (skipped — use Teacher Allocation module) ----
 

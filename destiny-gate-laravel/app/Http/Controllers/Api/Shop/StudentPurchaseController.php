@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +30,8 @@ class StudentPurchaseController extends Controller
             ->leftJoin('terms as t', 'sp.term_id', '=', 't.id')
             ->select(
                 'sp.*',
-                DB::raw("CONCAT(s.first_name,' ',s.last_name) as student_name"),
+                's.first_name',
+                's.last_name',
                 's.student_number',
                 's.admission_number',
                 'u.name as recorded_by_name',
@@ -61,6 +63,10 @@ class StudentPurchaseController extends Controller
         $page = (int) ($request->page ?? 1);
         $total = (clone $q)->count();
         $items = $q->offset(($page - 1) * $perPage)->limit($perPage)->get();
+        foreach ($items as $item) {
+            $item->student_name = trim(($item->first_name ?? '') . ' ' . ($item->last_name ?? ''));
+            StudentStreamResolver::attachResolvedFields($item);
+        }
 
         return response()->json([
             'data' => $items,
@@ -178,6 +184,8 @@ class StudentPurchaseController extends Controller
     {
         $purchase = $this->purchaseQuery()->where('sp.id', $id)->first();
         abort_if(!$purchase, 404, 'Purchase not found.');
+        $purchase->student_name = trim(($purchase->first_name ?? '') . ' ' . ($purchase->last_name ?? ''));
+        StudentStreamResolver::attachResolvedFields($purchase);
 
         $items = DB::table('student_purchase_items as spi')
             ->join('shop_items as si', 'spi.shop_item_id', '=', 'si.id')
@@ -238,15 +246,19 @@ class StudentPurchaseController extends Controller
 
     public function studentPurchases(int $studentId)
     {
-        return response()->json($this->purchaseQuery()->where('sp.student_id', $studentId)->orderByDesc('sp.purchase_date')->get());
+        $rows = $this->purchaseQuery()->where('sp.student_id', $studentId)->orderByDesc('sp.purchase_date')->get();
+        foreach ($rows as $row) {
+            $row->student_name = trim(($row->first_name ?? '') . ' ' . ($row->last_name ?? ''));
+            StudentStreamResolver::attachResolvedFields($row);
+        }
+        return response()->json($rows);
     }
 
     public function searchStudents(Request $request)
     {
         $s = '%' . $request->query('search', '') . '%';
         $students = DB::table('students as s')
-            ->leftJoin('classes as c', 's.class_id', '=', 'c.id')
-            ->select('s.id', 's.first_name', 's.last_name', 's.student_number', 's.admission_number', 'c.class_name', 'c.stream')
+            ->select('s.id', 's.first_name', 's.last_name', 's.student_number', 's.admission_number')
             ->where(function ($q) use ($s) {
                 $q->where('s.first_name', 'like', $s)
                   ->orWhere('s.last_name', 'like', $s)
@@ -256,6 +268,9 @@ class StudentPurchaseController extends Controller
             ->orderBy('s.last_name')
             ->limit(20)
             ->get();
+        foreach ($students as $student) {
+            StudentStreamResolver::attachResolvedFields($student);
+        }
 
         return response()->json($students);
     }

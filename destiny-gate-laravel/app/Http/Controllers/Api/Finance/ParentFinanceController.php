@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -25,11 +26,12 @@ class ParentFinanceController extends Controller
         }
 
         $children = DB::table('students')
-            ->leftJoin('classes', 'students.class_id', '=', 'classes.id')
             ->whereIn('students.id', $studentIds)
-            ->select('students.id', DB::raw("CONCAT(students.first_name,' ',students.last_name) as name"), 'students.student_number', 'classes.class_name')
+            ->select('students.id', 'students.first_name', 'students.last_name', 'students.student_number')
             ->get()
             ->map(function ($s) {
+                $s->name = trim(($s->first_name ?? '') . ' ' . ($s->last_name ?? ''));
+                StudentStreamResolver::attachResolvedFields($s);
                 $s->balance = DB::table('student_bills')
                     ->where('student_id', $s->id)
                     ->where('status', '!=', 'cancelled')

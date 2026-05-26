@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -85,17 +86,15 @@ class StudentBillController extends Controller
             ->join('fee_categories', 'sb.fee_category_id', '=', 'fee_categories.id')
             ->join('academic_years', 'sb.academic_year_id', '=', 'academic_years.id')
             ->join('terms', 'sb.term_id', '=', 'terms.id')
-            ->leftJoin('classes', 'students.class_id', '=', 'classes.id')
             ->select(
                 'sb.*',
-                DB::raw("CONCAT(students.first_name,' ',students.last_name) as student_name"),
+                'students.first_name',
+                'students.last_name',
                 'students.student_number',
                 'students.admission_number',
                 'fee_categories.name as category_name',
                 'academic_years.name as academic_year_name',
-                'terms.name as term_name',
-                'classes.class_name',
-                'classes.stream'
+                'terms.name as term_name'
             )
             ->orderByDesc('sb.created_at');
 
@@ -117,6 +116,10 @@ class StudentBillController extends Controller
         $page    = (int)($request->page ?? 1);
         $total   = (clone $q)->count();
         $items   = $q->offset(($page - 1) * $perPage)->limit($perPage)->get();
+        foreach ($items as $item) {
+            $item->student_name = trim(($item->first_name ?? '') . ' ' . ($item->last_name ?? ''));
+            StudentStreamResolver::attachResolvedFields($item);
+        }
 
         return response()->json([
             'data'         => $items,
@@ -135,7 +138,8 @@ class StudentBillController extends Controller
             ->join('academic_years', 'sb.academic_year_id', '=', 'academic_years.id')
             ->join('terms', 'sb.term_id', '=', 'terms.id')
             ->select('sb.*',
-                DB::raw("CONCAT(students.first_name,' ',students.last_name) as student_name"),
+                'students.first_name',
+                'students.last_name',
                 'students.student_number',
                 'fee_categories.name as category_name',
                 'academic_years.name as academic_year_name',
@@ -143,6 +147,8 @@ class StudentBillController extends Controller
             )
             ->where('sb.id', $id)->first();
         abort_if(!$bill, 404, 'Bill not found.');
+        $bill->student_name = trim(($bill->first_name ?? '') . ' ' . ($bill->last_name ?? ''));
+        StudentStreamResolver::attachResolvedFields($bill);
 
         $allocations = DB::table('payment_allocations as pa')
             ->join('finance_payments as fp', 'pa.payment_id', '=', 'fp.id')
@@ -208,12 +214,7 @@ class StudentBillController extends Controller
             return response()->json(['message' => 'No active fee structures found for this form/term.'], 422);
         }
 
-        // Get active students in this form's classes
-        $students = DB::table('students')
-            ->join('classes', 'students.class_id', '=', 'classes.id')
-            ->where('classes.form_id', $data['form_id'])
-            ->where('students.status', 'active')
-            ->pluck('students.id');
+        $students = collect(StudentStreamResolver::studentIdsForForm((int) $data['form_id'], (int) $data['academic_year_id']));
 
         if ($students->isEmpty()) {
             return response()->json(['message' => 'No active students found in this form.'], 422);
@@ -264,12 +265,7 @@ class StudentBillController extends Controller
             return response()->json(['message' => 'No active fee structures found for this stream/term.'], 422);
         }
 
-        // Get class linked to this stream
-        $students = DB::table('students')
-            ->join('classes', 'students.class_id', '=', 'classes.id')
-            ->where('classes.stream_id', $data['stream_id'])
-            ->where('students.status', 'active')
-            ->pluck('students.id');
+        $students = collect(StudentStreamResolver::studentIdsForStream((int) $data['stream_id'], (int) $data['academic_year_id']));
 
         if ($students->isEmpty()) {
             return response()->json(['message' => 'No active students found in this stream.'], 422);

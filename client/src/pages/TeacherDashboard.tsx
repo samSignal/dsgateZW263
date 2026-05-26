@@ -32,23 +32,23 @@ export default function TeacherDashboard() {
     areasForImprovement: "",
   });
 
-  const recordMarks = trpc.academic.recordMarks.useMutation({
+  const recordMarks = trpc.academics.recordMarks.useMutation({
     onSuccess: () => {
       toast.success("Marks recorded successfully");
       setMarksData({ studentId: "", classId: "", subjectId: "", marks: "", totalMarks: "100", assessmentType: "exam" });
     },
-    onError: (error) => {
-      toast.error(error.message || "Failed to record marks");
+    onError: (error: unknown) => {
+      toast.error((error as any)?.message || "Failed to record marks");
     },
   });
 
-  const addComment = trpc.academic.addTeacherComment.useMutation({
+  const addComment = trpc.academics.addTeacherComment.useMutation({
     onSuccess: () => {
       toast.success("Comment added successfully");
       setCommentData({ studentId: "", classId: "", progress: "", participation: "", homework: "", behaviour: "", areasForImprovement: "" });
     },
-    onError: (error) => {
-      toast.error(error.message || "Failed to add comment");
+    onError: (error: unknown) => {
+      toast.error((error as any)?.message || "Failed to add comment");
     },
   });
 
@@ -62,12 +62,11 @@ export default function TeacherDashboard() {
       studentId: parseInt(marksData.studentId),
       classId: parseInt(marksData.classId),
       subjectId: parseInt(marksData.subjectId),
-      marks: parseFloat(marksData.marks),
-      totalMarks: parseFloat(marksData.totalMarks),
+      marks: marksData.marks,
+      totalMarks: marksData.totalMarks,
       assessmentType: marksData.assessmentType as any,
       academicYear: new Date().getFullYear().toString(),
       term: "term1",
-      recordedAt: new Date(),
     });
   };
 
@@ -98,10 +97,20 @@ export default function TeacherDashboard() {
             <h1 className="text-2xl font-bold text-foreground">Teacher Dashboard</h1>
             <p className="text-sm text-muted-foreground">Academic Management</p>
           </div>
-          <Button onClick={() => logout()} variant="outline" className="gap-2">
-            <LogOut size={16} />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                window.location.href = "/teacher/results-native";
+              }}
+              variant="outline"
+            >
+              Stream-Native Results
+            </Button>
+            <Button onClick={() => logout()} variant="outline" className="gap-2">
+              <LogOut size={16} />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -11,7 +11,9 @@ use App\Models\AcademicProgress;
 use App\Models\TeacherComment;
 use App\Models\Attendance;
 use App\Models\TeacherSubject;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TeacherApiController extends Controller
 {
@@ -39,14 +41,56 @@ class TeacherApiController extends Controller
         $assignments = TeacherSubject::where('staff_id', $staff->id)
             ->with(['schoolClass.students', 'subject'])
             ->get();
+
+        foreach ($assignments as $a) {
+            $mapping = StudentStreamResolver::mapClass((int) ($a->class_id ?? 0));
+            if ($mapping->status === 'mapped') {
+                $a->resolved_stream_id = (int) $mapping->stream->id;
+                $a->resolved_stream_name = $mapping->stream->name;
+                $a->resolved_form_id = (int) $mapping->stream->form_id;
+                $a->resolved_category_id = $mapping->stream->category_id ?? null;
+                $a->resolved_display_label = trim(($mapping->class?->class_name ?? '') . ' ' . ($mapping->class?->stream ?? ''));
+            } else {
+                $a->resolved_stream_id = null;
+                $a->resolved_stream_name = null;
+                $a->resolved_form_id = null;
+                $a->resolved_category_id = null;
+                $a->resolved_display_label = null;
+            }
+            $a->stream_mapping_status = $mapping->status;
+            $a->stream_mapping_reason = $mapping->reason;
+        }
+
         return response()->json($assignments);
     }
 
     public function classStudents(SchoolClass $class)
     {
-        $students = Student::where('class_id', $class->id)->where('status', 'active')->get();
+        $mapping = StudentStreamResolver::mapClass((int) $class->id);
+
+        $students = collect([]);
+        if ($mapping->status === 'mapped') {
+            $streamId = (int) $mapping->stream->id;
+            $yearId = !empty($class->academic_year) ? (int) (DB::table('academic_years')->where('name', $class->academic_year)->value('id') ?? 0) : 0;
+            $ids = StudentStreamResolver::studentIdsForStream($streamId, $yearId ?: null, true);
+            $students = Student::whereIn('id', $ids)->where('status', 'active')->orderBy('first_name')->orderBy('last_name')->get();
+            foreach ($students as $s) {
+                StudentStreamResolver::attachResolvedFields($s);
+            }
+        } else {
+            $students = Student::where('class_id', $class->id)->where('status', 'active')->orderBy('first_name')->orderBy('last_name')->get();
+            foreach ($students as $s) {
+                StudentStreamResolver::attachResolvedFields($s);
+            }
+        }
         $subjects = Subject::all();
-        return response()->json(['class' => $class, 'students' => $students, 'subjects' => $subjects]);
+        return response()->json([
+            'class' => $class,
+            'resolved_stream' => $mapping->status === 'mapped' ? $mapping->stream : null,
+            'stream_mapping' => ['status' => $mapping->status, 'reason' => $mapping->reason],
+            'students' => $students,
+            'subjects' => $subjects,
+        ]);
     }
 
     public function recordMarks(Request $request)

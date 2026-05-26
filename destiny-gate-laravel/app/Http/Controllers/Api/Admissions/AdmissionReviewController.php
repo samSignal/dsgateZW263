@@ -207,23 +207,58 @@ class AdmissionReviewController extends Controller
             }
 
             $studentNumber = $this->generateStudentNumber();
+            // Stream-first enrollment: populate students.stream_id/form_id/category_id/academic_year_id.
+            $assignedStreamId = (int) ($request->input('assigned_stream_id', $app->assigned_stream_id) ?? 0);
+
+            abort_if($assignedStreamId <= 0, 422, 'assigned_stream_id is required for stream-based enrollment.');
+
+            $streamRow = DB::table('streams as st')
+                ->join('forms as f', 'st.form_id', '=', 'f.id')
+                ->leftJoin('categories as cat', 'st.category_id', '=', 'cat.id')
+                ->select('st.id as stream_id', 'st.form_id as form_id', 'st.category_id as category_id',
+                    'f.name as form_name', 'cat.name as category_name', 'cat.code as category_code')
+                ->where('st.id', $assignedStreamId)
+                ->first();
+
+            abort_if(!$streamRow, 422, 'Assigned stream is invalid.');
+
+            // Capacity validation (best-effort; if streams.capacity is null/absent, skip).
+            $streamCapacity = DB::table('streams')->where('id', $assignedStreamId)->value('capacity');
+            if (!is_null($streamCapacity)) {
+                $currentCount = DB::table('students')->where('stream_id', $assignedStreamId)->count();
+                abort_if((int) $currentCount >= (int) $streamCapacity, 422, 'Stream capacity exceeded.');
+            }
+
+            $academicYearId = (int) ($app->academic_year_id ?? 0) ?: null;
+
+            // Best-effort legacy compatibility class_id mapping from stream/form.
+            $compatClassId = DB::table('classes')
+                ->where('academic_year', $academicYearId ? (string) DB::table('academic_years')->where('id', $academicYearId)->value('name') : null)
+                ->where('class_name', $streamRow->form_name)
+                ->where('stream', DB::table('streams')->where('id', $assignedStreamId)->value('name'))
+                ->value('id');
+
             DB::table('students')->where('id', $app->enrolled_student_id)->update([
-                'student_number' => $studentNumber,
-                'class_id' => $request->input('class_id'),
-                'updated_at' => now(),
+                'student_number'   => $studentNumber,
+                'stream_id'        => (int) $streamRow->stream_id,
+                'form_id'          => (int) $streamRow->form_id,
+                'category_id'     => $streamRow->category_id ? (int) $streamRow->category_id : null,
+                'academic_year_id'=> $academicYearId,
+                // Compatibility only
+                'class_id'         => $compatClassId,
+                'updated_at'       => now(),
             ]);
 
             // Create initial finance profile/bill if requested
-            if ($app->academic_year_id && $app->term_id) {
-                // Check if student_bills table exists and create an initial 'Admission Fee' bill if needed
+            if (!empty($app->academic_year_id) && !empty($app->term_id)) {
                 DB::table('student_bills')->insert([
                     'bill_number' => 'BILL-' . strtoupper(Str::random(8)),
                     'student_id' => $app->enrolled_student_id,
                     'academic_year_id' => $app->academic_year_id,
                     'term_id' => $app->term_id,
-                    'fee_category_id' => 1, // Assuming 1 is a default category like 'Tuition' or 'Admission'
+                    'fee_category_id' => 1,
                     'description' => 'Admission and Enrollment Fee',
-                    'amount' => 0, // Set to 0 for now, bursar can update
+                    'amount' => 0,
                     'amount_paid' => 0,
                     'balance' => 0,
                     'status' => 'unpaid',
@@ -238,7 +273,7 @@ class AdmissionReviewController extends Controller
                 'progress_percentage' => 100,
                 'status_updated_at' => now(),
                 'enrollment_completed_at' => now(),
-                'assigned_stream_id' => $request->input('assigned_stream_id', $app->assigned_stream_id),
+                'assigned_stream_id' => $assignedStreamId,
                 'remarks' => $request->input('remarks', $app->remarks),
                 'updated_at' => now(),
             ]);
@@ -247,6 +282,7 @@ class AdmissionReviewController extends Controller
 
             DB::commit();
             return response()->json(['message' => 'Enrollment completed.', 'student_number' => $studentNumber]);
+
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json(['message' => 'Enrollment failed: ' . $e->getMessage()], 500);

@@ -38,10 +38,11 @@ export default function BursarDashboard() {
     }
     recordPayment.mutate({
       studentId: parseInt(paymentData.studentId),
-      amount: parseFloat(paymentData.amount),
+      studentFeeId: 0,
+      amount: paymentData.amount,
       paymentMethod: paymentData.paymentMethod as any,
-      reference: paymentData.reference,
       paymentDate: new Date(),
+      notes: paymentData.reference || undefined,
     });
   };
 

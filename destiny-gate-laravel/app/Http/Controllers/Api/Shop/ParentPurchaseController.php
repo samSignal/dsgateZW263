@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -23,17 +24,23 @@ class ParentPurchaseController extends Controller
         $studentIds = $this->linkedStudentIds();
 
         $children = DB::table('students as s')
-            ->leftJoin('classes as c', 's.class_id', '=', 'c.id')
-            ->select('s.id', 's.first_name', 's.last_name', 's.student_number', 's.admission_number', 'c.class_name', 'c.stream')
+            ->select('s.id', 's.first_name', 's.last_name', 's.student_number', 's.admission_number')
             ->whereIn('s.id', $studentIds)
             ->get();
+        foreach ($children as $child) {
+            StudentStreamResolver::attachResolvedFields($child);
+        }
 
         $purchases = DB::table('student_purchases as sp')
             ->join('students as s', 'sp.student_id', '=', 's.id')
-            ->select('sp.*', DB::raw("CONCAT(s.first_name,' ',s.last_name) as student_name"), 's.student_number')
+            ->select('sp.*', 's.first_name', 's.last_name', 's.student_number')
             ->whereIn('sp.student_id', $studentIds)
             ->orderByDesc('sp.purchase_date')
             ->get();
+        foreach ($purchases as $p) {
+            $p->student_name = trim(($p->first_name ?? '') . ' ' . ($p->last_name ?? ''));
+            StudentStreamResolver::attachResolvedFields($p);
+        }
 
         return response()->json(['children' => $children, 'purchases' => $purchases]);
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Academics;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -83,12 +84,11 @@ class StreamSubjectController extends Controller
     private function autoEnrollForStream(int $streamSubjectId): void
     {
         $ss = DB::table('stream_subjects')->where('id', $streamSubjectId)->first();
-        $form = DB::table('forms')->where('id', $ss->form_id)->first();
-        $stream = DB::table('streams')->where('id', $ss->stream_id)->first();
-        $students = DB::table('students as s')->join('classes as c', 's.class_id', '=', 'c.id')->where('s.status', 'active')->where('c.class_name', $form->name)->where('c.stream', $stream->name)->select('s.id')->get();
-        foreach ($students as $student) {
+        if (!$ss) return;
+        $studentIds = StudentStreamResolver::studentIdsForStream((int) $ss->stream_id, (int) $ss->academic_year_id);
+        foreach ($studentIds as $studentId) {
             DB::table('student_subjects')->updateOrInsert(
-                ['student_id' => $student->id, 'subject_id' => $ss->subject_id, 'academic_year_id' => $ss->academic_year_id, 'term_id' => $ss->term_id],
+                ['student_id' => $studentId, 'subject_id' => $ss->subject_id, 'academic_year_id' => $ss->academic_year_id, 'term_id' => $ss->term_id],
                 ['stream_subject_id' => $ss->id, 'is_compulsory' => true, 'enrollment_status' => 'active', 'created_by' => Auth::id(), 'updated_at' => now(), 'created_at' => now()]
             );
         }

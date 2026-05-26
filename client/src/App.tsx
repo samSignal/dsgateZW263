@@ -17,6 +17,7 @@ import AdmissionLandingPage from "./pages/AdmissionLandingPage";
 import OnlineApplicationPage from "./pages/OnlineApplicationPage";
 import ContinueApplicationPage from "./pages/ContinueApplicationPage";
 import AdmissionTrackingPage from "./pages/AdmissionTrackingPage";
+import AdmissionsMagicLinkPage from "./pages/AdmissionsMagicLinkPage";
 import AdmissionsDashboardPage from "./pages/AdmissionsDashboardPage";
 import ReviewApplicationPage from "./pages/ReviewApplicationPage";
 import ApplicationTimelinePage from "./pages/ApplicationTimelinePage";
@@ -27,6 +28,9 @@ import ApplicantsListPage from "./pages/AdmissionsManagement/ApplicantsListPage"
 import ApplicantDetailsPage from "./pages/AdmissionsManagement/ApplicantDetailsPage";
 import InterviewManagementPage from "./pages/AdmissionsManagement/InterviewManagementPage";
 import AdmissionsTimelinePageNew from "./pages/AdmissionsManagement/AdmissionsTimelinePage";
+import StreamNativeResultsDashboardPage from "./pages/StreamNative/StreamNativeResultsDashboardPage";
+import StudentAcademicProfilePage from "./pages/StreamNative/StudentAcademicProfilePage";
+import StreamNativeReportCardPreviewPage from "./pages/StreamNative/StreamNativeReportCardPreviewPage";
 
 const renderAdmissionsRoutes = () => (
   <>
@@ -60,6 +64,8 @@ function Router() {
         <Route path="/admissions/apply" component={OnlineApplicationPage} />
         <Route path="/admissions/continue" component={ContinueApplicationPage} />
         <Route path="/admissions/track" component={AdmissionTrackingPage} />
+        <Route path="/admissions/verify"><AdmissionsMagicLinkPage mode="verify" /></Route>
+        <Route path="/admissions/recover"><AdmissionsMagicLinkPage mode="recover" /></Route>
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
@@ -67,11 +73,15 @@ function Router() {
   }
 
   // Role-based routing
+  const role = String(user.role);
   return (
     <Switch>
       {/* Admin Routes */}
-      {user.role === "admin" && (
+      {role === "admin" && (
         <>
+          <Route path="/admin/results-native"><StreamNativeResultsDashboardPage /></Route>
+          <Route path="/admin/students/:id/academic"><StudentAcademicProfilePage mode="admin" /></Route>
+          <Route path="/admin/report-card-native/:id"><StreamNativeReportCardPreviewPage /></Route>
           <Route path="/admin/*" component={AdminDashboard} />
           <Route path="/admissions-office" component={AdmissionsDashboardPage} />
           <Route path="/admissions-office/applications/:id" component={ReviewApplicationPage} />
@@ -83,8 +93,9 @@ function Router() {
       )}
 
       {/* Headmaster Routes */}
-      {user.role === "headmaster" && (
+      {role === "headmaster" && (
         <>
+          <Route path="/headmaster/results-native"><StreamNativeResultsDashboardPage /></Route>
           <Route path="/headmaster/*" component={HeadmasterDashboard} />
           <Route path="/admissions-office" component={AdmissionsDashboardPage} />
           <Route path="/admissions-office/applications/:id" component={ReviewApplicationPage} />
@@ -94,22 +105,23 @@ function Router() {
       )}
 
       {/* Teacher Routes */}
-      {user.role === "teacher" && (
+      {role === "teacher" && (
         <>
+          <Route path="/teacher/results-native"><StreamNativeResultsDashboardPage /></Route>
           <Route path="/teacher/*" component={TeacherDashboard} />
           <Route path="/dashboard" component={TeacherDashboard} />
         </>
       )}
 
       {/* Bursar Routes */}
-      {user.role === "bursar" && (
+      {role === "bursar" && (
         <>
           <Route path="/bursar/*" component={BursarDashboard} />
           <Route path="/dashboard" component={BursarDashboard} />
         </>
       )}
 
-      {user.role === "admissions_office" && (
+      {role === "admissions_office" && (
         <>
           <Route path="/admissions-office" component={AdmissionsDashboardPage} />
           <Route path="/admissions-office/applications/:id" component={ReviewApplicationPage} />
@@ -121,7 +133,7 @@ function Router() {
       )}
 
       {/* Parent Routes */}
-      {user.role === "parent" && (
+      {role === "parent" && (
         <>
           <Route path="/parent/*" component={ParentPortal} />
           <Route path="/dashboard" component={ParentPortal} />
@@ -129,8 +141,9 @@ function Router() {
       )}
 
       {/* Student Routes */}
-      {user.role === "student" && (
+      {role === "student" && (
         <>
+          <Route path="/student/academic-profile"><StudentAcademicProfilePage mode="student" /></Route>
           <Route path="/student/*" component={StudentPortal} />
           <Route path="/dashboard" component={StudentPortal} />
         </>

@@ -22,7 +22,12 @@ class ParentReportController extends Controller
     public function myChildrenReports()
     {
         $ids = $this->childIds();
-        if (!$ids) return response()->json([]);
+        if (!$ids) {
+            return response()
+                ->json([])
+                ->header('Deprecation', 'true')
+                ->header('Link', '</api/parent/stream-native/children>; rel="successor-version"');
+        }
 
         $reports = DB::table('report_cards as rc')
             ->join('students as s', 'rc.student_id', '=', 's.id')
@@ -45,7 +50,10 @@ class ParentReportController extends Controller
                 return $report;
             });
 
-        return response()->json($reports);
+        return response()
+            ->json($reports)
+            ->header('Deprecation', 'true')
+            ->header('Link', '</api/parent/stream-native/child/{studentId}/year>; rel="successor-version"');
     }
 
     public function childReport(int $studentId)

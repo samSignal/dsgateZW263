@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { admissionsApi } from "@/lib/admissionsApi";
+import { admissionsV2Api, AdmissionsV2Error } from "@/lib/admissionsV2Api";
+import { setAdmissionsSession } from "@/lib/admissionsV2Session";
 import { RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,12 +19,28 @@ export default function ContinueApplicationPage() {
     event.preventDefault();
     setLoading(true);
     try {
-      const result = await admissionsApi.resume(token.toUpperCase(), dob || undefined);
-      localStorage.setItem("dgi-admission-draft", JSON.stringify(result.application));
-      toast.success(`Draft restored at step ${result.resume_step}`);
+      if (!token.trim() || !dob) {
+        toast.error("Enter your token and the learner’s date of birth.");
+        return;
+      }
+      const s = await admissionsV2Api.sessionStart({ token: token.toUpperCase(), date_of_birth: dob });
+      const res = await admissionsV2Api.draftGet({ token: token.toUpperCase(), date_of_birth: dob });
+      setAdmissionsSession({
+        token: token.toUpperCase(),
+        dateOfBirth: dob,
+        applicationId: res.application.id,
+        applicationNumber: res.application.application_number,
+        sessionToken: s.session_token,
+        sessionExpiresAt: s.expires_at,
+      });
+      toast.success("Application restored successfully.");
       setLocation("/admissions/apply");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not resume application");
+      if (error instanceof AdmissionsV2Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(error instanceof Error ? error.message : "Could not resume application");
+      }
     } finally {
       setLoading(false);
     }
@@ -44,12 +61,15 @@ export default function ContinueApplicationPage() {
                 <Input placeholder="DGI-8F4K2P9X" value={token} onChange={(e) => setToken(e.target.value.toUpperCase())} required />
               </div>
               <div className="space-y-2">
-                <Label>Date of Birth Verification (optional)</Label>
-                <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+                <Label>Learner date of birth</Label>
+                <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} required />
               </div>
               <Button className="w-full bg-emerald-800 hover:bg-emerald-900" disabled={loading}>
                 Restore draft
               </Button>
+              <div className="text-xs text-slate-500">
+                For privacy, access requires your token and the learner’s date of birth. If you no longer have your token, use the tracking page to request recovery.
+              </div>
             </form>
           </CardContent>
         </Card>

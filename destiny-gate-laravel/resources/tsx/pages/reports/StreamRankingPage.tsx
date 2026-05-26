@@ -10,7 +10,24 @@ export default function StreamRankingPage() {
   const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => api.get('/terms').then(r => r.data) });
   const { data: streams = [] } = useQuery({ queryKey: ['streams'], queryFn: () => api.get('/streams').then(r => r.data) });
   const enabled = !!filters.academic_year_id && !!filters.term_id && !!filters.stream_id;
-  const { data = [] } = useQuery({ queryKey: ['stream-rankings', filters], queryFn: () => api.get('/reports/rankings/stream', { params: filters }).then(r => r.data), enabled });
+  const { data } = useQuery({
+    queryKey: ['stream-native-stream-rankings', filters],
+    queryFn: () =>
+      api
+        .get('/stream-native/rankings', {
+          params: {
+            academic_year_id: Number(filters.academic_year_id),
+            term_id: Number(filters.term_id),
+            type: 'stream',
+            id: Number(filters.stream_id),
+            page: 1,
+            per_page: 200,
+          },
+        })
+        .then(r => r.data),
+    enabled,
+  });
+  const rows = (data?.data ?? []) as any[];
   const filteredTerms = (terms as any[]).filter(t => !filters.academic_year_id || String(t.academic_year_id) === filters.academic_year_id);
 
   return <div>
@@ -21,9 +38,22 @@ export default function StreamRankingPage() {
       <Select value={filters.stream_id} onChange={e => setFilters(f => ({ ...f, stream_id: e.target.value }))} style={{ width: 180 }}><option value="">Stream</option>{(streams as any[]).map(s => <option key={s.id} value={s.id}>{s.form_name ?? ''} {s.name}</option>)}</Select>
     </div>
     <Card>
-      <Table headers={['Rank', 'Student', 'Average', 'Grade', 'Trend', 'Status', 'Report']}>
-        {(data as any[]).map(r => <tr key={r.id}><Td><Badge variant="amber">#{r.class_position}</Badge></Td><Td>{r.student_name}<div className="text-xs text-slate-500">{r.student_number}</div></Td><Td>{r.overall_average}%</Td><Td>{r.overall_grade}</Td><Td>{r.performance_trend}</Td><Td>{r.status}</Td><Td><Link to={`/app/reports/${r.id}`}><Btn size="sm" variant="outline">Preview</Btn></Link></Td></tr>)}
-        {enabled && (data as any[]).length === 0 && <tr><Td colSpan={7} style={{ textAlign: 'center', color: '#64748b' }}>No generated reports for this stream yet.</Td></tr>}
+      <Table headers={['Rank', 'Student', 'Average', 'Grade', 'Status', 'Preview']}>
+        {rows.map((r) => {
+          const withheld = Boolean(r.is_withheld);
+          const previewUrl = `/app/reports/sn-${r.student_id}-${filters.academic_year_id}-${filters.term_id}`;
+          return (
+            <tr key={`${r.student_id}-${r.rank}`}>
+              <Td><Badge variant="amber">#{r.rank}</Badge></Td>
+              <Td>{r.student_name}<div className="text-xs text-slate-500">{r.student_number ?? r.admission_number}</div></Td>
+              <Td>{withheld ? '-' : `${r.term_average ?? r.score ?? '-'}%`}</Td>
+              <Td>{withheld ? '-' : (r.overall_grade ?? '-')}</Td>
+              <Td>{withheld ? <Badge variant="red">withheld</Badge> : <Badge variant="green">ok</Badge>}</Td>
+              <Td><Link to={previewUrl}><Btn size="sm" variant="outline">Preview</Btn></Link></Td>
+            </tr>
+          );
+        })}
+        {enabled && rows.length === 0 && <tr><Td colSpan={6} style={{ textAlign: 'center', color: '#64748b' }}>No ranking data yet for this stream.</Td></tr>}
       </Table>
     </Card>
   </div>;

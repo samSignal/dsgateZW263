@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Assessment;
 
 use App\Http\Controllers\Controller;
 use App\Support\FinancialClearance;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -26,11 +27,12 @@ class ParentAssessmentController extends Controller
         if (empty($ids)) return response()->json([]);
 
         $children = DB::table('students')
-            ->leftJoin('classes', 'students.class_id', '=', 'classes.id')
             ->whereIn('students.id', $ids)
-            ->select('students.id', DB::raw("CONCAT(students.first_name,' ',students.last_name) as name"), 'students.student_number', 'classes.class_name')
+            ->select('students.id', 'students.first_name', 'students.last_name', 'students.student_number')
             ->get()
             ->map(function ($s) {
+                $s->name = trim(($s->first_name ?? '') . ' ' . ($s->last_name ?? ''));
+                StudentStreamResolver::attachResolvedFields($s);
                 $clearance = FinancialClearance::summary((int) $s->id);
                 $s->financial_clearance = $clearance;
                 $s->financial_clearance_status = $clearance['status'];

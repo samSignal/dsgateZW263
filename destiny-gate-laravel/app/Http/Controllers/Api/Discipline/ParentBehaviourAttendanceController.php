@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Discipline;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +15,10 @@ class ParentBehaviourAttendanceController extends Controller
     public function myChildrenSummary()
     {
         $ids = $this->childIds();
-        $children = DB::table('students as s')->leftJoin('classes as c', 's.class_id', '=', 'c.id')->select('s.id', 's.first_name', 's.last_name', 's.student_number', 'c.class_name', 'c.stream')->whereIn('s.id', $ids)->get();
+        $children = DB::table('students as s')->select('s.id', 's.first_name', 's.last_name', 's.student_number')->whereIn('s.id', $ids)->get();
+        foreach ($children as $child) {
+            StudentStreamResolver::attachResolvedFields($child);
+        }
         return response()->json([
             'children' => $children,
             'notifications' => DB::table('student_notifications')->whereIn('student_id', $ids)->latest()->limit(20)->get(),

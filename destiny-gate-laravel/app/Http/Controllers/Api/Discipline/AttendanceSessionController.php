@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Discipline;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,14 +15,9 @@ class AttendanceSessionController extends Controller
         $form = DB::table('forms')->where('id', $formId)->first();
         $stream = DB::table('streams')->where('id', $streamId)->first();
         abort_if(!$form || !$stream, 422, 'Invalid form or stream.');
+        abort_if((int) $stream->form_id !== (int) $formId, 422, 'Stream does not belong to the selected form.');
 
-        return DB::table('students as s')
-            ->join('classes as c', 's.class_id', '=', 'c.id')
-            ->select('s.id')
-            ->where('s.status', 'active')
-            ->where('c.class_name', $form->name)
-            ->where('c.stream', $stream->name)
-            ->pluck('s.id');
+        return collect(StudentStreamResolver::studentIdsForStream($streamId));
     }
 
     private function sessionQuery()
@@ -117,11 +113,15 @@ class AttendanceSessionController extends Controller
         abort_if(!$session, 404, 'Attendance session not found.');
         $records = DB::table('student_attendance_records as ar')
             ->join('students as s', 'ar.student_id', '=', 's.id')
-            ->select('ar.*', DB::raw("CONCAT(s.first_name,' ',s.last_name) as student_name"), 's.student_number', 's.admission_number')
+            ->select('ar.*', 's.first_name', 's.last_name', 's.student_number', 's.admission_number')
             ->where('ar.attendance_session_id', $id)
             ->orderBy('s.last_name')
             ->orderBy('s.first_name')
             ->get();
+        foreach ($records as $r) {
+            $r->student_name = trim(($r->first_name ?? '') . ' ' . ($r->last_name ?? ''));
+            StudentStreamResolver::attachResolvedFields($r);
+        }
         return response()->json([...(array)$session, 'records' => $records]);
     }
 

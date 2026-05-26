@@ -70,6 +70,17 @@ class PermissionSeeder extends Seeder
             'applications-list','applications-approve','applications-reject',
             'admissions.view','admissions.review','admissions.update_status',
             'admissions.manage_documents','admissions.send_notifications','admissions.track',
+            'admissions.office.queue_view',
+            'admissions.office.review_view',
+            'admissions.office.review_claim',
+            'admissions.office.review_assign',
+            'admissions.office.review_notes',
+            'admissions.office.docs_review',
+            'admissions.office.transition',
+            'admissions.office.decision',
+            'admissions.office.duplicates',
+            'admissions.office.messages',
+            'admissions.office.override',
             // Users & Roles
             'users-list','users-create','users-edit','users-show',
             'roles-list','roles-create','roles-edit','roles-delete',
@@ -150,7 +161,44 @@ class PermissionSeeder extends Seeder
             'admissions.manage_documents','admissions.send_notifications','admissions.track',
             'applications-list','applications-approve','applications-reject',
             'announcements-list',
+            'admissions.office.queue_view',
+            'admissions.office.review_view',
+            'admissions.office.review_claim',
+            'admissions.office.review_notes',
+            'admissions.office.docs_review',
+            'admissions.office.transition',
+            'admissions.office.messages',
         ]);
+
+        $admissionsReviewerPerms = [
+            'dashboard-view',
+            'admissions.office.queue_view',
+            'admissions.office.review_view',
+            'admissions.office.review_claim',
+            'admissions.office.review_notes',
+            'admissions.office.docs_review',
+            'admissions.office.transition',
+            'admissions.office.messages',
+        ];
+
+        $admissionsSeniorPerms = array_values(array_unique(array_merge($admissionsReviewerPerms, [
+            'admissions.office.review_assign',
+            'admissions.office.decision',
+            'admissions.office.duplicates',
+        ])));
+
+        $admissionsManagerPerms = array_values(array_unique(array_merge($admissionsSeniorPerms, [
+            'admissions.office.override',
+        ])));
+
+        $admissionsReviewer = Role::firstOrCreate(['name' => 'admissions_reviewer', 'guard_name' => 'web']);
+        $admissionsReviewer->syncPermissions($admissionsReviewerPerms);
+
+        $admissionsSenior = Role::firstOrCreate(['name' => 'admissions_senior_reviewer', 'guard_name' => 'web']);
+        $admissionsSenior->syncPermissions($admissionsSeniorPerms);
+
+        $admissionsManager = Role::firstOrCreate(['name' => 'admissions_manager', 'guard_name' => 'web']);
+        $admissionsManager->syncPermissions($admissionsManagerPerms);
 
         // STOREKEEPER
         $storekeeper = Role::firstOrCreate(['name' => 'storekeeper', 'guard_name' => 'web']);

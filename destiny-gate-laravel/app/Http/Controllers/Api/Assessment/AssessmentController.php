@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Assessment;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -42,13 +43,20 @@ class AssessmentController extends Controller
             ->exists();
     }
 
-    private function classPartsForStream(int $streamId): ?object
+    private function enrolledStudentIdsForAssessment(int $streamId, int $academicYearId, int $termId, int $subjectId): array
     {
-        return DB::table('streams as st')
-            ->join('forms as f', 'st.form_id', '=', 'f.id')
-            ->where('st.id', $streamId)
-            ->select('f.name as class_name', 'st.name as stream_name')
-            ->first();
+        $streamStudentIds = StudentStreamResolver::studentIdsForStream($streamId, $academicYearId);
+        if (empty($streamStudentIds)) return [];
+
+        return DB::table('student_subjects')
+            ->whereIn('student_id', $streamStudentIds)
+            ->where('subject_id', $subjectId)
+            ->where('academic_year_id', $academicYearId)
+            ->where('term_id', $termId)
+            ->where('enrollment_status', 'active')
+            ->pluck('student_id')
+            ->map(fn ($id) => (int) $id)
+            ->toArray();
     }
 
     private function withJoins()
@@ -58,6 +66,7 @@ class AssessmentController extends Controller
             ->join('terms as t', 'a.term_id', '=', 't.id')
             ->join('streams as st', 'a.stream_id', '=', 'st.id')
             ->join('forms as f', 'st.form_id', '=', 'f.id')
+            ->leftJoin('categories as cat', 'st.category_id', '=', 'cat.id')
             ->join('subjects as sub', 'a.subject_id', '=', 'sub.id')
             ->join('assessment_types as at', 'a.assessment_type_id', '=', 'at.id')
             ->join('users as u', 'a.created_by', '=', 'u.id')
@@ -65,14 +74,17 @@ class AssessmentController extends Controller
                 'a.*',
                 'ay.name as academic_year_name',
                 't.name as term_name',
+                'st.form_id as form_id',
                 'st.name as stream_name',
                 'f.name as form_name',
+                'cat.id as category_id',
+                'cat.name as category_name',
                 'sub.name as subject_name',
                 'sub.code as subject_code',
                 'at.name as type_name',
                 'u.name as created_by_name',
                 DB::raw('(SELECT COUNT(*) FROM assessment_marks WHERE assessment_marks.assessment_id = a.id) as marks_count'),
-                DB::raw('(SELECT COUNT(*) FROM assessment_marks WHERE assessment_marks.assessment_id = a.id AND assessment_marks.status = "entered") as entered_count')
+                DB::raw("(SELECT COUNT(*) FROM assessment_marks WHERE assessment_marks.assessment_id = a.id AND assessment_marks.status = 'entered') as entered_count")
             );
     }
 
@@ -134,10 +146,7 @@ class AssessmentController extends Controller
             return response()->json(['message' => 'You can only create assessments for subjects and streams allocated to you.'], 403);
         }
 
-        $streamClass = $this->classPartsForStream((int) $data['stream_id']);
-        if (!$streamClass) {
-            return response()->json(['message' => 'Stream not found.'], 422);
-        }
+        abort_if(!DB::table('streams')->where('id', $data['stream_id'])->exists(), 422, 'Stream not found.');
 
         $exists = DB::table('assessments')
             ->where('academic_year_id', $data['academic_year_id'])
@@ -171,30 +180,22 @@ class AssessmentController extends Controller
                 'updated_at' => now(),
             ]);
 
-            $students = DB::table('students as s')
-                ->join('classes as c', 's.class_id', '=', 'c.id')
-                ->join('student_subjects as ss', function ($join) use ($data) {
-                    $join->on('ss.student_id', '=', 's.id')
-                        ->where('ss.subject_id', '=', $data['subject_id'])
-                        ->where('ss.academic_year_id', '=', $data['academic_year_id'])
-                        ->where('ss.term_id', '=', $data['term_id'])
-                        ->where('ss.enrollment_status', '=', 'active');
-                })
-                ->where('c.class_name', $streamClass->class_name)
-                ->where('c.stream', $streamClass->stream_name)
-                ->where('s.status', 'active')
-                ->distinct()
-                ->pluck('s.id');
+            $studentIds = $this->enrolledStudentIdsForAssessment(
+                (int) $data['stream_id'],
+                (int) $data['academic_year_id'],
+                (int) $data['term_id'],
+                (int) $data['subject_id']
+            );
 
-            $rows = $students->map(fn ($studentId) => [
+            $rows = array_map(fn ($studentId) => [
                 'assessment_id' => $assessmentId,
                 'student_id' => $studentId,
                 'status' => 'pending',
                 'created_at' => now(),
                 'updated_at' => now(),
-            ])->toArray();
+            ], $studentIds);
 
-            if ($rows) DB::table('assessment_marks')->insert($rows);
+            if ($rows) DB::table('assessment_marks')->insertOrIgnore($rows);
 
             DB::commit();
 
@@ -218,7 +219,8 @@ class AssessmentController extends Controller
             ->leftJoin('users as eu', 'am.entered_by', '=', 'eu.id')
             ->select(
                 'am.*',
-                DB::raw("CONCAT(s.first_name,' ',s.last_name) as student_name"),
+                's.first_name',
+                's.last_name',
                 's.student_number',
                 's.admission_number',
                 'eu.name as entered_by_name'
@@ -227,6 +229,10 @@ class AssessmentController extends Controller
             ->orderBy('s.first_name')
             ->orderBy('s.last_name')
             ->get();
+        foreach ($marks as $mark) {
+            $mark->student_name = trim(($mark->first_name ?? '') . ' ' . ($mark->last_name ?? ''));
+            StudentStreamResolver::attachResolvedFields($mark);
+        }
 
         return response()->json([...(array) $assessment, 'marks' => $marks]);
     }

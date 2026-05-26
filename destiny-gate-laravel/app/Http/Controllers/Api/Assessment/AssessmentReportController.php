@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Assessment;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,10 +14,9 @@ class AssessmentReportController extends Controller
     public function studentProgress(int $studentId, Request $request)
     {
         $student = DB::table('students')
-            ->leftJoin('classes', 'students.class_id', '=', 'classes.id')
-            ->select('students.*', 'classes.class_name')
             ->where('students.id', $studentId)->first();
         abort_if(!$student, 404, 'Student not found.');
+        $student = StudentStreamResolver::attachResolvedFields($student);
 
         $q = DB::table('assessment_marks as am')
             ->join('assessments as a', 'am.assessment_id', '=', 'a.id')
@@ -68,10 +68,13 @@ class AssessmentReportController extends Controller
 
         $marks = DB::table('assessment_marks as am')
             ->join('students', 'am.student_id', '=', 'students.id')
-            ->select('am.*', DB::raw("CONCAT(students.first_name,' ',students.last_name) as student_name"), 'students.student_number')
+            ->select('am.*', 'students.first_name', 'students.last_name', 'students.student_number')
             ->where('am.assessment_id', $assessmentId)
             ->orderBy('am.percentage', 'desc')
             ->get();
+        foreach ($marks as $m) {
+            $m->student_name = trim(($m->first_name ?? '') . ' ' . ($m->last_name ?? ''));
+        }
 
         $entered   = $marks->where('status', 'entered');
         $passCount = $entered->where('percentage', '>=', 50)->count();

@@ -40,7 +40,10 @@ class StudentReportController extends Controller
                 return $report;
             });
 
-        return response()->json($reports);
+        return response()
+            ->json($reports)
+            ->header('Deprecation', 'true')
+            ->header('Link', '</api/stream-native/me/results/year>; rel="successor-version"');
     }
 
     public function downloadMyReport(int $reportId)

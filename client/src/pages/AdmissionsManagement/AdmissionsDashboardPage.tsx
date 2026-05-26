@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { FileText, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
-import { getApiUrl } from "@/_core/hooks/useAuth"; // Fallback to window/env
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; // Assuming an Input component exists
-import { Select } from "@/components/ui/select"; // Assuming a Select component exists
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { useLocation } from "wouter";
 const fetchDashboardStats = async (filters = {}) => {
@@ -65,17 +64,6 @@ const AdmissionsDashboardPage: React.FC = () => {
   // Re‑fetch when filters change (optional automatic)
   // useEffect(() => { applyFilters(); }, [semester, academicYear, startDate, endDate]);
 
-    fetchDashboardStats()
-      .then(res => {
-          setData(res.data);
-          setLoading(false);
-      })
-      .catch(err => {
-          console.error(err);
-          setLoading(false);
-      });
-  }, []);
-
   if (loading) {
       return <div className="flex h-full items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-[#0B4619] border-t-transparent rounded-full"></div></div>;
   }
@@ -103,12 +91,16 @@ const AdmissionsDashboardPage: React.FC = () => {
 
       {/* Filters Section */}
       <div className="mb-6 grid gap-4 md:grid-cols-4">
-        <Select value={semester} onValueChange={setSemester} placeholder="Select Semester">
+        <select
+          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+          value={semester}
+          onChange={(e) => setSemester(e.target.value)}
+        >
           <option value="">All Semesters</option>
           <option value="Fall">Fall</option>
           <option value="Spring">Spring</option>
           <option value="Summer">Summer</option>
-        </Select>
+        </select>
         <Input type="text" placeholder="Academic Year (e.g., 2024)" value={academicYear} onChange={e => setAcademicYear(e.target.value)} />
         <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
         <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />

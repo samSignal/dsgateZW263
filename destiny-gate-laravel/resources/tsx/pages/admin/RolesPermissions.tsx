@@ -34,6 +34,12 @@ export default function RolesPermissions() {
 
   const allPermissions = Object.values(permissionsData).flat().map(p => p.name);
 
+  const displayPerm = (group: string, full: string) => {
+    if (full.startsWith(group + '.')) return full.slice(group.length + 1);
+    if (full.startsWith(group + '-')) return full.slice(group.length + 1);
+    return full;
+  };
+
   const openAdd = () => {
     setEditing(null);
     setForm({ name: '', permissions: [] });
@@ -180,7 +186,7 @@ export default function RolesPermissions() {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                       {perms.map((p: Permission) => (
                         <span key={p.name} style={{ fontSize: 10, background: '#fff', border: '1px solid #e8eaed', borderRadius: 4, padding: '2px 6px', color: '#374151' }}>
-                          {p.name.replace(group + '-', '')}
+                          {displayPerm(group, p.name)}
                         </span>
                       ))}
                     </div>

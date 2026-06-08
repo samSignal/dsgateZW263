@@ -160,8 +160,9 @@ const BS_SIZES = {
 };
 
 export function Btn({ variant = 'primary', size = 'md', loading, children, style, disabled, ...rest }: BtnProps) {
+  const type = rest.type ?? 'button';
   return (
-    <button {...rest} disabled={disabled || loading} style={{
+    <button {...rest} type={type} disabled={disabled || loading} style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
       fontWeight: 500, cursor: (disabled || loading) ? 'not-allowed' : 'pointer',
       fontFamily: 'inherit', transition: 'all .12s', whiteSpace: 'nowrap',
@@ -263,14 +264,26 @@ export function Empty({ message = 'No data found' }: { message?: string }) {
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
-export function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  maxWidth = 520,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  maxWidth?: number;
+}) {
   if (!open) return null;
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,.4)', backdropFilter: 'blur(2px)' }} />
       <div style={{
         position: 'relative', background: '#fff', borderRadius: 16,
-        padding: 28, width: '100%', maxWidth: 520,
+        padding: 28, width: '100%', maxWidth,
         maxHeight: '90vh', overflowY: 'auto',
         boxShadow: '0 24px 64px rgba(0,0,0,.15)',
         animation: 'fadeUp .2s ease',

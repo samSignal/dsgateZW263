@@ -5,43 +5,9 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import ComponentShowcase from "./pages/ComponentShowcase";
 import NotFound from "./pages/NotFound";
-import AdminDashboard from "./pages/AdminDashboard";
-import HeadmasterDashboard from "./pages/HeadmasterDashboard";
-import TeacherDashboard from "./pages/TeacherDashboard";
-import BursarDashboard from "./pages/BursarDashboard";
-import ParentPortal from "./pages/ParentPortal";
-import StudentPortal from "./pages/StudentPortal";
 import Login from "./pages/Login";
-import AdmissionLandingPage from "./pages/AdmissionLandingPage";
-import OnlineApplicationPage from "./pages/OnlineApplicationPage";
-import ContinueApplicationPage from "./pages/ContinueApplicationPage";
-import AdmissionTrackingPage from "./pages/AdmissionTrackingPage";
-import AdmissionsMagicLinkPage from "./pages/AdmissionsMagicLinkPage";
-import AdmissionsDashboardPage from "./pages/AdmissionsDashboardPage";
-import ReviewApplicationPage from "./pages/ReviewApplicationPage";
-import ApplicationTimelinePage from "./pages/ApplicationTimelinePage";
-import AdmissionNotificationsPage from "./pages/AdmissionNotificationsPage";
-import AdmissionsLayout from "./pages/AdmissionsManagement/AdmissionsLayout";
-import AdmissionsDashboardPageNew from "./pages/AdmissionsManagement/AdmissionsDashboardPage";
-import ApplicantsListPage from "./pages/AdmissionsManagement/ApplicantsListPage";
-import ApplicantDetailsPage from "./pages/AdmissionsManagement/ApplicantDetailsPage";
-import InterviewManagementPage from "./pages/AdmissionsManagement/InterviewManagementPage";
-import AdmissionsTimelinePageNew from "./pages/AdmissionsManagement/AdmissionsTimelinePage";
-import StreamNativeResultsDashboardPage from "./pages/StreamNative/StreamNativeResultsDashboardPage";
-import StudentAcademicProfilePage from "./pages/StreamNative/StudentAcademicProfilePage";
-import StreamNativeReportCardPreviewPage from "./pages/StreamNative/StreamNativeReportCardPreviewPage";
-
-const renderAdmissionsRoutes = () => (
-  <>
-    <Route path="/app/admissions/dashboard"><AdmissionsLayout><AdmissionsDashboardPageNew /></AdmissionsLayout></Route>
-    <Route path="/app/admissions/applicants"><AdmissionsLayout><ApplicantsListPage /></AdmissionsLayout></Route>
-    <Route path="/app/admissions/applicants/:id"><AdmissionsLayout><ApplicantDetailsPage /></AdmissionsLayout></Route>
-    <Route path="/app/admissions/interviews"><AdmissionsLayout><InterviewManagementPage /></AdmissionsLayout></Route>
-    <Route path="/app/admissions/timeline/:id"><AdmissionsLayout><AdmissionsTimelinePageNew /></AdmissionsLayout></Route>
-    <Route path="/app/admissions"><AdmissionsLayout><AdmissionsDashboardPageNew /></AdmissionsLayout></Route>
-  </>
-);
 
 function Router() {
   const { user, loading } = useAuth();
@@ -60,101 +26,16 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/login" component={Login} />
-        <Route path="/admissions" component={AdmissionLandingPage} />
-        <Route path="/admissions/apply" component={OnlineApplicationPage} />
-        <Route path="/admissions/continue" component={ContinueApplicationPage} />
-        <Route path="/admissions/track" component={AdmissionTrackingPage} />
-        <Route path="/admissions/verify"><AdmissionsMagicLinkPage mode="verify" /></Route>
-        <Route path="/admissions/recover"><AdmissionsMagicLinkPage mode="recover" /></Route>
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
     );
   }
 
-  // Role-based routing
-  const role = String(user.role);
   return (
     <Switch>
-      {/* Admin Routes */}
-      {role === "admin" && (
-        <>
-          <Route path="/admin/results-native"><StreamNativeResultsDashboardPage /></Route>
-          <Route path="/admin/students/:id/academic"><StudentAcademicProfilePage mode="admin" /></Route>
-          <Route path="/admin/report-card-native/:id"><StreamNativeReportCardPreviewPage /></Route>
-          <Route path="/admin/*" component={AdminDashboard} />
-          <Route path="/admissions-office" component={AdmissionsDashboardPage} />
-          <Route path="/admissions-office/applications/:id" component={ReviewApplicationPage} />
-          <Route path="/admissions-office/timeline" component={ApplicationTimelinePage} />
-          <Route path="/admissions-office/notifications" component={AdmissionNotificationsPage} />
-          {renderAdmissionsRoutes()}
-          <Route path="/dashboard" component={AdminDashboard} />
-        </>
-      )}
-
-      {/* Headmaster Routes */}
-      {role === "headmaster" && (
-        <>
-          <Route path="/headmaster/results-native"><StreamNativeResultsDashboardPage /></Route>
-          <Route path="/headmaster/*" component={HeadmasterDashboard} />
-          <Route path="/admissions-office" component={AdmissionsDashboardPage} />
-          <Route path="/admissions-office/applications/:id" component={ReviewApplicationPage} />
-          {renderAdmissionsRoutes()}
-          <Route path="/dashboard" component={HeadmasterDashboard} />
-        </>
-      )}
-
-      {/* Teacher Routes */}
-      {role === "teacher" && (
-        <>
-          <Route path="/teacher/results-native"><StreamNativeResultsDashboardPage /></Route>
-          <Route path="/teacher/*" component={TeacherDashboard} />
-          <Route path="/dashboard" component={TeacherDashboard} />
-        </>
-      )}
-
-      {/* Bursar Routes */}
-      {role === "bursar" && (
-        <>
-          <Route path="/bursar/*" component={BursarDashboard} />
-          <Route path="/dashboard" component={BursarDashboard} />
-        </>
-      )}
-
-      {role === "admissions_office" && (
-        <>
-          <Route path="/admissions-office" component={AdmissionsDashboardPage} />
-          <Route path="/admissions-office/applications/:id" component={ReviewApplicationPage} />
-          <Route path="/admissions-office/timeline" component={ApplicationTimelinePage} />
-          <Route path="/admissions-office/notifications" component={AdmissionNotificationsPage} />
-          {renderAdmissionsRoutes()}
-          <Route path="/dashboard" component={AdmissionsDashboardPage} />
-        </>
-      )}
-
-      {/* Parent Routes */}
-      {role === "parent" && (
-        <>
-          <Route path="/parent/*" component={ParentPortal} />
-          <Route path="/dashboard" component={ParentPortal} />
-        </>
-      )}
-
-      {/* Student Routes */}
-      {role === "student" && (
-        <>
-          <Route path="/student/academic-profile"><StudentAcademicProfilePage mode="student" /></Route>
-          <Route path="/student/*" component={StudentPortal} />
-          <Route path="/dashboard" component={StudentPortal} />
-        </>
-      )}
-
-      {/* Default redirect to dashboard */}
-      <Route path="/admissions" component={AdmissionLandingPage} />
-      <Route path="/admissions/apply" component={OnlineApplicationPage} />
-      <Route path="/admissions/continue" component={ContinueApplicationPage} />
-      <Route path="/admissions/track" component={AdmissionTrackingPage} />
-      <Route path="/" component={Home} />
+      <Route path="/dashboard" component={ComponentShowcase} />
+      <Route path="/" component={ComponentShowcase} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

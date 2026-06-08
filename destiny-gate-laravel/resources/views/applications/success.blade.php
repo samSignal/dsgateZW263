@@ -16,12 +16,12 @@
 </head>
 <body>
 <div class="card">
+    <div class="app-number">{{ $application->application_number }}</div>
     <div class="icon">✅</div>
     <h1>Application Submitted!</h1>
     <p>Thank you, <strong>{{ $application->full_name }}</strong>. Your application has been received.</p>
-    <div class="app-number">{{ $application->application_number }}</div>
     <p>Please keep this application number for reference. We will contact you at <strong>{{ $application->email }}</strong> with updates.</p>
-    <a href="{{ route('home') }}" class="btn">Back to Home</a>
+    <a href="/" class="btn">Back to Portal</a>
 </div>
 </body>
 </html>

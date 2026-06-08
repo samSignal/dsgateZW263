@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import type { User } from '../types';
 
@@ -180,10 +180,11 @@ export default function Login({ onLogin }: Props) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         padding: 60,
         position: 'relative',
-        overflow: 'hidden',
+        overflowY: 'auto',
+        overflowX: 'hidden',
       }}>
         {/* Background pattern */}
         <div style={{
@@ -216,39 +217,6 @@ export default function Login({ onLogin }: Props) {
 
           {/* Login method cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 360 }}>
-            <Link to="/admissions" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '12px 16px',
-                background: '#ffffff',
-                border: '2px solid #fbbf24',
-                borderRadius: 10,
-                boxShadow: '0 4px 12px rgba(0,0,0,.15)',
-                transition: 'all .2s ease',
-                width: '100%',
-                boxSizing: 'border-box',
-                cursor: 'pointer',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,.2)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,.15)';
-              }}
-              >
-                <div style={{ fontSize: 28, flexShrink: 0 }}>📝</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: '#1a6b3c', whiteSpace: 'nowrap' }}>Admissions Portal</div>
-                  <div style={{ fontSize: 12, color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Apply for 2026 Intake or Transfer</div>
-                </div>
-                <div style={{ flexShrink: 0, color: '#1a6b3c', display: 'flex', alignItems: 'center' }}>
-                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-                </div>
-              </div>
-            </Link>
-
             {[
               { icon: '🧑‍💼', title: 'Staff & Admin', desc: 'Login with your email address', color: '#4ade80' },
               { icon: '🎓', title: 'Students',      desc: 'Login with Student Number (e.g. D001G2026I001)', color: '#60a5fa' },
@@ -270,6 +238,78 @@ export default function Login({ onLogin }: Props) {
               </div>
             ))}
           </div>
+
+          <a
+            href="/applications/create"
+            style={{
+              marginTop: 18,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              maxWidth: 360,
+              padding: '12px 16px',
+              background: 'rgba(255,255,255,.95)',
+              color: '#0f3d22',
+              border: '1px solid rgba(255,255,255,.35)',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 800,
+              textDecoration: 'none',
+              letterSpacing: '.2px',
+              boxShadow: '0 10px 30px rgba(0,0,0,.18)',
+            }}
+          >
+            Online Application
+          </a>
+
+          <a
+            href="/applications/resume"
+            style={{
+              marginTop: 10,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              maxWidth: 360,
+              padding: '12px 16px',
+              background: 'rgba(255,255,255,.10)',
+              color: 'rgba(255,255,255,.92)',
+              border: '1px solid rgba(255,255,255,.22)',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 800,
+              textDecoration: 'none',
+              letterSpacing: '.2px',
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            Resume Application
+          </a>
+
+          <a
+            href="/applications/track"
+            style={{
+              marginTop: 10,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              maxWidth: 360,
+              padding: '12px 16px',
+              background: 'rgba(255,255,255,.10)',
+              color: 'rgba(255,255,255,.92)',
+              border: '1px solid rgba(255,255,255,.22)',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 800,
+              textDecoration: 'none',
+              letterSpacing: '.2px',
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            Track Application
+          </a>
         </div>
       </div>
     </div>

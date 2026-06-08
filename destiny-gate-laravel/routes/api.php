@@ -63,11 +63,6 @@ use App\Http\Controllers\Api\Academics\TeacherSubjectAllocationController as Aca
 use App\Http\Controllers\Api\Academics\StudentSubjectController;
 use App\Http\Controllers\Api\Academics\AcademicSubjectReportController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AdmissionsManagement\AdmissionDashboardController;
-use App\Http\Controllers\Api\AdmissionsManagement\AdmissionApplicantController;
-use App\Http\Controllers\Api\AdmissionsManagement\AdmissionInterviewController;
-use App\Http\Controllers\Api\AdmissionsManagement\AdmissionDocumentController;
-use App\Http\Controllers\Api\AdmissionsManagement\AdmissionTimelineController;
 use App\Http\Controllers\Api\StreamNative\ResultsController as StreamNativeResultsController;
 use App\Http\Controllers\Api\StreamNative\RankingsController as StreamNativeRankingsController;
 use App\Http\Controllers\Api\StreamNative\TranscriptController as StreamNativeTranscriptController;
@@ -81,44 +76,6 @@ Route::post('/login',                    [AuthApiController::class, 'login']);
 Route::post('/apply',                    [ApplicationApiController::class, 'store']);
 Route::post('/forgot-password',          [AuthApiController::class, 'forgotPassword']);
 Route::post('/guardian-forgot-password', [AuthApiController::class, 'guardianForgotPassword']);
-
-// Public online admissions: applicants do not need accounts.
-Route::middleware('throttle:30,1')->prefix('admissions')->group(function () {
-    Route::get('/academic-years',        [AcademicYearController::class, 'index']);
-    Route::get('/forms',                 [FormController::class, 'index']);
-    Route::get('/continue',              [\App\Http\Controllers\Api\Admissions\AdmissionDraftController::class, 'continueApplication']);
-    Route::post('/apply',                [\App\Http\Controllers\Api\Admissions\AdmissionApplicationController::class, 'submit']);
-    Route::post('/submit',               [\App\Http\Controllers\Api\Admissions\AdmissionApplicationController::class, 'submit']);
-    Route::post('/draft',                [\App\Http\Controllers\Api\Admissions\AdmissionDraftController::class, 'saveDraft']);
-    Route::patch('/draft',               [\App\Http\Controllers\Api\Admissions\AdmissionDraftController::class, 'updateDraft']);
-    Route::post('/continue/{token}',     [\App\Http\Controllers\Api\Admissions\AdmissionDraftController::class, 'resumeByToken']);
-    Route::get('/resume/{token}',        [\App\Http\Controllers\Api\Admissions\AdmissionDraftController::class, 'resumeByToken']);
-    Route::patch('/resume/{token}/step', [\App\Http\Controllers\Api\Admissions\AdmissionDraftController::class, 'updateStep']);
-    Route::post('/track',                [\App\Http\Controllers\Api\Admissions\AdmissionTrackingController::class, 'track']);
-    Route::post('/track/timeline',       [\App\Http\Controllers\Api\Admissions\AdmissionTrackingController::class, 'timeline']);
-    Route::post('/track/notifications',  [\App\Http\Controllers\Api\Admissions\AdmissionTrackingController::class, 'notifications']);
-    Route::post('/upload/{token}',       [\App\Http\Controllers\Api\Admissions\AdmissionApplicationController::class, 'uploadDocuments']);
-
-    Route::prefix('v2')->group(function () {
-        Route::get('/catalog/academic-years', [\App\Http\Controllers\Api\Admissions\V2\PublicCatalogController::class, 'academicYears']);
-        Route::get('/catalog/forms',          [\App\Http\Controllers\Api\Admissions\V2\PublicCatalogController::class, 'forms']);
-        Route::get('/catalog/categories',     [\App\Http\Controllers\Api\Admissions\V2\PublicCatalogController::class, 'categories']);
-
-        Route::post('/draft/start',           [\App\Http\Controllers\Api\Admissions\V2\DraftController::class, 'start']);
-        Route::post('/draft/save',            [\App\Http\Controllers\Api\Admissions\V2\DraftController::class, 'save']);
-        Route::post('/draft/get',             [\App\Http\Controllers\Api\Admissions\V2\DraftController::class, 'get']);
-
-        Route::post('/session/start',         [\App\Http\Controllers\Api\Admissions\V2\SessionController::class, 'start']);
-
-        Route::post('/documents/upload',      [\App\Http\Controllers\Api\Admissions\V2\DocumentController::class, 'upload']);
-        Route::post('/submit',                [\App\Http\Controllers\Api\Admissions\V2\SubmitController::class, 'submit']);
-        Route::post('/track',                 [\App\Http\Controllers\Api\Admissions\V2\TrackingController::class, 'track']);
-        Route::post('/recovery/request',      [\App\Http\Controllers\Api\Admissions\V2\RecoveryController::class, 'request']);
-
-        Route::post('/verification/stepup/request', [\App\Http\Controllers\Api\Admissions\V2\VerificationController::class, 'requestStepup']);
-        Route::post('/verification/consume',        [\App\Http\Controllers\Api\Admissions\V2\VerificationController::class, 'consume']);
-    });
-});
 
 // ── Authenticated ────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
@@ -225,69 +182,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me/progression/status',        [StreamNativeProgressionController::class, 'myStatus']);
         Route::get('/me/progression/history',       [StreamNativeProgressionController::class, 'myHistory']);
         Route::get('/me/graduation',                [StreamNativeGraduationController::class, 'me']);
-    });
-
-    // ── Admissions System ───────────────────────────────
-    // Admissions Office (Staff only)
-    Route::middleware('role:admin,headmaster,admissions_office')->prefix('admissions-office')->group(function () {
-        Route::prefix('v2')->group(function () {
-            Route::get('/queue/{queue}', [\App\Http\Controllers\Api\AdmissionsOffice\V2\QueueController::class, 'list']);
-            Route::get('/metrics/summary', [\App\Http\Controllers\Api\AdmissionsOffice\V2\QueueController::class, 'metrics']);
-
-            Route::get('/reviewers', [\App\Http\Controllers\Api\AdmissionsOffice\V2\ReviewController::class, 'reviewers']);
-            Route::get('/review/{id}', [\App\Http\Controllers\Api\AdmissionsOffice\V2\ReviewController::class, 'show']);
-            Route::post('/review/{id}/claim', [\App\Http\Controllers\Api\AdmissionsOffice\V2\ReviewController::class, 'claim']);
-            Route::post('/review/{id}/assign', [\App\Http\Controllers\Api\AdmissionsOffice\V2\ReviewController::class, 'assign']);
-            Route::post('/review/{id}/release', [\App\Http\Controllers\Api\AdmissionsOffice\V2\ReviewController::class, 'release']);
-            Route::post('/review/{id}/transition', [\App\Http\Controllers\Api\AdmissionsOffice\V2\ReviewController::class, 'transition']);
-
-            Route::post('/documents/{documentId}/verify', [\App\Http\Controllers\Api\AdmissionsOffice\V2\DocumentsController::class, 'verify']);
-            Route::post('/documents/{documentId}/reject', [\App\Http\Controllers\Api\AdmissionsOffice\V2\DocumentsController::class, 'reject']);
-            Route::post('/documents/{documentId}/request-reupload', [\App\Http\Controllers\Api\AdmissionsOffice\V2\DocumentsController::class, 'requestReupload']);
-
-            Route::get('/duplicates/{applicationId}/candidates', [\App\Http\Controllers\Api\AdmissionsOffice\V2\DuplicatesController::class, 'candidates']);
-            Route::get('/duplicates/{applicationId}/compare/{candidateId}', [\App\Http\Controllers\Api\AdmissionsOffice\V2\DuplicatesController::class, 'compare']);
-            Route::post('/duplicates/link', [\App\Http\Controllers\Api\AdmissionsOffice\V2\DuplicatesController::class, 'link']);
-            Route::post('/duplicates/reopen', [\App\Http\Controllers\Api\AdmissionsOffice\V2\DuplicatesController::class, 'reopen']);
-
-            Route::get('/messages/templates', [\App\Http\Controllers\Api\AdmissionsOffice\V2\MessagesController::class, 'templates']);
-            Route::post('/messages/{applicationId}/internal-note', [\App\Http\Controllers\Api\AdmissionsOffice\V2\MessagesController::class, 'internalNote']);
-            Route::post('/messages/{applicationId}/applicant', [\App\Http\Controllers\Api\AdmissionsOffice\V2\MessagesController::class, 'applicantMessage']);
-        });
-
-        Route::get('/applications',         [\App\Http\Controllers\Api\Admissions\AdmissionReviewController::class, 'index']);
-        Route::get('/applications/{id}',    [\App\Http\Controllers\Api\Admissions\AdmissionReviewController::class, 'show']);
-        Route::get('/applications/{id}/review', [\App\Http\Controllers\Api\Admissions\AdmissionReviewController::class, 'review']);
-        Route::patch('/applications/{id}',  [\App\Http\Controllers\Api\Admissions\AdmissionReviewController::class, 'updateStatus']);
-        Route::post('/applications/{id}/documents/request', [\App\Http\Controllers\Api\Admissions\AdmissionReviewController::class, 'requestDocuments']);
-        Route::post('/applications/{id}/accept', [\App\Http\Controllers\Api\Admissions\AdmissionReviewController::class, 'accept']);
-        Route::post('/applications/{id}/reject', [\App\Http\Controllers\Api\Admissions\AdmissionReviewController::class, 'reject']);
-        Route::post('/applications/{id}/enroll', [\App\Http\Controllers\Api\Admissions\AdmissionReviewController::class, 'enroll']);
-        Route::get('/applications/{id}/notifications', [\App\Http\Controllers\Api\Admissions\AdmissionNotificationController::class, 'index']);
-        Route::post('/applications/{id}/email',  [\App\Http\Controllers\Api\Admissions\AdmissionNotificationController::class, 'sendEmail']);
-        Route::post('/applications/{id}/whatsapp', [\App\Http\Controllers\Api\Admissions\AdmissionNotificationController::class, 'queueWhatsApp']);
-    });
-
-    // Internal Admissions Management Dashboard
-    Route::middleware('role:admin,headmaster,admissions_office')->prefix('app/admissions')->group(function () {
-        Route::get('/dashboard', [AdmissionDashboardController::class, 'dashboardStats']);
-
-        Route::get('/applicants', [AdmissionApplicantController::class, 'index']);
-        Route::get('/applicants/{id}', [AdmissionApplicantController::class, 'show']);
-        Route::patch('/applicants/{id}/status', [AdmissionApplicantController::class, 'updateStatus']);
-        Route::patch('/applicants/{id}/remarks', [AdmissionApplicantController::class, 'addRemarks']);
-        Route::post('/applicants/{id}/approve', [AdmissionApplicantController::class, 'approve']);
-        Route::post('/applicants/{id}/reject', [AdmissionApplicantController::class, 'reject']);
-        Route::post('/applicants/{id}/request-documents', [AdmissionApplicantController::class, 'requestDocuments']);
-
-        Route::post('/interviews/schedule', [AdmissionInterviewController::class, 'schedule']);
-        Route::patch('/interviews/{id}', [AdmissionInterviewController::class, 'update']);
-        Route::post('/interviews/{id}/cancel', [AdmissionInterviewController::class, 'cancel']);
-
-        Route::post('/documents/{id}/verify', [AdmissionDocumentController::class, 'verify']);
-        Route::post('/documents/{id}/request-replacement', [AdmissionDocumentController::class, 'requestReplacement']);
-
-        Route::get('/applicants/{id}/timeline', [AdmissionTimelineController::class, 'history']);
     });
 
     // ── Academic Structure (admin + headmaster) ────────

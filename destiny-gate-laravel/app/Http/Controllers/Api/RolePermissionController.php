@@ -19,8 +19,14 @@ class RolePermissionController extends Controller
             ->orderBy('name')
             ->get()
             ->groupBy(function ($p) {
-                // Group by prefix (e.g. "students-list" → "students")
-                return explode('-', $p->name)[0];
+                $name = (string) $p->name;
+                if (str_contains($name, '.')) {
+                    return explode('.', $name)[0];
+                }
+                if (str_contains($name, '-')) {
+                    return explode('-', $name)[0];
+                }
+                return $name;
             });
 
         return response()->json($permissions);

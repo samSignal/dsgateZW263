@@ -96,13 +96,6 @@ import TeacherReportCommentsPage from './pages/reports/TeacherReportCommentsPage
 import ParentReportsPage from './pages/reports/ParentReportsPage';
 import StudentReportsPage from './pages/reports/StudentReportsPage';
 
-// Admissions Module
-import AdmissionLandingPage from './pages/admissions/AdmissionLandingPage';
-import OnlineApplicationPage from './pages/admissions/OnlineApplicationPage';
-import AdmissionTrackingPage from './pages/admissions/AdmissionTrackingPage';
-import AdmissionsDashboardPage from './pages/admissions/office/AdmissionsDashboardPage';
-import ReviewApplicationPage from './pages/admissions/office/ReviewApplicationPage';
-
 // Timetable Module
 import TimetableBuilderPage from './pages/timetable/TimetableBuilderPage';
 import TimetablePeriodsPage from './pages/timetable/TimetablePeriodsPage';
@@ -125,16 +118,7 @@ function dashboardPath(role: string): string {
 export default function App() {
   const { user, login, logout, clearMustChangePassword } = useAuth();
 
-  // Public Routes (Accessible to everyone)
-  const publicRoutes = (
-    <>
-      <Route path="/admissions" element={<AdmissionLandingPage />} />
-      <Route path="/admissions/apply" element={<OnlineApplicationPage />} />
-      <Route path="/admissions/continue" element={<OnlineApplicationPage />} />
-      <Route path="/admissions/continue/:token" element={<OnlineApplicationPage />} />
-      <Route path="/admissions/track" element={<AdmissionTrackingPage />} />
-    </>
-  );
+  const publicRoutes = <></>;
 
   // Not logged in
   if (!user) {
@@ -277,10 +261,6 @@ export default function App() {
         <Route path="/app/reports/:id"                              element={<ReportCardPreviewPage />} />
         <Route path="/app/parent/reports"                           element={<ParentReportsPage />} />
         <Route path="/app/student/reports"                          element={<StudentReportsPage />} />
-
-        {/* Admissions Office */}
-        <Route path="/app/admissions"                       element={<AdmissionsDashboardPage />} />
-        <Route path="/app/admissions/:id"                   element={<ReviewApplicationPage />} />
 
         {/* Timetable Module */}
         <Route path="/app/timetable"                    element={<TimetableBuilderPage />} />

@@ -20,10 +20,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // Only redirect to login if we're not already on a public admissions page
-      if (!window.location.pathname.startsWith('/admissions')) {
-        window.location.href = '/app';
-      }
+      window.location.href = '/app';
     }
     return Promise.reject(err);
   }

@@ -48,9 +48,6 @@ function navForRole(role: string): NavGroup[] {
         { label: 'Stream Rankings',   path: '/app/reports/rankings/stream',   icon: Ic.bar },
         { label: 'Attendance',        path: '/app/discipline/attendance',     icon: Ic.attend },
       ]},
-      { section: 'ADMISSIONS', items: [
-        { label: 'Admissions Office', path: '/app/admissions', icon: Ic.users },
-      ]},
       { section: 'ACADEMIC SETUP', items: [
         { label: 'Academic Years',    path: '/app/academic/years',            icon: Ic.cal },
         { label: 'Terms',             path: '/app/academic/terms',            icon: Ic.cal },
@@ -444,8 +441,7 @@ export default function Layout({ user, onLogout, children }: Props) {
           <span>SMN Dev Consultancy</span>
         </footer>
       </div>
+
     </div>
   );
 }
-
-

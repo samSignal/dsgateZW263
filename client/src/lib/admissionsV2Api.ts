@@ -104,6 +104,27 @@ export type V2Document = {
   uploaded_at: string | null;
 };
 
+export type V2OfferCurrent = {
+  has_offer: boolean;
+  offer?: {
+    offer_id: number;
+    offer_state: string;
+    offer_version: number;
+    expires_at: string | null;
+    offered_at: string | null;
+    viewed_at: string | null;
+    responded_at: string | null;
+    response: string | null;
+  };
+  letter?: { letter_id: number; sha256: string; download_endpoint: string } | null;
+  enrollment_preparation?: {
+    enrollment_preparation_id: number;
+    enrollment_state: string;
+    readiness_status: string | null;
+    last_evaluated_at: string | null;
+  } | null;
+};
+
 export const admissionsV2Api = {
   catalogAcademicYears() {
     return request<{ academic_years: CatalogAcademicYear[] }>("/admissions/v2/catalog/academic-years");
@@ -247,5 +268,98 @@ export const admissionsV2Api = {
 
   recoveryRequest(payload: { academic_year_id: number; birth_certificate_number: string; guardian_email?: string; guardian_phone?: string }) {
     return request<{ message: string }>("/admissions/v2/recovery/request", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  offersCurrent() {
+    return request<V2OfferCurrent>("/admissions/v2/offers/current");
+  },
+
+  offerRespond(payload: { response: "accept" | "decline" }, idempotencyKey?: string) {
+    const headers: Record<string, string> = {};
+    if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+    return request<{
+      offer_id: number;
+      offer_state: string;
+      response?: string;
+      enrollment_preparation_id?: number;
+      replayed?: boolean;
+      stream_recommendation?: { recommendation_id: number; version: number; confidence_score: number } | null;
+    }>("/admissions/v2/offers/respond", { method: "POST", body: JSON.stringify({ ...payload, idempotency_key: idempotencyKey }), headers });
+  },
+
+  enrollmentPreparationStatus() {
+    return request<{
+      enrollment_preparation_id: number;
+      enrollment_state: string;
+      readiness: {
+        status: "READY" | "READY_WITH_WARNINGS" | "BLOCKED";
+        blocks: string[];
+        warnings: string[];
+        checks?: any;
+        checklist?: { item_key: string; title: string; status: string; acknowledged_at: string | null; due_at: string | null }[];
+      };
+    }>("/admissions/v2/enrollment-preparation/status");
+  },
+
+  async downloadCurrentOfferLetter(): Promise<Blob> {
+    const sess = getValidAdmissionsSession();
+    const headers = new Headers();
+    headers.set("Accept", "application/pdf");
+    if (sess?.sessionToken) headers.set("X-Admissions-Session", sess.sessionToken);
+
+    const response = await fetch(`${API_BASE}/admissions/v2/offers/current/letter`, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
+    if (!response.ok) {
+      const data = (await response.json().catch(() => ({}))) as ApiFail | any;
+      if (data && data.ok === false && typeof data.code === "string") {
+        throw new AdmissionsV2Error(response.status, data as ApiFail);
+      }
+      throw new Error((data && data.message) || "Offer letter download failed");
+    }
+    touchAdmissionsSession();
+    return await response.blob();
+  },
+
+  onboardingStatus() {
+    return request<{
+      has_provisional: boolean;
+      provisional_enrollment_id?: number;
+      onboarding_completion_pct?: number;
+      activation_readiness_status?: string | null;
+      activation_readiness_pct?: number;
+      tasks?: {
+        task_id: number;
+        task_key: string;
+        title: string;
+        task_type: string;
+        status: string;
+        severity: string;
+        due_at: string | null;
+        completed_at: string | null;
+      }[];
+      allocation?: { stream_id: number | null; allocation_state: string } | null;
+      student_number_reservation?: { reservation_state: string; expires_at: string | null } | null;
+    }>("/admissions/v2/onboarding/status");
+  },
+
+  onboardingAcknowledge(payload: { task_key: string; note?: string }) {
+    return request<any>("/admissions/v2/onboarding/acknowledge", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  onboardingGuidance() {
+    return request<{
+      has_provisional: boolean;
+      provisional_enrollment_id?: number;
+      readiness_score?: number;
+      readiness_state?: string | null;
+      blocks?: { code: string; title: string }[];
+      remediation?: {
+        pending_acknowledgements?: { task_key: string; title: string; due_at: string | null }[];
+        pending_reupload_requests?: number;
+      };
+    }>("/admissions/v2/onboarding/guidance");
   },
 };

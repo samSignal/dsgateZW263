@@ -20,7 +20,7 @@ class AdminApiController extends Controller
             'total_students' => Student::where('status', 'active')->count(),
             'total_staff'    => Staff::where('is_active', true)->count(),
             'total_classes'  => SchoolClass::count(),
-            'pending_apps'   => Application::where('status', 'pending')->count(),
+            'pending_apps'   => Application::where('status', 'pending')->where('is_draft', false)->count(),
             'recent_users'   => User::latest()->take(5)->get(['id','name','email','role','created_at']),
         ]);
     }
@@ -108,7 +108,7 @@ class AdminApiController extends Controller
 
     public function applications()
     {
-        $apps = Application::latest()->paginate(20);
+        $apps = Application::where('is_draft', false)->latest()->paginate(20);
         return response()->json($apps);
     }
 

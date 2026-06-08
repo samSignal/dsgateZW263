@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ str_replace(chr(95), chr(45), app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
@@ -244,6 +244,7 @@
                 <a href="{{ route('admin.staff') }}"><span class="nav-icon">&#9632;</span> Staff</a>
                 <a href="{{ route('admin.classes') }}"><span class="nav-icon">&#9632;</span> Classes</a>
                 <a href="{{ route('students.index') }}"><span class="nav-icon">&#9632;</span> Students</a>
+                <a href="{{ route('admin.applications') }}"><span class="nav-icon">&#9632;</span> Admissions</a>
                 <a href="{{ route('admin.applications') }}"><span class="nav-icon">&#9632;</span> Applications</a>
 
             @elseif($role === 'headmaster')
@@ -251,6 +252,7 @@
                 <a href="{{ route('headmaster.dashboard') }}"><span class="nav-icon">&#9632;</span> Dashboard</a>
                 <div class="sidebar-section">School</div>
                 <a href="{{ route('students.index') }}"><span class="nav-icon">&#9632;</span> Students</a>
+                <a href="{{ route('admin.applications') }}"><span class="nav-icon">&#9632;</span> Admissions</a>
                 <a href="{{ route('headmaster.announcements') }}"><span class="nav-icon">&#9632;</span> Announcements</a>
                 <a href="{{ route('headmaster.behaviour') }}"><span class="nav-icon">&#9632;</span> Behaviour</a>
                 <a href="{{ route('headmaster.reports') }}"><span class="nav-icon">&#9632;</span> Reports</a>

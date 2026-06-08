@@ -39,6 +39,9 @@ function navForRole(role: string): NavGroup[] {
   switch (role) {
     case 'admin': return [
       { section: '', items: [{ label: 'Dashboard', path: '/app/admin', icon: Ic.grid }] },
+      { section: 'ADMISSIONS', items: [
+        { label: 'Admissions', path: '/app/admin/applications', icon: Ic.clip },
+      ]},
       { section: 'ACADEMICS', items: [
         { label: 'Students',          path: '/app/students',                  icon: Ic.users },
         { label: 'Assessments',       path: '/app/assessments',               icon: Ic.chart },
@@ -111,6 +114,9 @@ function navForRole(role: string): NavGroup[] {
     ];
     case 'headmaster': return [
       { section: '', items: [{ label: 'Dashboard', path: '/app/headmaster', icon: Ic.grid }] },
+      { section: 'ADMISSIONS', items: [
+        { label: 'Admissions', path: '/app/admin/applications', icon: Ic.clip },
+      ]},
       { section: 'ACADEMICS', items: [
         { label: 'Students',   path: '/app/students',               icon: Ic.users },
         { label: 'Attendance', path: '/app/discipline/attendance/reports', icon: Ic.attend },

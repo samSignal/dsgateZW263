@@ -132,8 +132,8 @@ export function Badge({ children, variant = 'gray', style }: { children: React.R
 
 export function statusBadge(status: string) {
   const map: Record<string, BV> = {
-    active: 'green', paid: 'green', approved: 'green', present: 'green', enrolled: 'green',
-    pending: 'amber', partial: 'amber', late: 'amber', moderate: 'amber',
+    active: 'green', paid: 'green', approved: 'green', offered: 'green', present: 'green', enrolled: 'green',
+    pending: 'amber', waiting_list: 'amber', partial: 'amber', late: 'amber', moderate: 'amber',
     overdue: 'red', rejected: 'red', suspended: 'red', absent: 'red', severe: 'red',
     transferred: 'blue', graduated: 'blue', inactive: 'gray', minor: 'green',
     excused: 'blue', sick: 'amber', early_departure: 'amber',

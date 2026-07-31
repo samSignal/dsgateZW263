@@ -20,6 +20,8 @@ class Application extends Model
         'guardian2_name', 'guardian2_email', 'guardian2_phone',
         'guardian3_name', 'guardian3_email', 'guardian3_phone',
         'intended_class', 'academic_year', 'status', 'rejection_reason',
+        'offer_letter_token', 'offer_letter_version', 'offer_letter_expires_at',
+        'offer_accepted_at',
         'is_draft', 'last_saved_step', 'resume_token',
         'processed_by', 'processed_at', 'enrolled_student_id',
     ];
@@ -28,6 +30,8 @@ class Application extends Model
         'date_of_birth' => 'date',
         'processed_at'  => 'datetime',
         'is_draft'      => 'boolean',
+        'offer_letter_expires_at' => 'datetime',
+        'offer_accepted_at' => 'datetime',
     ];
 
     public function processedBy()

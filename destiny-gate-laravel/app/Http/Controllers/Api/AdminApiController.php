@@ -10,6 +10,8 @@ use App\Models\SchoolClass;
 use App\Models\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AdminApiController extends Controller
 {
@@ -112,14 +114,84 @@ class AdminApiController extends Controller
         return response()->json($apps);
     }
 
+    public function documentRequests(Application $application)
+    {
+        return response()->json(
+            DB::table('application_document_requests')
+                ->where('application_id', $application->id)
+                ->orderByDesc('id')
+                ->get()
+        );
+    }
+
+    public function requestDocumentResubmission(Request $request, Application $application)
+    {
+        $data = $request->validate([
+            'document_key' => 'required|string|in:doc_student_id_path,doc_results_path,doc_parent_id_path,doc_transfer_letter_path',
+            'instructions' => 'nullable|string|max:2000',
+        ]);
+
+        $exists = DB::table('application_document_requests')
+            ->where('application_id', $application->id)
+            ->where('document_key', $data['document_key'])
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['message' => 'A pending request already exists for this document.'], 422);
+        }
+
+        $oldPath = $application->{$data['document_key']} ?? null;
+
+        $id = DB::table('application_document_requests')->insertGetId([
+            'application_id' => $application->id,
+            'document_key' => $data['document_key'],
+            'status' => 'pending',
+            'instructions' => $data['instructions'] ?? null,
+            'requested_by' => auth()->id(),
+            'requested_at' => now(),
+            'old_path' => $oldPath,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(DB::table('application_document_requests')->where('id', $id)->first(), 201);
+    }
+
     public function approveApplication(Request $request, Application $application)
     {
+        return $this->offerApplication($application);
+    }
+
+    public function offerApplication(Application $application)
+    {
+        $token = $application->offer_letter_token;
+        if (!$token) {
+            do {
+                $token = Str::upper(Str::random(16));
+            } while (DB::table('applications')->where('offer_letter_token', $token)->exists());
+        }
+
         $application->update([
-            'status'       => 'approved',
+            'status'       => 'offered',
+            'processed_by' => auth()->id(),
+            'processed_at' => now(),
+            'offer_letter_token' => $token,
+            'offer_letter_expires_at' => now()->addDays(21),
+        ]);
+
+        return response()->json(['message' => 'Place offered.', 'application' => $application]);
+    }
+
+    public function waitlistApplication(Application $application)
+    {
+        $application->update([
+            'status'       => 'waiting_list',
             'processed_by' => auth()->id(),
             'processed_at' => now(),
         ]);
-        return response()->json(['message' => 'Application approved.', 'application' => $application]);
+
+        return response()->json(['message' => 'Application moved to waiting list.', 'application' => $application]);
     }
 
     public function rejectApplication(Request $request, Application $application)

@@ -20,8 +20,8 @@
                 <td>{{ $app->academic_year }}</td>
                 <td>
                     <span style="padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;
-                        background: {{ $app->status === 'pending' ? '#fef3c7' : ($app->status === 'approved' ? '#d1fae5' : '#fee2e2') }};
-                        color: {{ $app->status === 'pending' ? '#d97706' : ($app->status === 'approved' ? '#065f46' : '#991b1b') }};">
+                        background: {{ $app->status === 'pending' || $app->status === 'waiting_list' ? '#fef3c7' : ($app->status === 'approved' || $app->status === 'offered' || $app->status === 'enrolled' ? '#d1fae5' : '#fee2e2') }};
+                        color: {{ $app->status === 'pending' || $app->status === 'waiting_list' ? '#d97706' : ($app->status === 'approved' || $app->status === 'offered' || $app->status === 'enrolled' ? '#065f46' : '#991b1b') }};">
                         {{ ucfirst($app->status) }}
                     </span>
                 </td>

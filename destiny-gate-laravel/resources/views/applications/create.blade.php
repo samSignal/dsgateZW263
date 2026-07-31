@@ -29,6 +29,7 @@
         .btn-secondary { background: #fff; color: #1a6b3c; border: 1.5px solid rgba(26, 107, 60, 0.35); }
         .btn-secondary:hover { background: #f0faf4; }
         .alert-error { background: #fef2f2; color: #991b1b; padding: 12px 14px; border-radius: 12px; border: 1px solid #fecaca; margin-bottom: 14px; font-size: 13px; }
+        .alert-success { background: #ecfdf5; color: #065f46; padding: 12px 14px; border-radius: 12px; border: 1px solid #a7f3d0; margin-bottom: 14px; font-size: 13px; }
         .summary { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; }
         .summary h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: 0.4px; color: #475569; text-transform: uppercase; }
         .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
@@ -143,6 +144,12 @@
                     </ul>
                 </div>
             @endif
+            @if(session('success'))
+                <div class="alert-success">{{ session('success') }}</div>
+            @endif
+            @if(session('error'))
+                <div class="alert-error">{{ session('error') }}</div>
+            @endif
             @if($mode === 'resume')
                 <div class="title">Resume Application</div>
                 <p class="subtitle">Enter your resume token to continue where you left off.</p>
@@ -171,17 +178,18 @@
                     <div class="grid-2" style="margin-top: 14px;">
                         <div class="form-group">
                             <label>Application Number *</label>
-                            <input type="text" name="application_number" value="{{ old('application_number') }}" required>
+                            <input type="text" name="application_number" value="{{ old('application_number', $tracked?->application_number ?? '') }}" required>
                         </div>
                         <div class="form-group">
                             <label>Email *</label>
-                            <input type="email" name="email" value="{{ old('email') }}" required>
+                            <input type="email" name="email" value="{{ old('email', $tracked?->email ?? '') }}" required>
                         </div>
                     </div>
                     <button type="submit" class="btn">Check Status</button>
                 </form>
 
                 @php($tracked = $trackedApplication ?? null)
+                @php($requests = $trackedRequests ?? collect())
                 @if(isset($trackedApplication) && !$tracked)
                     <div class="alert-error" style="margin-top:14px;">No application found for those details.</div>
                 @endif
@@ -193,8 +201,67 @@
                             <div class="pill">Status: {{ ucfirst($tracked->status) }}</div>
                             <div class="pill">Applicant: {{ $tracked->full_name }}</div>
                             <div class="pill">Year: {{ $tracked->academic_year }}</div>
+                            @if(!empty($tracked->offer_accepted_at))
+                                <div class="pill">Offer Accepted: {{ $tracked->offer_accepted_at->format('Y-m-d H:i') }}</div>
+                            @endif
                         </div>
                     </div>
+
+                    @if($tracked->status === 'offered' && !empty($tracked->offer_letter_token))
+                        <div class="summary" style="margin-top: 14px;">
+                            <h3>Offer Letter</h3>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items:center;">
+                                <div style="font-size:13px; color:#0f172a; font-weight:700;">
+                                    {{ !empty($tracked->offer_accepted_at) ? 'Offer letter accepted. Admissions can now prepare for enrolment.' : 'A provisional place has been offered.' }}
+                                </div>
+                                <a href="{{ route('applications.offer-letter', $tracked->offer_letter_token) }}" target="_blank" class="btn" style="display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">
+                                    {{ !empty($tracked->offer_accepted_at) ? 'View Accepted Offer' : 'View Offer Letter' }}
+                                </a>
+                                <form method="POST" action="{{ route('applications.offer-letter.send', $tracked->offer_letter_token) }}" style="margin:0;">
+                                    @csrf
+                                    <input type="hidden" name="application_number" value="{{ old('application_number', $tracked?->application_number ?? '') }}">
+                                    <input type="hidden" name="email" value="{{ old('email', $tracked?->email ?? '') }}">
+                                    <button type="submit" class="btn btn-secondary" style="width:100%; height:42px;">Send to Email</button>
+                                </form>
+                            </div>
+                        </div>
+                    @endif
+
+                    @php($pendingRequests = $pendingRequests ?? collect())
+                    @php($documentLabels = $documentLabels ?? [])
+                    @if($pendingRequests->count() > 0)
+                        <div class="summary" style="margin-top: 14px;">
+                            <h3>Document Resubmission Required</h3>
+                            <p style="font-size:12px; color:#64748b; margin:0 0 10px;">Please upload the requested document(s) below.</p>
+
+                            @foreach($pendingRequests as $r)
+                                <div style="border:1px solid #e2e8f0; border-radius:12px; padding:12px; background:#fff; margin-bottom:10px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                                        <div>
+                                            <div style="font-size:12px; font-weight:800; color:#0f172a;">{{ $documentLabels[$r->document_key] ?? 'Document' }}</div>
+                                            @if(!empty($r->instructions))
+                                                <div style="font-size:12px; color:#64748b; margin-top:6px; white-space:pre-wrap;">{{ $r->instructions }}</div>
+                                            @endif
+                                        </div>
+                                        <div class="pill">Requested</div>
+                                    </div>
+
+                                    <form method="POST" action="{{ route('applications.document-requests.upload', $r->id) }}" enctype="multipart/form-data" style="margin-top:10px;">
+                                        @csrf
+                                        <input type="hidden" name="application_number" value="{{ old('application_number', $tracked?->application_number ?? '') }}">
+                                        <input type="hidden" name="email" value="{{ old('email', $tracked?->email ?? '') }}">
+                                        <div class="grid-2" style="align-items:end;">
+                                            <div class="form-group" style="margin-bottom:0;">
+                                                <label>Upload (PDF or image, max 5MB) *</label>
+                                                <input type="file" name="document" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*">
+                                            </div>
+                                            <button type="submit" class="btn" style="height:42px;">Upload</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
                 @endif
             @else
             <form method="POST" action="{{ route('applications.store') }}" id="applicationForm" enctype="multipart/form-data">

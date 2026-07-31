@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -46,6 +47,39 @@ class ApplicationController extends Controller
     public function trackForm(Request $request)
     {
         $request->merge(['mode' => 'track']);
+        $autoTrack = (bool) session()->pull('auto_track', false);
+        $applicationNumber = $request->old('application_number');
+        $email = $request->old('email');
+
+        if ($autoTrack && $applicationNumber && $email) {
+            $application = Application::where('application_number', $applicationNumber)
+                ->where('email', $email)
+                ->first();
+
+            $view = $this->create($request);
+            $requests = $application
+                ? DB::table('application_document_requests')
+                    ->where('application_id', $application->id)
+                    ->orderByDesc('id')
+                    ->get()
+                : collect();
+
+            $documentLabels = [
+                'doc_student_id_path' => 'Student Birth Certificate / National ID',
+                'doc_results_path' => 'Previous / Current Results',
+                'doc_parent_id_path' => 'Parent ID / Birth Certificate',
+                'doc_transfer_letter_path' => 'Transfer Letter',
+            ];
+
+            $pendingRequests = collect($requests)->where('status', 'pending')->values();
+
+            return $view
+                ->with('trackedApplication', $application)
+                ->with('trackedRequests', $requests)
+                ->with('pendingRequests', $pendingRequests)
+                ->with('documentLabels', $documentLabels);
+        }
+
         return $this->create($request);
     }
 
@@ -56,13 +90,217 @@ class ApplicationController extends Controller
             'email' => 'required|email',
         ]);
 
+        $request->flash();
+
         $application = Application::where('application_number', $data['application_number'])
             ->where('email', $data['email'])
             ->first();
 
         $request->merge(['mode' => 'track']);
         $view = $this->create($request);
-        return $view->with('trackedApplication', $application);
+        $requests = $application
+            ? DB::table('application_document_requests')
+                ->where('application_id', $application->id)
+                ->orderByDesc('id')
+                ->get()
+            : collect();
+
+        $documentLabels = [
+            'doc_student_id_path' => 'Student Birth Certificate / National ID',
+            'doc_results_path' => 'Previous / Current Results',
+            'doc_parent_id_path' => 'Parent ID / Birth Certificate',
+            'doc_transfer_letter_path' => 'Transfer Letter',
+        ];
+
+        $pendingRequests = collect($requests)->where('status', 'pending')->values();
+
+        return $view
+            ->with('trackedApplication', $application)
+            ->with('trackedRequests', $requests)
+            ->with('pendingRequests', $pendingRequests)
+            ->with('documentLabels', $documentLabels);
+    }
+
+    public function uploadRequestedDocument(Request $request, int $requestId)
+    {
+        $data = $request->validate([
+            'application_number' => 'required|string|max:50',
+            'email' => 'required|email',
+            'document' => 'required|file|max:5120|mimes:pdf,jpg,jpeg,png',
+        ]);
+
+        $docRequest = DB::table('application_document_requests')->where('id', $requestId)->first();
+        abort_if(!$docRequest, 404);
+
+        $application = Application::where('id', $docRequest->application_id)
+            ->where('application_number', $data['application_number'])
+            ->where('email', $data['email'])
+            ->first();
+
+        if (!$application) {
+            return redirect()->route('applications.track')
+                ->withInput([
+                    'application_number' => $data['application_number'],
+                    'email' => $data['email'],
+                ])
+                ->with('error', 'Application not found for those details.');
+        }
+
+        if ($docRequest->status !== 'pending') {
+            return redirect()->route('applications.track')
+                ->withInput([
+                    'application_number' => $data['application_number'],
+                    'email' => $data['email'],
+                ])
+                ->with('error', 'This request is no longer pending.');
+        }
+
+        $allowed = ['doc_student_id_path', 'doc_results_path', 'doc_parent_id_path', 'doc_transfer_letter_path'];
+        if (!in_array($docRequest->document_key, $allowed, true)) {
+            abort(422);
+        }
+
+        $filesBasePath = 'applications/' . $application->application_number;
+        $newPath = $request->file('document')->store($filesBasePath, 'public');
+
+        $oldPath = $application->{$docRequest->document_key} ?? null;
+        $application->{$docRequest->document_key} = $newPath;
+        $application->save();
+
+        DB::table('application_document_requests')->where('id', $docRequest->id)->update([
+            'status' => 'fulfilled',
+            'fulfilled_at' => now(),
+            'old_path' => $docRequest->old_path ?? $oldPath,
+            'new_path' => $newPath,
+            'updated_at' => now(),
+        ]);
+
+        return redirect()->route('applications.track')
+            ->withInput([
+                'application_number' => $data['application_number'],
+                'email' => $data['email'],
+            ])
+            ->with('auto_track', true)
+            ->with('success', 'Document uploaded successfully. Please track your application for updates.');
+    }
+
+    public function offerLetter(string $token)
+    {
+        $token = trim($token);
+        abort_if($token === '', 404);
+
+        $application = Application::where('offer_letter_token', $token)
+            ->whereIn('status', ['offered', 'enrolled'])
+            ->first();
+
+        abort_if(!$application, 404);
+
+        $studentName = trim(collect([$application->first_name, $application->middle_name, $application->last_name])->filter()->join(' '));
+
+        $offer = [
+            'id' => $application->application_number,
+            'version' => (string) ($application->offer_letter_version ?? 1),
+            'expires_at' => $application->offer_letter_expires_at ? $application->offer_letter_expires_at->toDateString() : now()->addDays(21)->toDateString(),
+            'accepted_at' => $application->offer_accepted_at ? $application->offer_accepted_at->toDateTimeString() : null,
+        ];
+
+        $applicationData = [
+            'application_number' => $application->application_number,
+            'student_name' => $studentName !== '' ? $studentName : '—',
+            'date_of_birth' => $application->date_of_birth ? $application->date_of_birth->toDateString() : '—',
+            'guardian_email' => $application->guardian_email ?? $application->email,
+        ];
+
+        $intake = [
+            'academic_year' => $application->academic_year ?? '—',
+            'form' => $application->intended_class ?? '—',
+            'category' => (string) ($application->category_id ?? '—'),
+        ];
+
+        return view('admissions.offer-letter', [
+            'token' => $token,
+            'watermark' => strtoupper((string) $application->status),
+            'offer' => $offer,
+            'application' => $applicationData,
+            'intake' => $intake,
+        ]);
+    }
+
+    public function acceptOfferLetter(Request $request, string $token)
+    {
+        $token = trim($token);
+        abort_if($token === '', 404);
+
+        $application = Application::where('offer_letter_token', $token)
+            ->whereIn('status', ['offered', 'enrolled'])
+            ->first();
+
+        abort_if(!$application, 404);
+
+        if ($application->offer_letter_expires_at && $application->offer_letter_expires_at->isPast()) {
+            return redirect()->route('applications.offer-letter', $token)
+                ->with('error', 'This offer letter has expired. Please contact the admissions office.');
+        }
+
+        if (!$application->offer_accepted_at) {
+            $application->offer_accepted_at = now();
+            $application->save();
+        }
+
+        return redirect()->route('applications.offer-letter', $token)
+            ->with('success', 'Offer letter accepted successfully. The admissions office can now prepare for your enrolment.');
+    }
+
+    public function sendOfferLetter(Request $request, string $token)
+    {
+        $data = $request->validate([
+            'application_number' => 'required|string|max:50',
+            'email' => 'required|email',
+        ]);
+
+        $token = trim($token);
+        abort_if($token === '', 404);
+
+        $application = Application::where('offer_letter_token', $token)
+            ->whereIn('status', ['offered', 'enrolled'])
+            ->where('application_number', $data['application_number'])
+            ->where('email', $data['email'])
+            ->first();
+
+        if (!$application) {
+            return redirect()->route('applications.track')
+                ->withInput($data)
+                ->with('auto_track', true)
+                ->with('error', 'Application not found for those details.');
+        }
+
+        $offerLink = route('applications.offer-letter', $application->offer_letter_token);
+        $studentName = trim(collect([$application->first_name, $application->middle_name, $application->last_name])->filter()->join(' '));
+        $studentName = $studentName !== '' ? $studentName : 'Student';
+
+        $text = implode("\n\n", [
+            "Dear {$studentName},",
+            "Congratulations. A provisional place has been offered for application {$application->application_number}.",
+            "View your offer letter here: {$offerLink}",
+            "If you have questions, please contact the Admissions Office.",
+        ]);
+
+        try {
+            Mail::raw($text, function ($message) use ($application) {
+                $message->to($application->email)
+                    ->subject('Offer Letter - ' . $application->application_number);
+            });
+        } catch (\Throwable $e) {
+            return redirect()->route('applications.track')
+                ->withInput($data)
+                ->with('auto_track', true)
+                ->with('error', 'Unable to send the offer letter email right now. Please try again later.');
+        }
+
+        return redirect()->route('applications.track')
+            ->withInput($data)
+            ->with('auto_track', true)
+            ->with('success', 'Offer letter sent to ' . $application->email . '.');
     }
 
     public function draft(Request $request)

@@ -15,6 +15,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/applications/resume', [ApplicationController::class, 'resume'])->name('applications.resume.submit');
     Route::get('/applications/track', [ApplicationController::class, 'trackForm'])->name('applications.track');
     Route::post('/applications/track', [ApplicationController::class, 'track'])->name('applications.track.submit');
+    Route::post('/applications/document-requests/{requestId}/upload', [ApplicationController::class, 'uploadRequestedDocument'])->name('applications.document-requests.upload');
+    Route::get('/applications/offer-letter/{token}', [ApplicationController::class, 'offerLetter'])->name('applications.offer-letter');
+    Route::post('/applications/offer-letter/{token}/send', [ApplicationController::class, 'sendOfferLetter'])->name('applications.offer-letter.send');
+    Route::post('/applications/offer-letter/{token}/accept', [ApplicationController::class, 'acceptOfferLetter'])->name('applications.offer-letter.accept');
     Route::get('/applications/{application}/success', [ApplicationController::class, 'success'])->name('applications.success');
 });
 

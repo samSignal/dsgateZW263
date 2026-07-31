@@ -95,6 +95,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/classes',                      [AdminApiController::class, 'classes']);
         Route::post('/classes',                     [AdminApiController::class, 'storeClass']);
         Route::get('/applications',                 [AdminApiController::class, 'applications']);
+        Route::get('/applications/{application}/document-requests', [AdminApiController::class, 'documentRequests']);
+        Route::post('/applications/{application}/document-requests', [AdminApiController::class, 'requestDocumentResubmission']);
+        Route::post('/applications/{application}/offer', [AdminApiController::class, 'offerApplication']);
+        Route::post('/applications/{application}/waitlist', [AdminApiController::class, 'waitlistApplication']);
         Route::post('/applications/{application}/approve', [AdminApiController::class, 'approveApplication']);
         Route::post('/applications/{application}/reject',  [AdminApiController::class, 'rejectApplication']);
     });
@@ -102,6 +106,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Headmaster ─────────────────────────────────────
     Route::middleware('role:admin,headmaster')->prefix('headmaster')->group(function () {
         Route::get('/dashboard',                    [HeadmasterApiController::class, 'dashboard']);
+        Route::post('/ai/insights',                [HeadmasterApiController::class, 'aiInsights']);
+        Route::post('/ai/announcements/draft',     [HeadmasterApiController::class, 'draftAnnouncement']);
         Route::get('/announcements',                [HeadmasterApiController::class, 'announcements']);
         Route::post('/announcements',               [HeadmasterApiController::class, 'storeAnnouncement']);
         Route::get('/behaviour',                    [HeadmasterApiController::class, 'behaviourCases']);

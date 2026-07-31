@@ -22,11 +22,26 @@
         }
         table { width: 100%; border-collapse: collapse; }
         td { padding: 4px 0; vertical-align: top; }
+        .alert { padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; }
+        .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .actions { margin-top: 18px; padding-top: 14px; border-top: 1px solid #e5e7eb; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; padding: 10px 16px; font-size: 12px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-primary { background: #1a6b3c; color: #fff; }
+        .accepted { color: #166534; font-weight: bold; }
     </style>
 </head>
 <body>
 @if(!empty($watermark))
     <div class="watermark">{{ $watermark }}</div>
+@endif
+
+@if(session('success'))
+    <div class="alert alert-success">{{ session('success') }}</div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-error">{{ session('error') }}</div>
 @endif
 
 <div class="header">
@@ -63,6 +78,16 @@
     <p>Additional onboarding requirements may apply. Please follow the enrollment preparation instructions provided by the admissions office.</p>
 </div>
 
+<div class="actions">
+    @if(!empty($offer['accepted_at']))
+        <div class="accepted">Offer accepted on {{ $offer['accepted_at'] }}</div>
+    @else
+        <form method="POST" action="{{ route('applications.offer-letter.accept', $token) }}" style="margin:0;">
+            @csrf
+            <button type="submit" class="btn btn-primary">Accept Offer Letter</button>
+        </form>
+    @endif
+</div>
+
 </body>
 </html>
-

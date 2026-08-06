@@ -43,7 +43,7 @@ export default function TeacherDashboard() {
               <Td>{a.academic_year}</Td>
               <Td>{a.school_class?.students?.length ?? 0}</Td>
               <Td>
-                <Link to={`/app/teacher/classes/${a.class_id}`} style={{ fontSize: 12, color: '#1a6b3c', textDecoration: 'none', fontWeight: 500 }}>View Students →</Link>
+                <Link to={`/app/teacher/classes/${a.class_id}`} style={{ fontSize: 12, color: '#8a6b34', textDecoration: 'none', fontWeight: 500 }}>View Students →</Link>
               </Td>
             </tr>
           ))}

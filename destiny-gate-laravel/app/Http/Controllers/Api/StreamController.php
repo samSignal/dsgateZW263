@@ -143,7 +143,7 @@ class StreamController extends Controller
 
         // Check if used in allocations or students
         $usedInAllocations = DB::table('teacher_allocations')->where('stream_id', $id)->exists();
-        $usedInStudents    = DB::table('students')->where('class_id', $id)->exists();
+        $usedInStudents    = DB::table('students')->where('stream_id', $id)->exists();
 
         if ($usedInAllocations || $usedInStudents) {
             return response()->json(['message' => 'Cannot delete: stream is in use.'], 422);

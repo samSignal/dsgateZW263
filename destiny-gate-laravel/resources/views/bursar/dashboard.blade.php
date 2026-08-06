@@ -68,7 +68,7 @@
     <div class="table-card">
         <div style="padding:16px 20px; border-bottom:1px solid #e5e7eb; font-weight:600; display:flex; justify-content:space-between;">
             <span>🧾 Recent Payments</span>
-            <a href="{{ route('bursar.payments') }}" style="font-size:0.8rem; color:#1a6b3c;">View all</a>
+            <a href="{{ route('bursar.payments') }}" style="font-size:0.8rem; color:#8a6b34;">View all</a>
         </div>
         <table>
             <thead><tr><th>Student</th><th>Amount</th><th>Method</th><th>Date</th></tr></thead>

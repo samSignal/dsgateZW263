@@ -69,7 +69,7 @@ export default function FeeStructuresPage() {
       </div>
 
       <Card>
-        <Table headers={['Name', 'Category', 'Form', 'Stream', 'Term', 'Year', 'Amount', 'Due Date', 'Status', 'Actions']}>
+        <Table headers={['Name', 'Category', 'Form', 'Class', 'Term', 'Year', 'Amount', 'Due Date', 'Status', 'Actions']}>
           {data.map(s => (
             <tr key={s.id}>
               <Td><strong>{s.name}</strong></Td>
@@ -78,7 +78,7 @@ export default function FeeStructuresPage() {
               <Td>{s.stream_name ?? '—'}</Td>
               <Td>{s.term_name}</Td>
               <Td>{s.academic_year_name}</Td>
-              <Td><strong style={{ color: '#1a6b3c' }}>${Number(s.amount).toLocaleString()}</strong></Td>
+              <Td><strong style={{ color: '#8a6b34' }}>${Number(s.amount).toLocaleString()}</strong></Td>
               <Td style={{ color: '#6b7280' }}>{s.due_date ?? '—'}</Td>
               <Td><Badge variant={s.is_active ? 'green' : 'gray'}>{s.is_active ? 'Active' : 'Inactive'}</Badge></Td>
               <Td>
@@ -119,9 +119,9 @@ export default function FeeStructuresPage() {
                   {(forms as any[]).map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                 </Select>
               </FormGroup>
-              <FormGroup label="Stream (optional)">
+              <FormGroup label="Class (optional)">
                 <Select value={form.stream_id} onChange={e => setForm(f => ({ ...f, stream_id: e.target.value }))}>
-                  <option value="">All Streams</option>
+                  <option value="">All Classes</option>
                   {filteredStreams.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </Select>
               </FormGroup>

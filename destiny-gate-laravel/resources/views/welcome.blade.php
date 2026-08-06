@@ -3,34 +3,34 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>DestinyGate Institute - School Management System</title>
+    <title>Willowcrest College - School Management System</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #0f3d22; color: #fff; min-height: 100vh; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f1a2e; color: #fff; min-height: 100vh; }
         .hero { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 40px 20px; }
-        .shield { font-size: 5rem; margin-bottom: 20px; }
-        h1 { font-size: 2.8rem; font-weight: 800; color: #c9a227; margin-bottom: 8px; }
+        .shield { width: 130px; height: auto; object-fit: contain; margin-bottom: 24px; filter: drop-shadow(0 8px 24px rgba(0,0,0,.35)); }
+        h1 { font-size: 2.8rem; font-weight: 800; color: #b6924c; margin-bottom: 8px; }
         .motto { font-size: 1rem; color: #9ca3af; margin-bottom: 40px; font-style: italic; }
         .address { font-size: 0.85rem; color: #6b7280; margin-bottom: 40px; }
         .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 900px; margin: 0 auto 40px; }
         .feature { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; }
         .feature .icon { font-size: 2rem; margin-bottom: 10px; }
-        .feature h3 { font-size: 1rem; color: #c9a227; margin-bottom: 6px; }
+        .feature h3 { font-size: 1rem; color: #b6924c; margin-bottom: 6px; }
         .feature p { font-size: 0.8rem; color: #9ca3af; }
         .actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
         .btn { padding: 14px 32px; border-radius: 10px; font-size: 1rem; font-weight: 600; text-decoration: none; cursor: pointer; border: none; }
-        .btn-login { background: #c9a227; color: #0f3d22; }
-        .btn-apply { background: transparent; color: #c9a227; border: 2px solid #c9a227; }
+        .btn-login { background: #b6924c; color: #0f1a2e; }
+        .btn-apply { background: transparent; color: #b6924c; border: 2px solid #b6924c; }
         .btn:hover { opacity: 0.9; }
         @media (max-width: 600px) { .features { grid-template-columns: 1fr; } h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
 <div class="hero">
-    <div class="shield">🛡️</div>
-    <h1>DestinyGate Institute</h1>
-    <p class="motto">"Raising a Godly, Skilled and Confident Generation"</p>
+    <img src="/logo-mark.png" alt="Willowcrest College" class="shield">
+    <h1>Willowcrest College</h1>
+    <p class="motto">"Dream it, Achieve it."</p>
     <p class="address">📍 15412 Samson Kanyemba Street, Runyararo West, Masvingo &nbsp;|&nbsp; 📞 0779 672 246</p>
 
     <div class="features">

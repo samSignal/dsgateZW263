@@ -44,14 +44,14 @@ export default function ParentFinancePage() {
             {children.map((c: any) => (
               <div key={c.id} onClick={() => setSelectedChild(c)} style={{
                 padding: '14px 20px', borderRadius: 12, cursor: 'pointer',
-                border: `2px solid ${selectedChild?.id === c.id ? '#1a6b3c' : '#e8eaed'}`,
-                background: selectedChild?.id === c.id ? '#f0faf4' : '#fff',
+                border: `2px solid ${selectedChild?.id === c.id ? '#b6924c' : '#e8eaed'}`,
+                background: selectedChild?.id === c.id ? '#eef1f8' : '#fff',
                 minWidth: 180,
               }}>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{c.name}</div>
                 <div style={{ fontSize: 12, color: '#6b7280' }}>{c.student_number}</div>
                 <div style={{ fontSize: 12, color: '#6b7280' }}>{c.class_name ?? 'No class'}</div>
-                <div style={{ marginTop: 8, fontSize: 15, fontWeight: 800, color: Number(c.balance) > 0 ? '#dc2626' : '#1a6b3c' }}>
+                <div style={{ marginTop: 8, fontSize: 15, fontWeight: 800, color: Number(c.balance) > 0 ? '#dc2626' : '#8a6b34' }}>
                   ${Number(c.balance).toLocaleString()} {Number(c.balance) > 0 ? 'owing' : '✓ clear'}
                 </div>
               </div>
@@ -66,8 +66,8 @@ export default function ParentFinancePage() {
                   <button key={t} onClick={() => setTab(t)} style={{
                     padding: '10px 20px', border: 'none', background: 'none', cursor: 'pointer',
                     fontSize: 13, fontWeight: tab === t ? 700 : 400,
-                    color: tab === t ? '#1a6b3c' : '#6b7280',
-                    borderBottom: tab === t ? '2px solid #1a6b3c' : '2px solid transparent',
+                    color: tab === t ? '#8a6b34' : '#6b7280',
+                    borderBottom: tab === t ? '2px solid #b6924c' : '2px solid transparent',
                     marginBottom: -2, textTransform: 'capitalize',
                   }}>{t}</button>
                 ))}
@@ -82,8 +82,8 @@ export default function ParentFinancePage() {
                         <Td>{b.description}</Td>
                         <Td>{b.term_name}</Td>
                         <Td>${Number(b.amount).toLocaleString()}</Td>
-                        <Td style={{ color: '#1a6b3c' }}>${Number(b.amount_paid).toLocaleString()}</Td>
-                        <Td style={{ color: Number(b.balance) > 0 ? '#dc2626' : '#1a6b3c', fontWeight: 600 }}>${Number(b.balance).toLocaleString()}</Td>
+                        <Td style={{ color: '#8a6b34' }}>${Number(b.amount_paid).toLocaleString()}</Td>
+                        <Td style={{ color: Number(b.balance) > 0 ? '#dc2626' : '#8a6b34', fontWeight: 600 }}>${Number(b.balance).toLocaleString()}</Td>
                         <Td>{statusBadge(b.status)}</Td>
                         <Td style={{ color: '#6b7280' }}>{b.due_date ?? '—'}</Td>
                       </tr>
@@ -99,7 +99,7 @@ export default function ParentFinancePage() {
                     {(payments as any[]).map((p: any) => (
                       <tr key={p.id}>
                         <Td><code style={{ fontSize: 11, background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>{p.receipt_number}</code></Td>
-                        <Td style={{ color: '#1a6b3c', fontWeight: 700 }}>${Number(p.amount).toLocaleString()}</Td>
+                        <Td style={{ color: '#8a6b34', fontWeight: 700 }}>${Number(p.amount).toLocaleString()}</Td>
                         <Td style={{ textTransform: 'capitalize' }}>{p.payment_method?.replace('_', ' ')}</Td>
                         <Td>{p.payer_name ?? '—'}</Td>
                         <Td style={{ color: '#6b7280' }}>{p.payment_date}</Td>

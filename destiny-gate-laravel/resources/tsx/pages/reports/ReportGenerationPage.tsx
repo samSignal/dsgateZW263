@@ -54,12 +54,12 @@ export default function ReportGenerationPage() {
           <FormGroup label="Term"><Select value={form.term_id} onChange={e => setForm(f => ({ ...f, term_id: e.target.value }))}><option value="">Select term</option>{filteredTerms.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}</Select></FormGroup>
           <FormGroup label="Student"><Select value={form.student_id} onChange={e => setForm(f => ({ ...f, student_id: e.target.value }))}><option value="">Select student</option>{(students as any[]).map(s => <option key={s.id} value={s.id}>{s.first_name} {s.last_name} - {s.student_number ?? s.admission_number}</option>)}</Select></FormGroup>
           <FormGroup label="Form"><Select value={form.form_id} onChange={e => setForm(f => ({ ...f, form_id: e.target.value, stream_id: '' }))}><option value="">Select form</option>{(forms as any[]).map(fm => <option key={fm.id} value={fm.id}>{fm.name}</option>)}</Select></FormGroup>
-          <FormGroup label="Stream"><Select value={form.stream_id} onChange={e => setForm(f => ({ ...f, stream_id: e.target.value }))}><option value="">Select stream</option>{filteredStreams.map((s: any) => <option key={s.id} value={s.id}>{s.form_name ?? ''} {s.name}</option>)}</Select></FormGroup>
+          <FormGroup label="Class"><Select value={form.stream_id} onChange={e => setForm(f => ({ ...f, stream_id: e.target.value }))}><option value="">Select class</option>{filteredStreams.map((s: any) => <option key={s.id} value={s.id}>{s.form_name ?? ''} {s.name}</option>)}</Select></FormGroup>
           <FormGroup label="Report Rules"><Input value="Promote >= 50, probation 40-49, repeat < 40" disabled /></FormGroup>
         </Grid>
         <div className="flex gap-3">
           <Btn loading={generateStudent.isPending} onClick={() => generateStudent.mutate()}>Generate Student Report</Btn>
-          <Btn variant="outline" loading={generateStream.isPending} onClick={() => generateStream.mutate()}>Generate Whole Stream</Btn>
+          <Btn variant="outline" loading={generateStream.isPending} onClick={() => generateStream.mutate()}>Generate Whole Class</Btn>
         </div>
       </CardBody>
     </Card>

@@ -5,7 +5,7 @@ import api from '../../lib/api';
 import { Spinner, PageHeader, Btn } from '../../components/UI';
 
 const DAYS = ['monday','tuesday','wednesday','thursday','friday'];
-const SUBJECT_COLORS = ['#1a6b3c','#2563eb','#7c3aed','#d97706','#dc2626','#0891b2','#059669','#9333ea','#ea580c','#0284c7'];
+const SUBJECT_COLORS = ['#0f1a2e','#2563eb','#7c3aed','#d97706','#dc2626','#0891b2','#059669','#9333ea','#ea580c','#0284c7'];
 
 export default function StreamTimetablePage() {
   const { streamId } = useParams<{ streamId: string }>();
@@ -45,17 +45,17 @@ export default function StreamTimetablePage() {
 
       <div id="printable" style={{ background: '#fff', borderRadius: 12, border: '1px solid #e8eaed', overflow: 'auto' }}>
         {/* School header for print */}
-        <div className="print-only" style={{ display: 'none', textAlign: 'center', padding: '16px 20px', borderBottom: '2px solid #1a6b3c' }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#1a6b3c' }}>DestinyGate Institute</div>
+        <div className="print-only" style={{ display: 'none', textAlign: 'center', padding: '16px 20px', borderBottom: '2px solid #b6924c' }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#8a6b34' }}>Willowcrest College</div>
           <div style={{ fontSize: 13, color: '#374151' }}>{stream?.form_name} — {stream?.name} · Class Timetable</div>
         </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
           <thead>
             <tr>
-              <th style={{ background: '#0f3d22', color: '#fff', padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, letterSpacing: '.5px', width: 120 }}>PERIOD</th>
+              <th style={{ background: '#0f1a2e', color: '#fff', padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, letterSpacing: '.5px', width: 120 }}>PERIOD</th>
               {DAYS.map(d => (
-                <th key={d} style={{ background: '#0f3d22', color: '#fff', padding: '10px 14px', textAlign: 'center', fontSize: 12, fontWeight: 700, borderLeft: '1px solid rgba(255,255,255,.1)' }}>
+                <th key={d} style={{ background: '#0f1a2e', color: '#fff', padding: '10px 14px', textAlign: 'center', fontSize: 12, fontWeight: 700, borderLeft: '1px solid rgba(255,255,255,.1)' }}>
                   {d.charAt(0).toUpperCase() + d.slice(1)}
                 </th>
               ))}
@@ -70,7 +70,7 @@ export default function StreamTimetablePage() {
                 </td>
                 {DAYS.map(d => {
                   const entry = grid[p.id]?.[d];
-                  const color = entry ? (colorMap[entry.subject_id] ?? '#1a6b3c') : null;
+                  const color = entry ? (colorMap[entry.subject_id] ?? '#0f1a2e') : null;
                   return (
                     <td key={d} style={{ padding: 6, borderBottom: '1px solid #f3f4f6', borderLeft: '1px solid #f3f4f6', verticalAlign: 'top', minWidth: 130 }}>
                       {p.is_break ? (

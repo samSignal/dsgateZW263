@@ -61,8 +61,8 @@ export default function ParentPortal() {
                 <Td>{f.academic_year}</Td>
                 <Td style={{ textTransform: 'uppercase' }}>{f.term}</Td>
                 <Td>${Number(f.amount).toLocaleString()}</Td>
-                <Td style={{ color: '#1a6b3c' }}>${Number(f.amount_paid).toLocaleString()}</Td>
-                <Td style={{ color: Number(f.balance) > 0 ? '#dc2626' : '#1a6b3c', fontWeight: 600 }}>${Number(f.balance).toLocaleString()}</Td>
+                <Td style={{ color: '#8a6b34' }}>${Number(f.amount_paid).toLocaleString()}</Td>
+                <Td style={{ color: Number(f.balance) > 0 ? '#dc2626' : '#8a6b34', fontWeight: 600 }}>${Number(f.balance).toLocaleString()}</Td>
                 <Td>{statusBadge(f.status)}</Td>
               </tr>
             ))}
@@ -74,7 +74,7 @@ export default function ParentPortal() {
           <Grid cols={3} style={{ padding: '0 14px', marginTop: 14, marginBottom: 10 }}>
             <div><div className="text-xs uppercase text-slate-500">Term Average</div><div className="text-xl font-bold">{withheld ? '-' : `${termData?.aggregate?.term_average ?? '-'}%`}</div></div>
             <div><div className="text-xs uppercase text-slate-500">GPA</div><div className="text-xl font-bold">{withheld ? '-' : (termData?.aggregate?.gpa ?? '-')}</div></div>
-            <div><div className="text-xs uppercase text-slate-500">Stream Rank</div><div className="text-xl font-bold">{withheld ? '-' : (termData?.rankings?.stream?.rank ?? '-')}</div></div>
+            <div><div className="text-xs uppercase text-slate-500">Class Rank</div><div className="text-xl font-bold">{withheld ? '-' : (termData?.rankings?.stream?.rank ?? '-')}</div></div>
           </Grid>
           {withheld && <div style={{ padding: '0 14px 10px' }}><Badge variant="red">withheld</Badge></div>}
           <Table headers={['Subject', '%', 'Grade', 'GPA Points']}>

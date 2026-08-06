@@ -15,7 +15,7 @@ export default function Payments() {
             <tr key={p.id}>
               <Td><code style={{ background: '#f3f4f6', padding: '2px 7px', borderRadius: 5, fontSize: 12 }}>{p.receipt_number}</code></Td>
               <Td><strong>{p.student?.first_name} {p.student?.last_name}</strong></Td>
-              <Td style={{ color: '#1a6b3c', fontWeight: 600 }}>${Number(p.amount).toLocaleString()}</Td>
+              <Td style={{ color: '#8a6b34', fontWeight: 600 }}>${Number(p.amount).toLocaleString()}</Td>
               <Td style={{ textTransform: 'capitalize' }}>{p.payment_method?.replace(/_/g, ' ')}</Td>
               <Td style={{ color: '#6b7280' }}>{new Date(p.payment_date).toLocaleDateString()}</Td>
               <Td>{p.recorded_by?.name}</Td>

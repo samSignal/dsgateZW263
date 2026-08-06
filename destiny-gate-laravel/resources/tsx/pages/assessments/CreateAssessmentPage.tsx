@@ -69,7 +69,7 @@ export default function CreateAssessmentPage() {
               </FormGroup>
             </Grid>
             <Grid cols={2} style={{ marginBottom: 0 }}>
-              <FormGroup label="Stream">
+              <FormGroup label="Class">
                 <Select value={form.stream_id} onChange={e => setForm(f => ({ ...f, stream_id: e.target.value, subject_id: '' }))}>
                   <option value="">Select stream…</option>
                   {availableStreams.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}

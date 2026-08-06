@@ -23,7 +23,7 @@ const perfData = [
   { month:'Jul', cls:75, inst:65 },
 ];
 const attendData = [
-  { name:'Present', value:92.6, color:'#1a6b3c' },
+  { name:'Present', value:92.6, color:'#8a6b34' },
   { name:'Late',    value:4.3,  color:'#f59e0b' },
   { name:'Absent',  value:3.1,  color:'#ef4444' },
 ];
@@ -34,15 +34,15 @@ const sparkBlue   = [5,6,5,7,6,8,7,9,8,10].map((v,i)=>({i,v}));
 const sparkPurple = [6,7,8,7,9,8,10,9,11,10].map((v,i)=>({i,v}));
 
 const topClasses = [
-  { name:'Form 4A', pct:89.6, color:'#1a6b3c' },
-  { name:'Form 3B', pct:76.4, color:'#1a6b3c' },
+  { name:'Form 4A', pct:89.6, color:'#8a6b34' },
+  { name:'Form 3B', pct:76.4, color:'#8a6b34' },
   { name:'Form 2A', pct:72.1, color:'#f59e0b' },
   { name:'Form 1A', pct:68.9, color:'#f59e0b' },
   { name:'Form 1B', pct:65.3, color:'#ef4444' },
 ];
 
 const activities = [
-  { icon:'👤', bg:'#f0faf4', text:<>New student registration: <strong>Tinashe Chikomba</strong> (Form 1A)</>, time:'2 mins ago' },
+  { icon:'👤', bg:'#eef1f8', text:<>New student registration: <strong>Tinashe Chikomba</strong> (Form 1A)</>, time:'2 mins ago' },
   { icon:'💰', bg:'#fffbeb', text:<>Payment received from <strong>Rudo Mayo</strong> (Form 3B)</>,           time:'15 mins ago' },
   { icon:'📝', bg:'#eff6ff', text:<>John Matanda uploaded marks for Mathematics (Form 2A)</>,                time:'1 hour ago' },
   { icon:'📅', bg:'#f5f3ff', text:<>Attendance marked for Form 4A</>,                                        time:'2 hours ago' },
@@ -57,16 +57,16 @@ const reminders = [
 ];
 
 const quickActions = [
-  { label:'Add Student',     icon:'👤', color:'#1a6b3c', bg:'#f0faf4', to:'/app/students' },
+  { label:'Add Student',     icon:'👤', color:'#8a6b34', bg:'#eef1f8', to:'/app/students' },
   { label:'Record Payment',  icon:'💰', color:'#f59e0b', bg:'#fffbeb', to:'/app/bursar/fees' },
-  { label:'Upload Results',  icon:'📊', color:'#1a6b3c', bg:'#f0faf4', to:'/app/students' },
+  { label:'Upload Results',  icon:'📊', color:'#8a6b34', bg:'#eef1f8', to:'/app/students' },
   { label:'Mark Attendance', icon:'📅', color:'#f59e0b', bg:'#fffbeb', to:'/app/students' },
-  { label:'Add Staff',       icon:'🧑‍💼', color:'#1a6b3c', bg:'#f0faf4', to:'/app/admin/staff' },
+  { label:'Add Staff',       icon:'🧑‍💼', color:'#8a6b34', bg:'#eef1f8', to:'/app/admin/staff' },
   { label:'Create Invoice',  icon:'🧾', color:'#f59e0b', bg:'#fffbeb', to:'/app/bursar/fees' },
 ];
 
 const notifications = [
-  { dot:'#1a6b3c', text:'New fee structure for Term 3',  time:'2 hours ago' },
+  { dot:'#0f1a2e', text:'New fee structure for Term 3',  time:'2 hours ago' },
   { dot:'#f59e0b', text:'System maintenance on Sunday',  time:'5 hours ago' },
   { dot:'#2563eb', text:'Parents meeting on 20 May',     time:'1 day ago' },
 ];
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
   if (isLoading) return <Spinner />;
 
   const kpis = [
-    { label:'Total Students',  value: data?.total_students ?? 1248, trend:'+5.3% from last term',  up:true,  color:'#1a6b3c', spark:sparkGreen,  icon:'👥' },
+    { label:'Total Students',  value: data?.total_students ?? 1248, trend:'+5.3% from last term',  up:true,  color:'#8a6b34', spark:sparkGreen,  icon:'👥' },
     { label:'Fees Collected',  value:`$${Number(142560).toLocaleString()}.00`, trend:'+12.5% from last term', up:true,  color:'#f59e0b', spark:sparkAmber,  icon:'💰' },
     { label:'Owing Students',  value: data?.owing_students ?? 256,  trend:'-8.2% from last term',  up:false, color:'#ef4444', spark:sparkRed,    icon:'👤' },
     { label:'Staff Members',   value: data?.total_staff ?? 87,      trend:'+2.1% from last term',  up:true,  color:'#2563eb', spark:sparkBlue,   icon:'👥' },
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
           <h1 style={{fontSize:22,fontWeight:800,color:'#111827',letterSpacing:'-.4px',margin:0,lineHeight:1.2}}>Dashboard</h1>
           <p style={{fontSize:13,color:'#6b7280',marginTop:3}}>Welcome back, {data?.admin_name ?? 'Dr. Emmanuel Chikwanda'} 👋</p>
         </div>
-        <button style={{display:'flex',alignItems:'center',gap:7,padding:'9px 18px',background:'#1a6b3c',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 8px rgba(26,107,60,.25)'}}>
+        <button style={{display:'flex',alignItems:'center',gap:7,padding:'9px 18px',background:'#b6924c',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 8px rgba(27,42,74,.25)'}}>
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download Report
         </button>
@@ -173,7 +173,7 @@ export default function AdminDashboard() {
         <Panel>
           <PanelHead title="Fees Collection Overview" action={<TermSelect/>}/>
           <div style={{padding:'0 18px 4px',display:'flex',gap:14,marginBottom:4}}>
-            <span style={{fontSize:11,color:'#374151',display:'flex',alignItems:'center',gap:5}}><span style={{width:14,height:2.5,background:'#1a6b3c',display:'inline-block',borderRadius:2}}/> Collected</span>
+            <span style={{fontSize:11,color:'#374151',display:'flex',alignItems:'center',gap:5}}><span style={{width:14,height:2.5,background:'#b6924c',display:'inline-block',borderRadius:2}}/> Collected</span>
             <span style={{fontSize:11,color:'#374151',display:'flex',alignItems:'center',gap:5}}><span style={{width:14,height:2,background:'#f59e0b',display:'inline-block',borderRadius:2,borderTop:'2px dashed #f59e0b'}}/> Target</span>
           </div>
           <div style={{padding:'0 8px 14px'}}>
@@ -182,7 +182,7 @@ export default function AdminDashboard() {
                 <XAxis dataKey="month" tick={{fontSize:11,fill:'#9ca3af'}} axisLine={false} tickLine={false}/>
                 <YAxis tick={{fontSize:10,fill:'#9ca3af'}} axisLine={false} tickLine={false} tickFormatter={v=>`$${v/1000}k`}/>
                 <Tooltip formatter={(v:number)=>`$${v.toLocaleString()}`} contentStyle={{fontSize:12,borderRadius:8,border:'1px solid #e8eaed',boxShadow:'0 4px 12px rgba(0,0,0,.08)'}}/>
-                <Bar dataKey="collected" fill="#1a6b3c" radius={[4,4,0,0]}/>
+                <Bar dataKey="collected" fill="#b6924c" radius={[4,4,0,0]}/>
                 <Line type="monotone" dataKey="target" stroke="#f59e0b" strokeWidth={2} strokeDasharray="4 3" dot={false}/>
               </ComposedChart>
             </ResponsiveContainer>
@@ -193,7 +193,7 @@ export default function AdminDashboard() {
         <Panel>
           <PanelHead title="Class Performance Trend" action={<TermSelect/>}/>
           <div style={{padding:'0 18px 4px',display:'flex',gap:14,marginBottom:4}}>
-            <span style={{fontSize:11,color:'#374151',display:'flex',alignItems:'center',gap:5}}><span style={{width:14,height:2,background:'#1a6b3c',display:'inline-block'}}/> Class Average</span>
+            <span style={{fontSize:11,color:'#374151',display:'flex',alignItems:'center',gap:5}}><span style={{width:14,height:2,background:'#b6924c',display:'inline-block'}}/> Class Average</span>
             <span style={{fontSize:11,color:'#374151',display:'flex',alignItems:'center',gap:5}}><span style={{width:14,height:2,background:'#f59e0b',display:'inline-block'}}/> Institute Average</span>
           </div>
           <div style={{padding:'0 8px 14px'}}>
@@ -202,7 +202,7 @@ export default function AdminDashboard() {
                 <XAxis dataKey="month" tick={{fontSize:11,fill:'#9ca3af'}} axisLine={false} tickLine={false}/>
                 <YAxis tick={{fontSize:10,fill:'#9ca3af'}} axisLine={false} tickLine={false} domain={[0,100]} tickFormatter={v=>`${v}%`}/>
                 <Tooltip formatter={(v:number)=>`${v}%`} contentStyle={{fontSize:12,borderRadius:8,border:'1px solid #e8eaed',boxShadow:'0 4px 12px rgba(0,0,0,.08)'}}/>
-                <Line type="monotone" dataKey="cls"  stroke="#1a6b3c" strokeWidth={2.5} dot={{r:3,fill:'#1a6b3c'}}/>
+                <Line type="monotone" dataKey="cls"  stroke="#b6924c" strokeWidth={2.5} dot={{r:3,fill:'#b6924c'}}/>
                 <Line type="monotone" dataKey="inst" stroke="#f59e0b" strokeWidth={2} strokeDasharray="4 3" dot={{r:3,fill:'#f59e0b'}}/>
               </LineChart>
             </ResponsiveContainer>
@@ -258,7 +258,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
             ))}
-            <Link to="/app/students" style={{fontSize:12,color:'#1a6b3c',fontWeight:600,display:'flex',alignItems:'center',gap:4,marginTop:8}}>
+            <Link to="/app/students" style={{fontSize:12,color:'#8a6b34',fontWeight:600,display:'flex',alignItems:'center',gap:4,marginTop:8}}>
               View Full Report →
             </Link>
           </div>
@@ -270,7 +270,7 @@ export default function AdminDashboard() {
 
         {/* Recent Activities */}
         <Panel>
-          <PanelHead title="Recent Activities" action={<Link to="/app/students" style={{fontSize:12,color:'#1a6b3c',fontWeight:600}}>View All</Link>}/>
+          <PanelHead title="Recent Activities" action={<Link to="/app/students" style={{fontSize:12,color:'#8a6b34',fontWeight:600}}>View All</Link>}/>
           <div style={{padding:'0 18px 16px'}}>
             {activities.map((a,i)=>(
               <div key={i} style={{display:'flex',gap:10,paddingBottom:12,marginBottom:12,borderBottom:i<activities.length-1?'1px solid #f3f4f6':'none'}}>
@@ -286,7 +286,7 @@ export default function AdminDashboard() {
 
         {/* Important Reminders */}
         <Panel>
-          <PanelHead title="Important Reminders" action={<Link to="/app/students" style={{fontSize:12,color:'#1a6b3c',fontWeight:600}}>View All</Link>}/>
+          <PanelHead title="Important Reminders" action={<Link to="/app/students" style={{fontSize:12,color:'#8a6b34',fontWeight:600}}>View All</Link>}/>
           <div style={{padding:'0 18px 16px'}}>
             {reminders.map((r,i)=>(
               <div key={i} style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:10,paddingBottom:12,marginBottom:12,borderBottom:i<reminders.length-1?'1px solid #f3f4f6':'none'}}>
@@ -325,7 +325,7 @@ export default function AdminDashboard() {
         {/* Notifications + Promo */}
         <div style={{display:'flex',flexDirection:'column',gap:12}}>
           <Panel>
-            <PanelHead title="Notifications" action={<Link to="/app/admin/users" style={{fontSize:12,color:'#1a6b3c',fontWeight:600}}>View All</Link>}/>
+            <PanelHead title="Notifications" action={<Link to="/app/admin/users" style={{fontSize:12,color:'#8a6b34',fontWeight:600}}>View All</Link>}/>
             <div style={{padding:'0 16px 14px'}}>
               {notifications.map((n,i)=>(
                 <div key={i} style={{display:'flex',alignItems:'flex-start',gap:9,paddingBottom:10,marginBottom:10,borderBottom:i<notifications.length-1?'1px solid #f3f4f6':'none'}}>
@@ -341,17 +341,17 @@ export default function AdminDashboard() {
 
           {/* Promo card */}
           <div style={{
-            background:'linear-gradient(135deg,#0f3d22 0%,#1a6b3c 100%)',
+            background:'#0f1a2e',
             borderRadius:12,padding:'18px 16px',
             display:'flex',alignItems:'flex-start',gap:12,
             position:'relative',overflow:'hidden',
           }}>
             <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:5,lineHeight:1.3}}>Keep DestinyGate Moving Forward 🚀</div>
+              <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:5,lineHeight:1.3}}>Keep Willowcrest College Moving Forward 🚀</div>
               <p style={{fontSize:11,color:'rgba(255,255,255,.7)',margin:0,lineHeight:1.5}}>Your dashboard is updated in real-time.</p>
             </div>
             <div style={{width:52,height:52,flexShrink:0,background:'rgba(255,255,255,.15)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',padding:4}}>
-              <img src="/logo.svg" alt="Logo" style={{width:'100%',height:'100%',objectFit:'contain',opacity:.9}}/>
+              <img src="/logo-mark.png" alt="Logo" style={{width:'100%',height:'100%',objectFit:'contain',opacity:.9}}/>
             </div>
           </div>
         </div>

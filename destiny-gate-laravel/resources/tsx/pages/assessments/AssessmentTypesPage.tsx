@@ -44,7 +44,7 @@ export default function AssessmentTypesPage() {
               <Td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 60, height: 6, background: '#f3f4f6', borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${t.weight_percentage}%`, background: '#1a6b3c', borderRadius: 3 }} />
+                    <div style={{ height: '100%', width: `${t.weight_percentage}%`, background: '#b6924c', borderRadius: 3 }} />
                   </div>
                   <span style={{ fontSize: 12, fontWeight: 600 }}>{t.weight_percentage}%</span>
                 </div>

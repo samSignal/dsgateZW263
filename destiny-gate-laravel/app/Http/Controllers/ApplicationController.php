@@ -539,8 +539,32 @@ class ApplicationController extends Controller
             $application = Application::create($data);
         }
 
+        $this->sendApplicationReceivedEmail($application);
+
         return redirect()->route('applications.success', $application)
             ->with('success', 'Application submitted successfully. Your application number is ' . $application->application_number);
+    }
+
+    protected function sendApplicationReceivedEmail(Application $application): void
+    {
+        $studentName = trim(collect([$application->first_name, $application->middle_name, $application->last_name])->filter()->join(' '));
+        $studentName = $studentName !== '' ? $studentName : 'Applicant';
+
+        $text = implode("\n\n", [
+            "Dear {$studentName},",
+            "Thank you for applying to Willowcrest College. Your application has been received.",
+            "Application number: {$application->application_number}",
+            "Please keep this application number for reference. We will contact you at {$application->email} with updates on your application status.",
+        ]);
+
+        try {
+            Mail::raw($text, function ($message) use ($application) {
+                $message->to($application->email)
+                    ->subject('Application Received - ' . $application->application_number);
+            });
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     public function success(Application $application)

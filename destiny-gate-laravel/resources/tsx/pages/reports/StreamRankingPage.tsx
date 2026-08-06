@@ -31,11 +31,11 @@ export default function StreamRankingPage() {
   const filteredTerms = (terms as any[]).filter(t => !filters.academic_year_id || String(t.academic_year_id) === filters.academic_year_id);
 
   return <div>
-    <PageHeader title="Stream Rankings" subtitle="Overall term ranking with shared positions for tied averages" />
+    <PageHeader title="Class Rankings" subtitle="Overall term ranking with shared positions for tied averages" />
     <div className="mb-4 flex flex-wrap gap-3">
       <Select value={filters.academic_year_id} onChange={e => setFilters(f => ({ ...f, academic_year_id: e.target.value, term_id: '' }))} style={{ width: 160 }}><option value="">Year</option>{(years as any[]).map(y => <option key={y.id} value={y.id}>{y.name}</option>)}</Select>
       <Select value={filters.term_id} onChange={e => setFilters(f => ({ ...f, term_id: e.target.value }))} style={{ width: 150 }}><option value="">Term</option>{filteredTerms.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}</Select>
-      <Select value={filters.stream_id} onChange={e => setFilters(f => ({ ...f, stream_id: e.target.value }))} style={{ width: 180 }}><option value="">Stream</option>{(streams as any[]).map(s => <option key={s.id} value={s.id}>{s.form_name ?? ''} {s.name}</option>)}</Select>
+      <Select value={filters.stream_id} onChange={e => setFilters(f => ({ ...f, stream_id: e.target.value }))} style={{ width: 180 }}><option value="">Class</option>{(streams as any[]).map(s => <option key={s.id} value={s.id}>{s.form_name ?? ''} {s.name}</option>)}</Select>
     </div>
     <Card>
       <Table headers={['Rank', 'Student', 'Average', 'Grade', 'Status', 'Preview']}>

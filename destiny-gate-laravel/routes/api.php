@@ -101,6 +101,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/applications/{application}/waitlist', [AdminApiController::class, 'waitlistApplication']);
         Route::post('/applications/{application}/approve', [AdminApiController::class, 'approveApplication']);
         Route::post('/applications/{application}/reject',  [AdminApiController::class, 'rejectApplication']);
+        Route::put('/applications/{application}',           [AdminApiController::class, 'updateApplicationIntake']);
+    });
+
+    // ── Admissions enrollment (deposit + verification — needs bursar/headmaster too, not admin-only) ──
+    Route::middleware('role:admin,bursar')->post('/admin/applications/{application}/enroll', [AdminApiController::class, 'recordDepositAndEnroll']);
+    Route::middleware('role:admin,headmaster')->group(function () {
+        Route::get('/admin/students/{student}/document-checklist', [AdminApiController::class, 'studentDocumentChecklist']);
+        Route::post('/admin/students/{student}/verify-documents',  [AdminApiController::class, 'verifyStudentDocuments']);
     });
 
     // ── Headmaster ─────────────────────────────────────

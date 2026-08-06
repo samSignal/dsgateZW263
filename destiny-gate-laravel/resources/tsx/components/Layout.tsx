@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { User } from '../types';
 import api from '../lib/api';
+import { statusBadge } from './UI';
 
 // ── Icon map ──────────────────────────────────────────────────────────────────
 
@@ -48,18 +49,18 @@ function navForRole(role: string): NavGroup[] {
         { label: 'Assessment Types',  path: '/app/assessments/types',         icon: Ic.clip },
         { label: 'Assessment Reports',path: '/app/assessments/reports',       icon: Ic.bar },
         { label: 'Report Cards',      path: '/app/reports',                   icon: Ic.log },
-        { label: 'Stream Rankings',   path: '/app/reports/rankings/stream',   icon: Ic.bar },
+        { label: 'Class Rankings',    path: '/app/reports/rankings/stream',   icon: Ic.bar },
         { label: 'Attendance',        path: '/app/discipline/attendance',     icon: Ic.attend },
       ]},
       { section: 'ACADEMIC SETUP', items: [
         { label: 'Academic Years',    path: '/app/academic/years',            icon: Ic.cal },
         { label: 'Terms',             path: '/app/academic/terms',            icon: Ic.cal },
         { label: 'Forms',             path: '/app/academic/forms',            icon: Ic.book },
-        { label: 'Streams',           path: '/app/academic/streams',          icon: Ic.book },
+        { label: 'Classes',           path: '/app/academic/streams',          icon: Ic.book },
         { label: 'Subject Groups',    path: '/app/academic/subject-groups',   icon: Ic.grid },
         { label: 'Subjects',          path: '/app/academic/subjects',         icon: Ic.book },
         { label: 'Teacher Allocation',path: '/app/academic/allocations',      icon: Ic.users },
-        { label: 'Stream Subjects',    path: '/app/academic-foundation/stream-subjects', icon: Ic.book },
+        { label: 'Class Subjects',     path: '/app/academic-foundation/stream-subjects', icon: Ic.book },
         { label: 'Teacher Subjects',   path: '/app/academic-foundation/teacher-allocations', icon: Ic.users },
         { label: 'Student Enrolment',  path: '/app/academic-foundation/enrolment', icon: Ic.clip },
         { label: 'Subject Reports',    path: '/app/academic-foundation/reports', icon: Ic.bar },
@@ -205,14 +206,57 @@ export function RoleBadge({ role }: { role: string }) {
 
 interface Props { user: User; onLogout: () => void; children: React.ReactNode }
 
+const STUDENT_SEARCH_ROLES = ['admin', 'headmaster', 'teacher', 'bursar'];
+
 export default function Layout({ user, onLogout, children }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);   // desktop: open by default
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchBoxRef = useRef<HTMLDivElement>(null);
   const nav = navForRole(user.role);
   const initials = user.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  const canSearchStudents = STUDENT_SEARCH_ROLES.includes(user.role);
+
+  // Debounced live student search — name, surname, or student/admission number all hit the
+  // same backend `search` param already used by the Students list page.
+  useEffect(() => {
+    if (!canSearchStudents || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    const t = setTimeout(() => {
+      api.get('/students', { params: { search: searchQuery.trim(), per_page: 8 } })
+        .then(r => setSearchResults(r.data?.data ?? []))
+        .catch(() => setSearchResults([]))
+        .finally(() => setSearchLoading(false));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchQuery, canSearchStudents]);
+
+  // Close the results dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const goToStudent = (studentId: number) => {
+    setSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    navigate(`/app/students/${studentId}`);
+  };
 
   // Track viewport width
   useEffect(() => {
@@ -249,14 +293,14 @@ export default function Layout({ user, onLogout, children }: Props) {
         <div style={{display:'flex', alignItems:'center', gap:10}}>
           <div style={{
             width:42, height:42, flexShrink:0,
-            background:'#c9a227',
+            background:'#b6924c',
             borderRadius:9, border:'2px solid rgba(255,255,255,.25)',
             display:'flex', alignItems:'center', justifyContent:'center', padding:4,
           }}>
-            <img src="/logo.svg" alt="Logo" style={{width:'100%', height:'100%', objectFit:'contain'}}/>
+            <img src="/logo-mark.png" alt="Logo" style={{width:'100%', height:'100%', objectFit:'contain'}}/>
           </div>
           <div>
-            <div style={{fontSize:14, fontWeight:800, color:'#fff', letterSpacing:'.3px', lineHeight:1.1}}>DESTINYGATE</div>
+            <div style={{fontSize:14, fontWeight:800, color:'#fff', letterSpacing:'.3px', lineHeight:1.1}}>WILLOWCREST</div>
             <div style={{fontSize:9, color:'rgba(255,255,255,.55)', fontWeight:600, letterSpacing:'1.2px', textTransform:'uppercase', marginTop:2}}>INSTITUTE</div>
           </div>
         </div>
@@ -322,7 +366,7 @@ export default function Layout({ user, onLogout, children }: Props) {
       {/* ── DESKTOP SIDEBAR ── */}
       {!isMobile && sidebarOpen && (
         <aside className="sidebar-desktop" style={{
-          width:200, background:'#0f3d22',
+          width:200, background:'#0f1a2e',
           display:'flex', flexDirection:'column',
           position:'fixed', top:0, left:0, bottom:0, zIndex:100, overflowY:'auto',
           transition:'transform .22s ease',
@@ -335,7 +379,7 @@ export default function Layout({ user, onLogout, children }: Props) {
       {isMobile && sidebarOpen && (
         <>
           <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
-          <aside className="sidebar-mobile" style={{display:'flex', flexDirection:'column', background:'#0f3d22'}}>
+          <aside className="sidebar-mobile" style={{display:'flex', flexDirection:'column', background:'#0f1a2e'}}>
             <SidebarContent onClose={() => setSidebarOpen(false)} />
           </aside>
         </>
@@ -365,13 +409,59 @@ export default function Layout({ user, onLogout, children }: Props) {
           </div>
 
           {/* Search — hidden on small screens via CSS */}
-          <div className="topbar-search" style={{flex:1,maxWidth:400,position:'relative'}}>
+          <div ref={searchBoxRef} className="topbar-search" style={{flex:1,maxWidth:400,position:'relative'}}>
             <span style={{position:'absolute',left:11,top:'50%',transform:'translateY(-50%)',color:'#9ca3af',pointerEvents:'none'}}>{Ic.search}</span>
             <input
-              placeholder="Search for students, classes, staff, payments…"
-              style={{width:'100%',padding:'7px 44px 7px 34px',border:'1px solid #e8eaed',borderRadius:8,fontSize:12,color:'#374151',background:'#f9fafb',boxSizing:'border-box'}}
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true); }}
+              onFocus={() => setSearchOpen(true)}
+              disabled={!canSearchStudents}
+              placeholder={canSearchStudents ? 'Search students by name or number…' : 'Search for students, classes, staff, payments…'}
+              style={{width:'100%',padding:'7px 44px 7px 34px',border:'1px solid #e8eaed',borderRadius:8,fontSize:12,color:'#374151',background:canSearchStudents?'#f9fafb':'#f3f4f6',boxSizing:'border-box',cursor:canSearchStudents?'text':'not-allowed'}}
             />
-            <span style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',fontSize:10,color:'#9ca3af',background:'#efefef',padding:'2px 6px',borderRadius:4,fontFamily:'monospace',letterSpacing:'.5px'}}>⌘K</span>
+            {!searchQuery && (
+              <span style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',fontSize:10,color:'#9ca3af',background:'#efefef',padding:'2px 6px',borderRadius:4,fontFamily:'monospace',letterSpacing:'.5px'}}>⌘K</span>
+            )}
+
+            {canSearchStudents && searchOpen && searchQuery.trim().length >= 2 && (
+              <div style={{
+                position:'absolute', top:'calc(100% + 6px)', left:0, right:0,
+                background:'#fff', border:'1px solid #e8eaed', borderRadius:10,
+                boxShadow:'0 12px 32px rgba(15,23,42,.14)', maxHeight:340, overflowY:'auto', zIndex:200,
+              }}>
+                {searchLoading && (
+                  <div style={{padding:'14px 16px',fontSize:12,color:'#9ca3af'}}>Searching…</div>
+                )}
+                {!searchLoading && searchResults.length === 0 && (
+                  <div style={{padding:'14px 16px',fontSize:12,color:'#9ca3af'}}>No students found for "{searchQuery}"</div>
+                )}
+                {!searchLoading && searchResults.map((s: any) => (
+                  <div
+                    key={s.id}
+                    onMouseDown={() => goToStudent(s.id)}
+                    style={{
+                      display:'flex', alignItems:'center', justifyContent:'space-between', gap:10,
+                      padding:'10px 14px', cursor:'pointer', borderBottom:'1px solid #f3f4f6',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:'#111827'}}>{s.first_name} {s.last_name}</div>
+                      <div style={{fontSize:11,color:'#6b7280',marginTop:2}}>
+                        {s.student_number ?? s.admission_number ?? '—'}
+                        {s.class_name ? ` · ${s.class_name}` : ''}
+                        {s.resolved_category_name ? ` · ${s.resolved_category_name}` : ''}
+                      </div>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                      {statusBadge(s.status)}
+                      <span style={{color:'#cbd5e1'}}>{Ic.chevron}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right controls */}
@@ -404,17 +494,17 @@ export default function Layout({ user, onLogout, children }: Props) {
               <span style={{
                 position:'absolute',top:-4,right:-4,
                 minWidth:16,height:16,
-                background:'#1a6b3c',borderRadius:8,
+                background:'#b6924c',borderRadius:8,
                 border:'2px solid #fff',
                 display:'flex',alignItems:'center',justifyContent:'center',
-                fontSize:9,fontWeight:700,color:'#fff',lineHeight:1,
+                fontSize:9,fontWeight:700,color:'#0f1a2e',lineHeight:1,
                 padding:'0 3px',
               }}>2</span>
             </div>
 
             {/* User card */}
             <div style={{display:'flex',alignItems:'center',gap:8,padding:'4px 10px 4px 5px',border:'1px solid #e8eaed',borderRadius:8,cursor:'pointer',background:'#fff'}}>
-              <div style={{width:28,height:28,borderRadius:'50%',background:'#c9a227',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0}}>{initials}</div>
+              <div style={{width:28,height:28,borderRadius:'50%',background:'#b6924c',color:'#0f1a2e',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0}}>{initials}</div>
               <div className="topbar-user-name">
                 <div style={{fontSize:12,fontWeight:600,color:'#111827',lineHeight:1.2,whiteSpace:'nowrap'}}>{user.name}</div>
                 <div style={{fontSize:10,color:'#9ca3af',textTransform:'capitalize',whiteSpace:'nowrap'}}>
@@ -436,13 +526,13 @@ export default function Layout({ user, onLogout, children }: Props) {
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <div style={{
               width:26,height:26,borderRadius:6,
-              background:'#1a6b3c',
+              background:'#b6924c',
               display:'flex',alignItems:'center',justifyContent:'center',padding:3,
               flexShrink:0,
             }}>
-              <img src="/logo.svg" alt="Logo" style={{width:'100%',height:'100%',objectFit:'contain'}}/>
+              <img src="/logo-mark.png" alt="Logo" style={{width:'100%',height:'100%',objectFit:'contain'}}/>
             </div>
-            <span>© {new Date().getFullYear()} DestinyGate Institute. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} Willowcrest College. All rights reserved.</span>
           </div>
           <span>SMN Dev Consultancy</span>
         </footer>

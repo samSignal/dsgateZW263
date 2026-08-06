@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config(chr(97).chr(112).chr(112).chr(46).chr(110).chr(97).chr(109).chr(101), 'DestinyGate') }} &mdash; @yield('title', 'Dashboard')</title>
+    <title>{{ config(chr(97).chr(112).chr(112).chr(46).chr(110).chr(97).chr(109).chr(101), 'Willowcrest College') }} &mdash; @yield('title', 'Dashboard')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -12,9 +12,10 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
         --sidebar-w:256px;
-        --green:#1a6b3c;
-        --green-dark:#0f3d22;
-        --green-light:#e8f5ee;
+        --primary:#b6924c;
+        --primary-text:#8a6b34;
+        --primary-dark:#0f1a2e;
+        --primary-light:#f7f0e1;
         --text:#111827;
         --text-muted:#6b7280;
         --border:#e5e7eb;
@@ -33,7 +34,7 @@
     /* ── SIDEBAR ── */
     .sidebar{
         position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);
-        background:var(--green-dark);
+        background:var(--primary-dark);
         display:flex;flex-direction:column;
         z-index:100;overflow-y:auto;
     }
@@ -75,7 +76,7 @@
     .topbar-right{display:flex;align-items:center;gap:12px}
     .topbar-avatar{
         width:34px;height:34px;border-radius:50%;
-        background:var(--green);color:#fff;
+        background:var(--primary);color:#0f1a2e;
         display:flex;align-items:center;justify-content:center;
         font-size:13px;font-weight:600;
     }
@@ -109,11 +110,11 @@
     }
     .stat-label{font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
     .stat-value{font-size:26px;font-weight:700;color:var(--text);letter-spacing:-.5px;line-height:1}
-    .stat-value.green{color:var(--green)}
+    .stat-value.green{color:var(--primary-text)}
     .stat-value.red{color:#dc2626}
     .stat-value.amber{color:#d97706}
     .stat-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:12px}
-    .stat-icon.green{background:var(--green-light)}
+    .stat-icon.green{background:var(--primary-light)}
     .stat-icon.red{background:#fef2f2}
     .stat-icon.amber{background:#fffbeb}
     .stat-icon.blue{background:#eff6ff}
@@ -123,7 +124,7 @@
     .card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
     .card-title{font-size:14px;font-weight:600;color:var(--text)}
     .card-body{padding:20px}
-    .card-link{font-size:12px;color:var(--green);text-decoration:none;font-weight:500}
+    .card-link{font-size:12px;color:var(--primary-text);text-decoration:none;font-weight:500}
     .card-link:hover{text-decoration:underline}
 
     /* ── GRID ── */
@@ -165,8 +166,8 @@
     /* ── BUTTONS ── */
     .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;text-decoration:none;transition:all .15s;white-space:nowrap}
     .btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
-    .btn-primary{background:var(--green);color:#fff}
-    .btn-primary:hover{background:var(--green-dark);color:#fff}
+    .btn-primary{background:var(--primary);color:#0f1a2e}
+    .btn-primary:hover{background:var(--primary-text);color:#fff}
     .btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
     .btn-outline:hover{background:#f9fafb;color:var(--text)}
     .btn-danger{background:#dc2626;color:#fff}
@@ -184,7 +185,7 @@
         transition:border-color .15s,box-shadow .15s;
         font-family:inherit;
     }
-    .form-control:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(26,107,60,.1)}
+    .form-control:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(182,146,76,.15)}
     .form-control::placeholder{color:#9ca3af}
     textarea.form-control{resize:vertical;min-height:80px}
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -199,7 +200,7 @@
     .empty-state p{font-size:13px}
 
     /* ── DETAILS/SUMMARY ── */
-    details summary{cursor:pointer;color:var(--green);font-size:13px;font-weight:500;list-style:none;padding:8px 0}
+    details summary{cursor:pointer;color:var(--primary-text);font-size:13px;font-weight:500;list-style:none;padding:8px 0}
     details summary::-webkit-details-marker{display:none}
     details[open] summary{margin-bottom:12px}
 
@@ -225,9 +226,9 @@
     {{-- SIDEBAR --}}
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <img src="/logo.svg" alt="DestinyGate Logo">
+            <img src="/logo-mark.png" alt="Willowcrest College Logo">
             <div class="sidebar-brand-text">
-                <div class="sidebar-brand-name">DestinyGate</div>
+                <div class="sidebar-brand-name">Willowcrest College</div>
                 <div class="sidebar-brand-sub">Institute</div>
             </div>
         </div>

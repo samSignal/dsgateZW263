@@ -15,8 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         \App\Console\Commands\BackfillStudentStreams::class,
         \App\Console\Commands\SyncUserRoles::class,
+        \App\Console\Commands\ExpireStaleOffers::class,
+        \App\Console\Commands\RenumberStudents::class,
+        \App\Console\Commands\BackfillStudentLogins::class,
     ])
     ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('dgi:expire-stale-offers')->daily();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([

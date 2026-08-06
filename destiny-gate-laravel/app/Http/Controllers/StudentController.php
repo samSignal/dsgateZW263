@@ -67,7 +67,7 @@ class StudentController extends Controller
             'date_of_birth'      => 'nullable|date',
             'gender'             => 'nullable|in:male,female,other',
             'class_id'           => 'nullable|exists:classes,id',
-            'status'             => 'required|in:active,inactive,transferred,graduated,suspended',
+            'status'             => 'required|in:active,inactive,transferred,graduated,suspended,deceased',
             'blood_type'         => 'nullable|string|max:10',
             'allergies'          => 'nullable|string',
             'medical_conditions' => 'nullable|string',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\StudentNumberGenerator;
 use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,24 +11,6 @@ use Illuminate\Support\Facades\Hash;
 
 class StudentApiController extends Controller
 {
-    /* ── Student Number Generator ─────────────────────────────────────────
-     * Format: D001G{YEAR}I{SEQ}
-     * Example: D001G2026I001
-     */
-    private function generateStudentNumber(string $admissionDate): string
-    {
-        $year = date('Y', strtotime($admissionDate));
-
-        // Count students admitted in this year
-        $count = DB::table('students')
-            ->whereYear('admission_date', $year)
-            ->count();
-
-        $seq = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
-
-        return "D001G{$year}I{$seq}";
-    }
-
     /* ── index ────────────────────────────────────────────────────────────*/
     public function index(Request $request)
     {
@@ -74,7 +57,7 @@ class StudentApiController extends Controller
             'email'              => 'nullable|email|unique:students,email',
             'date_of_birth'      => 'nullable|date',
             'gender'             => 'nullable|in:male,female,other',
-            'class_id'           => 'nullable|exists:classes,id',
+            'stream_id'          => 'nullable|exists:streams,id',
             'admission_date'     => 'required|date',
             'national_id'        => 'nullable|string|max:50',
             'blood_type'         => 'nullable|string|max:10',
@@ -82,10 +65,13 @@ class StudentApiController extends Controller
             'medical_conditions' => 'nullable|string',
         ]);
 
+        // Class is authoritative — never trust client-sent form/category, derive from the class record.
+        $stream = !empty($data['stream_id']) ? DB::table('streams')->find($data['stream_id']) : null;
+
         DB::beginTransaction();
         try {
             // Generate student number
-            $studentNumber   = $this->generateStudentNumber($data['admission_date']);
+            $studentNumber   = StudentNumberGenerator::generate($data['admission_date']);
             $admissionNumber = $studentNumber; // use same as admission number
 
             // Create user account automatically
@@ -113,7 +99,9 @@ class StudentApiController extends Controller
                 'email'              => $data['email'] ?? null,
                 'date_of_birth'      => $data['date_of_birth'] ?? null,
                 'gender'             => $data['gender'] ?? null,
-                'class_id'           => $data['class_id'] ?? null,
+                'stream_id'          => $stream->id ?? null,
+                'form_id'            => $stream->form_id ?? null,
+                'category_id'        => $stream->category_id ?? null,
                 'admission_date'     => $data['admission_date'],
                 'status'             => 'active',
                 'blood_type'         => $data['blood_type'] ?? null,
@@ -168,13 +156,22 @@ class StudentApiController extends Controller
         $attendance = DB::table('attendance')->where('student_id', $id)->orderByDesc('date')->limit(30)->get();
         $behaviour  = DB::table('behaviour_records')->where('student_id', $id)->orderByDesc('issue_date')->get();
 
+        $applicationDocuments = null;
+        if ($student->application_id) {
+            $applicationDocuments = DB::table('applications')
+                ->select('application_number', 'doc_student_id_path', 'doc_results_path', 'doc_parent_id_path', 'doc_transfer_letter_path')
+                ->where('id', $student->application_id)
+                ->first();
+        }
+
         return response()->json([
             ...(array) $student,
-            'guardians'        => $guardians,
-            'fees'             => $fees,
-            'academic_progress'=> $progress,
-            'attendance'       => $attendance,
-            'behaviour_records'=> $behaviour,
+            'guardians'             => $guardians,
+            'fees'                  => $fees,
+            'academic_progress'     => $progress,
+            'attendance'            => $attendance,
+            'behaviour_records'     => $behaviour,
+            'application_documents' => $applicationDocuments,
         ]);
     }
 
@@ -190,12 +187,20 @@ class StudentApiController extends Controller
             'email'              => 'nullable|email|unique:students,email,' . $id,
             'date_of_birth'      => 'nullable|date',
             'gender'             => 'nullable|in:male,female,other',
-            'class_id'           => 'nullable|exists:classes,id',
-            'status'             => 'required|in:active,inactive,transferred,graduated,suspended',
+            'stream_id'          => 'nullable|exists:streams,id',
+            'status'             => 'required|in:active,inactive,transferred,graduated,suspended,deceased',
             'blood_type'         => 'nullable|string|max:10',
             'allergies'          => 'nullable|string',
             'medical_conditions' => 'nullable|string',
         ]);
+
+        // Only touch class assignment when the caller actually sent stream_id — class is
+        // authoritative for form/category, never trust client-sent values for those.
+        if ($request->has('stream_id')) {
+            $stream = !empty($data['stream_id']) ? DB::table('streams')->find($data['stream_id']) : null;
+            $data['form_id']     = $stream->form_id ?? null;
+            $data['category_id'] = $stream->category_id ?? null;
+        }
 
         DB::table('students')->where('id', $id)->update([
             ...$data,

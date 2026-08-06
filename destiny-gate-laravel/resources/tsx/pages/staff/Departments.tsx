@@ -49,7 +49,7 @@ export default function Departments() {
         {data.map(d => (
           <div key={d.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e8eaed', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 9, background: '#f0faf4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🏢</div>
+              <div style={{ width: 38, height: 38, borderRadius: 9, background: '#eef1f8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🏢</div>
               <Badge variant="blue">{d.staff_count} staff</Badge>
             </div>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 4 }}>{d.name}</div>

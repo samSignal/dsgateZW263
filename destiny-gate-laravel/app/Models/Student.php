@@ -10,19 +10,33 @@ class Student extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'admission_number', 'first_name', 'last_name', 'email',
-        'date_of_birth', 'gender', 'class_id', 'admission_date', 'status',
+        'user_id', 'admission_number', 'student_number', 'national_id', 'first_name', 'last_name', 'email',
+        'date_of_birth', 'gender', 'class_id', 'form_id', 'category_id', 'stream_id', 'academic_year_id',
+        'admission_date', 'status',
         'blood_type', 'allergies', 'medical_conditions',
+        'application_id', 'document_verified_at', 'document_verified_by', 'verification_due_at',
     ];
 
     protected $casts = [
-        'date_of_birth'  => 'date',
-        'admission_date' => 'date',
+        'date_of_birth'        => 'date',
+        'admission_date'       => 'date',
+        'document_verified_at' => 'datetime',
+        'verification_due_at'  => 'date',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function application()
+    {
+        return $this->belongsTo(Application::class);
+    }
+
+    public function documentVerifiedBy()
+    {
+        return $this->belongsTo(User::class, 'document_verified_by');
     }
 
     public function schoolClass()

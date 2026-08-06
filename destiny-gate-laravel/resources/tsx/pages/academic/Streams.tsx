@@ -56,18 +56,18 @@ export default function Streams() {
 
   const save = useMutation({
     mutationFn: (d: typeof empty) => editing ? api.put(`/streams/${editing.id}`, d) : api.post('/streams', d),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['streams'] }); setOpen(false); toastSuccess(editing ? 'Stream updated.' : 'Stream created.'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['streams'] }); setOpen(false); toastSuccess(editing ? 'Class updated.' : 'Class created.'); },
     onError: (e: any) => setFormErr(e.response?.data?.message ?? 'An error occurred.'),
   });
 
   const del = useMutation({
     mutationFn: (id: number) => api.delete(`/streams/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['streams'] }); toastSuccess('Stream deleted.'); },
-    onError: (e: any) => toastError(e.response?.data?.message ?? 'Cannot delete this stream.'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['streams'] }); toastSuccess('Class deleted.'); },
+    onError: (e: any) => toastError(e.response?.data?.message ?? 'Cannot delete this class.'),
   });
 
   const handleDelete = async (s: Stream) => {
-    const ok = await confirmDelete(`stream "${s.form_name} — ${s.name}"`);
+    const ok = await confirmDelete(`class "${s.form_name} — ${s.name}"`);
     if (ok) del.mutate(s.id);
   };
 
@@ -75,7 +75,7 @@ export default function Streams() {
 
   return (
     <div>
-      <PageHeader title="Streams" subtitle="Class groups under each form (e.g. Form 1A, Form 5 Sciences)" action={<Btn onClick={openAdd}>+ Add Stream</Btn>} />
+      <PageHeader title="Classes" subtitle="Classes under each form (e.g. Form 1A, Form 5 Sciences)" action={<Btn onClick={openAdd}>+ Add Class</Btn>} />
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
         <Select value={filterForm} onChange={e => setFilterForm(e.target.value)} style={{ width: 200 }}>
@@ -89,7 +89,7 @@ export default function Streams() {
       </div>
 
       <Card>
-        <Table headers={['Form', 'Stream Name', 'Category', 'Capacity', 'Actions']}>
+        <Table headers={['Form', 'Class Name', 'Category', 'Capacity', 'Actions']}>
           {streams.map(s => (
             <tr key={s.id}>
               <Td>{s.form_name}</Td>
@@ -107,7 +107,7 @@ export default function Streams() {
         </Table>
       </Card>
 
-      <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Edit Stream' : 'Add Stream'}>
+      <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Edit Class' : 'Add Class'}>
         {formErr && <Alert type="error" message={formErr} />}
         {!editing && (
           <FormGroup label="Form">
@@ -126,7 +126,7 @@ export default function Streams() {
           </Select>
         </FormGroup>
         <Grid cols={2} style={{ marginBottom: 0 }}>
-          <FormGroup label="Stream Name (e.g. 1A, Sciences)">
+          <FormGroup label="Class Name (e.g. 1A, Sciences)">
             <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="1A" />
           </FormGroup>
           <FormGroup label="Capacity">

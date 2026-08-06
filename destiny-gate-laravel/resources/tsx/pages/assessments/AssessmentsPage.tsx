@@ -60,7 +60,7 @@ export default function AssessmentsPage() {
           {filteredTerms.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </Select>
         <Select value={filters.stream_id} onChange={e => setFilters(f => ({ ...f, stream_id: e.target.value }))} style={{ width: 160 }}>
-          <option value="">All Streams</option>
+          <option value="">All Classes</option>
           {(streams as any[]).map(s => <option key={s.id} value={s.id}>{s.form_name} — {s.name}</option>)}
         </Select>
         <Select value={filters.subject_id} onChange={e => setFilters(f => ({ ...f, subject_id: e.target.value }))} style={{ width: 180 }}>
@@ -75,7 +75,7 @@ export default function AssessmentsPage() {
 
       <Card>
         {isLoading ? <Spinner /> : (
-          <Table headers={['Assessment #', 'Title', 'Subject', 'Stream', 'Type', 'Date', 'Marks', 'Progress', 'Status', 'Actions']}>
+          <Table headers={['Assessment #', 'Title', 'Subject', 'Class', 'Type', 'Date', 'Marks', 'Progress', 'Status', 'Actions']}>
             {assessments.map(a => (
               <tr key={a.id}>
                 <Td><code style={{ fontSize: 11, background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>{a.assessment_number}</code></Td>
@@ -88,7 +88,7 @@ export default function AssessmentsPage() {
                 <Td>
                   <span style={{ fontSize: 12 }}>{a.entered_count}/{a.marks_count}</span>
                   <div style={{ width: 60, height: 4, background: '#f3f4f6', borderRadius: 2, marginTop: 3 }}>
-                    <div style={{ height: '100%', width: a.marks_count > 0 ? `${(a.entered_count / a.marks_count) * 100}%` : '0%', background: '#1a6b3c', borderRadius: 2 }} />
+                    <div style={{ height: '100%', width: a.marks_count > 0 ? `${(a.entered_count / a.marks_count) * 100}%` : '0%', background: '#b6924c', borderRadius: 2 }} />
                   </div>
                 </Td>
                 <Td><Badge variant={statusColors[a.status] ?? 'gray'} style={{ textTransform: 'capitalize' }}>{a.status}</Badge></Td>

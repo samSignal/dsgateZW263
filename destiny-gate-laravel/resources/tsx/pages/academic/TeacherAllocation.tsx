@@ -80,13 +80,13 @@ export default function TeacherAllocation() {
           {allTerms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
         </Select>
         <Select value={filterStream} onChange={e => setFilterStream(e.target.value)} style={{ width: 200 }}>
-          <option value="">All Streams</option>
+          <option value="">All Classes</option>
           {streams.map(s => <option key={s.id} value={s.id}>{s.form_name} — {s.name}</option>)}
         </Select>
       </div>
 
       <Card>
-        <Table headers={['Teacher', 'Subject', 'Stream', 'Academic Year', 'Term', 'Actions']}>
+        <Table headers={['Teacher', 'Subject', 'Class', 'Academic Year', 'Term', 'Actions']}>
           {allocations.map(a => (
             <tr key={a.id}>
               <Td><strong>{a.teacher_name}</strong></Td>
@@ -117,7 +117,7 @@ export default function TeacherAllocation() {
             {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
           </Select>
         </FormGroup>
-        <FormGroup label="Stream">
+        <FormGroup label="Class">
           <Select value={form.stream_id} onChange={e => setForm(f => ({ ...f, stream_id: e.target.value }))}>
             <option value="">Select stream…</option>
             {streams.map(s => <option key={s.id} value={s.id}>{s.form_name} — {s.name}</option>)}

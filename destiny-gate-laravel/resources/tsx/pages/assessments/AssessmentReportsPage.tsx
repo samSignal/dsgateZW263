@@ -59,7 +59,7 @@ export default function AssessmentReportsPage() {
           {filteredTerms.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </Select>
         <Select value={filters.stream_id} onChange={e => setFilters(f => ({ ...f, stream_id: e.target.value }))} style={{ width: 170 }}>
-          <option value="">All Streams</option>
+          <option value="">All Classes</option>
           {(streams as any[]).map(s => <option key={s.id} value={s.id}>{s.form_name} - {s.name}</option>)}
         </Select>
         <Select value={filters.subject_id} onChange={e => setFilters(f => ({ ...f, subject_id: e.target.value }))} style={{ width: 190 }}>

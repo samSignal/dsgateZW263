@@ -120,8 +120,8 @@ export default function RolesPermissions() {
                   onClick={() => setActiveRole(r)}
                   style={{
                     padding: '10px 16px', cursor: 'pointer',
-                    background: activeRole?.id === r.id ? '#f0faf4' : 'transparent',
-                    borderLeft: activeRole?.id === r.id ? '3px solid #1a6b3c' : '3px solid transparent',
+                    background: activeRole?.id === r.id ? '#eef1f8' : 'transparent',
+                    borderLeft: activeRole?.id === r.id ? '3px solid #b6924c' : '3px solid transparent',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     transition: 'all .12s',
                   }}
@@ -153,8 +153,8 @@ export default function RolesPermissions() {
               <CardBody>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8 }}>
                   {activeRole.permissions.map(p => (
-                    <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: '#f0faf4', borderRadius: 6, fontSize: 12 }}>
-                      <span style={{ color: '#1a6b3c' }}>✓</span>
+                    <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: '#eef1f8', borderRadius: 6, fontSize: 12 }}>
+                      <span style={{ color: '#8a6b34' }}>✓</span>
                       <span style={{ color: '#374151' }}>{p}</span>
                     </div>
                   ))}
@@ -236,7 +236,7 @@ export default function RolesPermissions() {
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingLeft: 20 }}>
                     {perms.map((p: Permission) => (
-                      <label key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 12, color: '#374151', background: form.permissions.includes(p.name) ? '#f0faf4' : '#f9fafb', border: `1px solid ${form.permissions.includes(p.name) ? '#d1fae5' : '#e8eaed'}`, borderRadius: 6, padding: '3px 8px' }}>
+                      <label key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 12, color: '#374151', background: form.permissions.includes(p.name) ? '#eef1f8' : '#f9fafb', border: `1px solid ${form.permissions.includes(p.name) ? '#d1fae5' : '#e8eaed'}`, borderRadius: 6, padding: '3px 8px' }}>
                         <input
                           type="checkbox"
                           checked={form.permissions.includes(p.name)}

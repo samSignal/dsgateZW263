@@ -35,7 +35,7 @@ export default function ChangePassword({ onDone, userName }: Props) {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(145deg, #0f3d22 0%, #1a6b3c 100%)',
+      background: '#0f1a2e',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Inter', -apple-system, sans-serif", padding: 20,
     }}>
@@ -78,7 +78,7 @@ export default function ChangePassword({ onDone, userName }: Props) {
             ))}
 
             <button type="submit" disabled={loading} style={{
-              width: '100%', padding: 11, background: '#1a6b3c', color: '#fff',
+              width: '100%', padding: 11, background: '#b6924c', color: '#fff',
               border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? .7 : 1,
             }}>

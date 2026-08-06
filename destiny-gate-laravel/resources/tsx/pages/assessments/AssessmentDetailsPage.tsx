@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { Card, CardHeader, CardBody, Table, Td, Spinner, PageHeader, Btn, Badge, statusBadge } from '../../components/UI';
 
-const gradeColors: Record<string, string> = { A: '#1a6b3c', B: '#2563eb', C: '#7c3aed', D: '#d97706', E: '#f59e0b', U: '#dc2626' };
+const gradeColors: Record<string, string> = { A: '#0f1a2e', B: '#2563eb', C: '#7c3aed', D: '#d97706', E: '#f59e0b', U: '#dc2626' };
 
 export default function AssessmentDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -45,7 +45,7 @@ export default function AssessmentDetailsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
           { label: 'Total Students', value: marks.length, color: '#2563eb' },
-          { label: 'Marks Entered',  value: entered.length, color: '#1a6b3c' },
+          { label: 'Marks Entered',  value: entered.length, color: '#8a6b34' },
           { label: 'Absent',         value: marks.filter((m: any) => m.status === 'absent').length, color: '#dc2626' },
           { label: 'Average',        value: perf?.summary?.average ? `${perf.summary.average}%` : '—', color: '#7c3aed' },
           { label: 'Pass Rate',      value: perf?.summary?.pass_rate ? `${perf.summary.pass_rate}%` : '—', color: '#059669' },

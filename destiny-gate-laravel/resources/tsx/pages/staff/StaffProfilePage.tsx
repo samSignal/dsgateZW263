@@ -68,7 +68,7 @@ export default function StaffProfilePage() {
 
       {/* Top info bar */}
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e8eaed', padding: '20px 24px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg,#1a6b3c,#2d8a52)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg,#b6924c,#8a6b34)', color: '#0f1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>
           {staff.first_name[0]}{staff.last_name[0]}
         </div>
         <div style={{ flex: 1 }}>
@@ -147,7 +147,7 @@ export default function StaffProfilePage() {
             {staff.user_id ? (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#f0faf4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🔑</div>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#eef1f8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🔑</div>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>Account Active</div>
                     <div style={{ fontSize: 11, color: '#6b7280' }}>{staff.user_email}</div>

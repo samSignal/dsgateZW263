@@ -25,7 +25,7 @@ export default function StudentPortal() {
       <Grid cols={4} style={{ marginBottom: 20 }}>
         <Card><CardBody><div className="text-xs uppercase text-slate-500">Term Average</div><div className="text-3xl font-bold text-emerald-800">{withheld ? '-' : `${termData?.aggregate?.term_average ?? '-' }%`}</div></CardBody></Card>
         <Card><CardBody><div className="text-xs uppercase text-slate-500">GPA</div><div className="text-3xl font-bold">{withheld ? '-' : (termData?.aggregate?.gpa ?? '-')}</div><div className="text-xs text-slate-500">{transcript?.cumulative_gpa !== null && transcript?.cumulative_gpa !== undefined ? `Cumulative ${transcript.cumulative_gpa}` : ''}</div></CardBody></Card>
-        <Card><CardBody><div className="text-xs uppercase text-slate-500">Stream Rank</div><div className="text-3xl font-bold">{withheld ? '-' : (streamRank ?? '-')}</div><div className="text-xs text-slate-500">{withheld ? '' : (streamScore !== null ? `Score ${streamScore}%` : '')}</div></CardBody></Card>
+        <Card><CardBody><div className="text-xs uppercase text-slate-500">Class Rank</div><div className="text-3xl font-bold">{withheld ? '-' : (streamRank ?? '-')}</div><div className="text-xs text-slate-500">{withheld ? '' : (streamScore !== null ? `Score ${streamScore}%` : '')}</div></CardBody></Card>
         <Card><CardBody><div className="text-xs uppercase text-slate-500">Progression</div><div className="text-xl font-bold">{progression?.decision ?? '-'}</div><div className="text-xs text-slate-500">{progression?.reason ?? ''}</div></CardBody></Card>
       </Grid>
 

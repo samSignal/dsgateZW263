@@ -44,6 +44,11 @@ class Application extends Model
         return $this->belongsTo(Student::class, 'enrolled_student_id');
     }
 
+    public function deposit()
+    {
+        return $this->hasOne(ApplicationDeposit::class);
+    }
+
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";

@@ -3,19 +3,19 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Online Application — DestinyGate Institute</title>
+    <title>Online Application — Willowcrest College</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f3f7f5; color: #0f172a; }
         .container { max-width: 860px; margin: 44px auto; padding: 0 20px; }
         .shell { display: grid; grid-template-columns: 1fr; gap: 18px; }
-        .card { background: #fff; border-radius: 18px; padding: 30px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06); border: 1px solid rgba(26, 107, 60, 0.12); }
+        .card { background: #fff; border-radius: 18px; padding: 30px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06); border: 1px solid rgba(27, 42, 74, 0.12); }
         .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
         .brand { display: flex; align-items: center; gap: 12px; }
-        .brand-badge { width: 46px; height: 46px; border-radius: 12px; background: #f0faf4; border: 1px solid #d1fae5; display: flex; align-items: center; justify-content: center; }
+        .brand-badge { width: 46px; height: 46px; border-radius: 12px; background: #eef1f8; border: 1px solid #d1fae5; display: flex; align-items: center; justify-content: center; }
         .brand-title { font-size: 16px; font-weight: 800; color: #0f172a; line-height: 1.1; }
         .brand-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
-        .step { font-size: 12px; font-weight: 700; color: #1a6b3c; background: rgba(26, 107, 60, 0.08); border: 1px solid rgba(26, 107, 60, 0.18); padding: 6px 10px; border-radius: 999px; white-space: nowrap; }
+        .step { font-size: 12px; font-weight: 700; color: #8a6b34; background: rgba(27, 42, 74, 0.08); border: 1px solid rgba(27, 42, 74, 0.18); padding: 6px 10px; border-radius: 999px; white-space: nowrap; }
         .title { font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.3px; margin: 10px 0 6px; }
         .subtitle { font-size: 13px; color: #64748b; line-height: 1.6; margin: 0 0 6px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -23,17 +23,17 @@
         .form-group { margin-bottom: 14px; }
         .form-group label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 6px; letter-spacing: 0.2px; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 11px 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 13px; background: #fff; box-sizing: border-box; transition: border-color .15s, box-shadow .15s; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #1a6b3c; box-shadow: 0 0 0 4px rgba(26, 107, 60, 0.12); }
-        .btn { background: #1a6b3c; color: #fff; border: none; padding: 12px 18px; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; width: 100%; letter-spacing: 0.2px; }
-        .btn:hover { background: #0f3d22; }
-        .btn-secondary { background: #fff; color: #1a6b3c; border: 1.5px solid rgba(26, 107, 60, 0.35); }
-        .btn-secondary:hover { background: #f0faf4; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #b6924c; box-shadow: 0 0 0 4px rgba(27, 42, 74, 0.12); }
+        .btn { background: #b6924c; color: #fff; border: none; padding: 12px 18px; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; width: 100%; letter-spacing: 0.2px; }
+        .btn:hover { background: #0f1a2e; }
+        .btn-secondary { background: #fff; color: #8a6b34; border: 1.5px solid rgba(27, 42, 74, 0.35); }
+        .btn-secondary:hover { background: #eef1f8; }
         .alert-error { background: #fef2f2; color: #991b1b; padding: 12px 14px; border-radius: 12px; border: 1px solid #fecaca; margin-bottom: 14px; font-size: 13px; }
         .alert-success { background: #ecfdf5; color: #065f46; padding: 12px 14px; border-radius: 12px; border: 1px solid #a7f3d0; margin-bottom: 14px; font-size: 13px; }
         .summary { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; }
         .summary h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: 0.4px; color: #475569; text-transform: uppercase; }
         .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
-        .pill { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; padding: 8px 10px; border-radius: 999px; background: rgba(26, 107, 60, 0.06); border: 1px solid rgba(26, 107, 60, 0.14); color: #0f3d22; }
+        .pill { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; padding: 8px 10px; border-radius: 999px; background: rgba(27, 42, 74, 0.06); border: 1px solid rgba(27, 42, 74, 0.14); color: #0f1a2e; }
         .footer { text-align: center; padding: 6px 0; }
         .footer a { color: #64748b; font-size: 12px; text-decoration: none; }
         .footer a:hover { color: #0f172a; text-decoration: underline; }
@@ -98,10 +98,10 @@
             <div class="header">
                 <div class="brand">
                     <div class="brand-badge">
-                        <img src="/logo.svg" alt="DestinyGate Institute" style="width:30px; height:30px; object-fit:contain;" />
+                        <img src="/logo-mark.png" alt="Willowcrest College" style="width:30px; height:30px; object-fit:contain;" />
                     </div>
                     <div>
-                        <div class="brand-title">DestinyGate Institute</div>
+                        <div class="brand-title">Willowcrest College</div>
                         <div class="brand-sub">Online Admission Application</div>
                     </div>
                 </div>

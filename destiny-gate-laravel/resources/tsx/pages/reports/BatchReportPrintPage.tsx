@@ -22,7 +22,7 @@ export default function BatchReportPrintPage() {
       <FormGroup label="Academic Year"><Select value={filters.academic_year_id} onChange={e => setFilters(f => ({ ...f, academic_year_id: e.target.value, term_id: '' }))}><option value="">Year</option>{(years as any[]).map(y => <option key={y.id} value={y.id}>{y.name}</option>)}</Select></FormGroup>
       <FormGroup label="Term"><Select value={filters.term_id} onChange={e => setFilters(f => ({ ...f, term_id: e.target.value }))}><option value="">Term</option>{filteredTerms.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}</Select></FormGroup>
       <FormGroup label="Form"><Select value={filters.form_id} onChange={e => setFilters(f => ({ ...f, form_id: e.target.value, stream_id: '' }))}><option value="">Form</option>{(forms as any[]).map(fm => <option key={fm.id} value={fm.id}>{fm.name}</option>)}</Select></FormGroup>
-      <FormGroup label="Stream"><Select value={filters.stream_id} onChange={e => setFilters(f => ({ ...f, stream_id: e.target.value }))}><option value="">Stream</option>{filteredStreams.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></FormGroup>
-    </Grid><Btn onClick={batchDownload}>Download Stream PDF</Btn></CardBody></Card>
+      <FormGroup label="Class"><Select value={filters.stream_id} onChange={e => setFilters(f => ({ ...f, stream_id: e.target.value }))}><option value="">Class</option>{filteredStreams.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></FormGroup>
+    </Grid><Btn onClick={batchDownload}>Download Class PDF</Btn></CardBody></Card>
   </div>;
 }

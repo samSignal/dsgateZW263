@@ -65,7 +65,7 @@ export default function BursarDashboard() {
             {data.recent_payments?.map((p: any) => (
               <tr key={p.id}>
                 <Td><strong>{p.student?.first_name} {p.student?.last_name}</strong></Td>
-                <Td style={{ color: '#1a6b3c', fontWeight: 600 }}>${Number(p.amount).toLocaleString()}</Td>
+                <Td style={{ color: '#8a6b34', fontWeight: 600 }}>${Number(p.amount).toLocaleString()}</Td>
                 <Td style={{ textTransform: 'capitalize' }}>{p.payment_method?.replace(/_/g, ' ')}</Td>
                 <Td style={{ color: '#6b7280' }}>{new Date(p.payment_date).toLocaleDateString()}</Td>
               </tr>

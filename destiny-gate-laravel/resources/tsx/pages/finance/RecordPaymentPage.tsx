@@ -77,7 +77,7 @@ export default function RecordPaymentPage() {
                 </div>
               )}
               {selectedStudent && (
-                <div style={{ background: '#f0faf4', borderRadius: 8, padding: '12px 14px', marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ background: '#eef1f8', borderRadius: 8, padding: '12px 14px', marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 14 }}>{selectedStudent.first_name} {selectedStudent.last_name}</div>
                     <div style={{ fontSize: 12, color: '#6b7280' }}>{selectedStudent.student_number} · {selectedStudent.class_name ?? 'No class'}</div>
@@ -103,7 +103,7 @@ export default function RecordPaymentPage() {
                         <Td><code style={{ fontSize: 11, background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>{b.bill_number}</code></Td>
                         <Td>{b.description}</Td>
                         <Td>${Number(b.amount).toLocaleString()}</Td>
-                        <Td style={{ color: '#1a6b3c' }}>${Number(b.amount_paid).toLocaleString()}</Td>
+                        <Td style={{ color: '#8a6b34' }}>${Number(b.amount_paid).toLocaleString()}</Td>
                         <Td style={{ color: '#dc2626', fontWeight: 600 }}>${Number(b.balance).toLocaleString()}</Td>
                         <Td>{statusBadge(b.status)}</Td>
                       </tr>
@@ -171,7 +171,7 @@ export default function RecordPaymentPage() {
               <CardHeader title="Receipt" action={<Btn size="sm" variant="outline" onClick={() => window.print()}>🖨️ Print</Btn>} />
               <CardBody>
                 <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#1a6b3c' }}>DestinyGate Institute</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#8a6b34' }}>Willowcrest College</div>
                   <div style={{ fontSize: 12, color: '#6b7280' }}>Official Receipt</div>
                   <div style={{ fontSize: 20, fontWeight: 700, marginTop: 8 }}>{receipt.receipt_number}</div>
                 </div>

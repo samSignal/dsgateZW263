@@ -39,7 +39,7 @@ export default function TeacherProfiles() {
                 <Td><code style={{ background: '#eff6ff', color: '#1e40af', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>{t.teacher_code}</code></Td>
                 <Td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#1a6b3c,#2d8a52)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#b6924c,#8a6b34)', color: '#0f1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>
                       {t.first_name[0]}{t.last_name[0]}
                     </div>
                     <div>

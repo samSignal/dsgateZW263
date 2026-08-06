@@ -61,10 +61,10 @@ export default function FinanceDashboard() {
         <div style={{ padding: '16px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
             <span style={{ fontSize: 13, fontWeight: 600 }}>Collection Progress</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#1a6b3c' }}>{summary?.collection_rate ?? 0}%</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#8a6b34' }}>{summary?.collection_rate ?? 0}%</span>
           </div>
           <div style={{ height: 12, background: '#f3f4f6', borderRadius: 6, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${summary?.collection_rate ?? 0}%`, background: 'linear-gradient(90deg, #1a6b3c, #2d8a52)', borderRadius: 6, transition: 'width .5s ease' }} />
+            <div style={{ height: '100%', width: `${summary?.collection_rate ?? 0}%`, background: 'linear-gradient(90deg, #b6924c, #8a6b34)', borderRadius: 6, transition: 'width .5s ease' }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: '#6b7280' }}>
             <span>$0</span>
@@ -76,12 +76,12 @@ export default function FinanceDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* Today's collections */}
         <Card>
-          <CardHeader title={`Today's Collections (${daily?.date ?? '—'})`} action={<span style={{ fontSize: 14, fontWeight: 700, color: '#1a6b3c' }}>${Number(daily?.total ?? 0).toLocaleString()}</span>} />
+          <CardHeader title={`Today's Collections (${daily?.date ?? '—'})`} action={<span style={{ fontSize: 14, fontWeight: 700, color: '#8a6b34' }}>${Number(daily?.total ?? 0).toLocaleString()}</span>} />
           <Table headers={['Student', 'Amount', 'Method', 'Receipt']}>
             {(daily?.payments ?? []).slice(0, 8).map((p: any) => (
               <tr key={p.id}>
                 <Td><strong>{p.student_name}</strong></Td>
-                <Td style={{ color: '#1a6b3c', fontWeight: 600 }}>${Number(p.amount).toLocaleString()}</Td>
+                <Td style={{ color: '#8a6b34', fontWeight: 600 }}>${Number(p.amount).toLocaleString()}</Td>
                 <Td style={{ textTransform: 'capitalize' }}>{p.payment_method?.replace('_', ' ')}</Td>
                 <Td><code style={{ fontSize: 11, background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>{p.receipt_number}</code></Td>
               </tr>
@@ -92,7 +92,7 @@ export default function FinanceDashboard() {
 
         {/* Top debtors */}
         <Card>
-          <CardHeader title="Top Debtors" action={<Link to="/app/finance/debtors" style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 600 }}>View All →</Link>} />
+          <CardHeader title="Top Debtors" action={<Link to="/app/finance/debtors" style={{ fontSize: 12, color: '#8a6b34', fontWeight: 600 }}>View All →</Link>} />
           <Table headers={['Student', 'Form', 'Balance']}>
             {(debtors as any[]).slice(0, 8).map((d: any) => (
               <tr key={d.student_id}>

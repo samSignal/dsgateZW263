@@ -2,20 +2,36 @@ import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { toastSuccess, toastError } from '../../lib/toast';
-import { Card, Table, Td, Spinner, PageHeader, Btn, statusBadge, Modal, FormGroup, Textarea, StatCard } from '../../components/UI';
+import { Card, Table, Td, Spinner, PageHeader, Btn, statusBadge, Modal, FormGroup, Textarea, StatCard, Input } from '../../components/UI';
+
+const todayIso = () => new Date().toISOString().slice(0, 10);
+const addDaysIso = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
 
 export default function Applications() {
   const qc = useQueryClient();
   const [rejectId, setRejectId] = useState<number | null>(null);
   const [reason, setReason] = useState('');
   const [viewApp, setViewApp] = useState<any | null>(null);
-  const [activeTab, setActiveTab] = useState<'accepted' | 'offered' | 'waitingList' | 'pending' | 'rejected' | 'other'>('accepted');
+  const [activeTab, setActiveTab] = useState<'accepted' | 'offered' | 'enrolled' | 'waitingList' | 'pending' | 'rejected' | 'expired' | 'other'>('accepted');
+  const [depositAppId, setDepositAppId] = useState<number | null>(null);
+  const [depositForm, setDepositForm] = useState({
+    amount: '', payment_method: 'cash', reference_number: '',
+    payment_date: todayIso(), verification_due_at: addDaysIso(14), notes: '',
+  });
   const [requestOpen, setRequestOpen] = useState(false);
   const [requestDocKey, setRequestDocKey] = useState('doc_results_path');
   const [requestInstructions, setRequestInstructions] = useState('');
   const [docRequests, setDocRequests] = useState<any[]>([]);
+  const [editApp, setEditApp] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({ intended_class: '', form_id: '', category_id: '' });
 
   const { data, isLoading } = useQuery({ queryKey: ['applications'], queryFn: () => api.get('/admin/applications').then(r => r.data) });
+  const { data: forms } = useQuery({ queryKey: ['forms-list'], queryFn: () => api.get('/forms').then(r => r.data) });
+  const { data: categories } = useQuery({ queryKey: ['categories-list'], queryFn: () => api.get('/categories').then(r => r.data) });
 
   const offer = useMutation({
     mutationFn: (id: number) => api.post(`/admin/applications/${id}/offer`),
@@ -31,6 +47,32 @@ export default function Applications() {
     mutationFn: ({ id, reason }: { id: number; reason: string }) => api.post(`/admin/applications/${id}/reject`, { rejection_reason: reason }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['applications'] }); setRejectId(null); setReason(''); toastSuccess('Application rejected.'); },
     onError: (e: any) => toastError(e.response?.data?.message ?? 'Failed.'),
+  });
+
+  const recordDeposit = useMutation({
+    mutationFn: ({ id, ...body }: { id: number } & typeof depositForm) => api.post(`/admin/applications/${id}/enroll`, body),
+    onSuccess: (r: any) => {
+      qc.invalidateQueries({ queryKey: ['applications'] });
+      qc.invalidateQueries({ queryKey: ['students'] });
+      setDepositAppId(null);
+      setDepositForm({ amount: '', payment_method: 'cash', reference_number: '', payment_date: todayIso(), verification_due_at: addDaysIso(14), notes: '' });
+      toastSuccess(r?.data?.message ?? 'Deposit recorded — student enrolled.');
+    },
+    onError: (e: any) => toastError(e.response?.data?.errors?.status?.[0] ?? e.response?.data?.message ?? 'Failed to record deposit.'),
+  });
+
+  const updateIntake = useMutation({
+    mutationFn: ({ id, ...body }: { id: number } & typeof editForm) => api.put(`/admin/applications/${id}`, {
+      intended_class: body.intended_class || null,
+      form_id: body.form_id || null,
+      category_id: body.category_id || null,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['applications'] });
+      setEditApp(null);
+      toastSuccess('Application updated.');
+    },
+    onError: (e: any) => toastError(e.response?.data?.message ?? 'Failed to update application.'),
   });
 
   const createDocRequest = useMutation({
@@ -78,15 +120,19 @@ export default function Applications() {
     const groups = {
       accepted: [] as any[],
       offered: [] as any[],
+      enrolled: [] as any[],
       waitingList: [] as any[],
       pending: [] as any[],
       rejected: [] as any[],
+      expired: [] as any[],
       other: [] as any[],
     };
 
     for (const app of applications) {
       const status = String(app?.status ?? '').toLowerCase();
-      if (app?.offer_accepted_at) groups.accepted.push(app);
+      if (status === 'enrolled') groups.enrolled.push(app);
+      else if (status === 'expired') groups.expired.push(app);
+      else if (app?.offer_accepted_at) groups.accepted.push(app);
       else if (status === 'offered') groups.offered.push(app);
       else if (status === 'waiting_list') groups.waitingList.push(app);
       else if (status === 'pending') groups.pending.push(app);
@@ -130,7 +176,18 @@ export default function Applications() {
               setDocRequests([]);
             }
           }}>View</Btn>
-          {a.status !== 'rejected' && (
+          <Btn size="sm" variant="outline" onClick={() => {
+            setEditApp(a);
+            setEditForm({
+              intended_class: a.intended_class ?? '',
+              form_id: a.form_id != null ? String(a.form_id) : '',
+              category_id: a.category_id != null ? String(a.category_id) : '',
+            });
+          }}>Edit</Btn>
+          {a.status === 'offered' && (
+            <Btn size="sm" onClick={() => setDepositAppId(a.id)}>Record Deposit</Btn>
+          )}
+          {a.status !== 'rejected' && a.status !== 'enrolled' && (
             <>
               {a.status !== 'offered' && (
                 <Btn size="sm" loading={offer.isPending} onClick={() => offer.mutate(a.id)}>Offer</Btn>
@@ -196,10 +253,12 @@ export default function Applications() {
 
   const tabs = [
     { key: 'accepted' as const, label: 'Accepted Offers', count: grouped.accepted.length, accent: '#15803d' },
-    { key: 'offered' as const, label: 'Offered', count: grouped.offered.length, accent: '#1a6b3c' },
+    { key: 'offered' as const, label: 'Offered', count: grouped.offered.length, accent: '#0f1a2e' },
+    { key: 'enrolled' as const, label: 'Enrolled', count: grouped.enrolled.length, accent: '#8a6b34' },
     { key: 'waitingList' as const, label: 'Waiting List', count: grouped.waitingList.length, accent: '#d97706' },
     { key: 'pending' as const, label: 'Pending', count: grouped.pending.length, accent: '#7c3aed' },
     { key: 'rejected' as const, label: 'Rejected', count: grouped.rejected.length, accent: '#dc2626' },
+    { key: 'expired' as const, label: 'Expired', count: grouped.expired.length, accent: '#6b7280' },
     { key: 'other' as const, label: 'Other', count: grouped.other.length, accent: '#0f172a' },
   ];
 
@@ -219,8 +278,28 @@ export default function Applications() {
         'Offered Applicants',
         'Applicants who have already received an offer of admission.',
         grouped.offered,
-        '#1a6b3c',
+        '#0f1a2e',
         'No offered applicants yet.',
+      );
+    }
+
+    if (activeTab === 'enrolled') {
+      return renderSection(
+        'Enrolled',
+        'Applicants who paid a deposit and were enrolled as students. Document verification is tracked separately on the Students page.',
+        grouped.enrolled,
+        '#8a6b34',
+        'No applicants have been enrolled yet.',
+      );
+    }
+
+    if (activeTab === 'expired') {
+      return renderSection(
+        'Expired Offers',
+        'Offers whose deadline passed with no deposit or acceptance — the seat is free for the waiting list.',
+        grouped.expired,
+        '#6b7280',
+        'No offers have expired.',
       );
     }
 
@@ -272,6 +351,7 @@ export default function Applications() {
         <StatCard label="Total Applications" value={applications.length} color="blue" trend="All submitted applications" />
         <StatCard label="Accepted Offers" value={grouped.accepted.length} color="green" trend="Confirmed for enrolment preparation" />
         <StatCard label="Offered" value={grouped.offered.length} color="green" trend="Applicants offered a place" />
+        <StatCard label="Enrolled" value={grouped.enrolled.length} color="green" trend="Deposit paid, student created" />
         <StatCard label="Waiting List" value={grouped.waitingList.length} color="amber" trend="Applicants awaiting a place" />
         <StatCard label="Pending Review" value={grouped.pending.length} color="purple" trend="Applications still under review" />
       </div>
@@ -443,7 +523,7 @@ export default function Applications() {
                     </div>
                     <div style={{ marginTop: 8 }}>
                       {url ? (
-                        <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 700, textDecoration: 'none' }}>
+                        <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#8a6b34', fontWeight: 700, textDecoration: 'none' }}>
                           Open document
                         </a>
                       ) : (
@@ -483,7 +563,7 @@ export default function Applications() {
                               href={docUrl(r.new_path) ?? '#'}
                               target="_blank"
                               rel="noreferrer"
-                              style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 800, textDecoration: 'none' }}
+                              style={{ fontSize: 12, color: '#8a6b34', fontWeight: 800, textDecoration: 'none' }}
                             >
                               Open resubmitted document
                             </a>
@@ -544,6 +624,101 @@ export default function Applications() {
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <Btn variant="outline" onClick={() => setRejectId(null)}>Cancel</Btn>
           <Btn variant="danger" loading={reject.isPending} onClick={() => rejectId && reject.mutate({ id: rejectId, reason })}>Reject</Btn>
+        </div>
+      </Modal>
+
+      <Modal open={!!editApp} onClose={() => setEditApp(null)} title="Edit Intake Details" maxWidth={480}>
+        {editApp && (
+          <div>
+            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 14 }}>
+              {editApp.first_name} {editApp.last_name} · {editApp.application_number}
+            </div>
+            <FormGroup label="Class Applied">
+              <Input value={editForm.intended_class}
+                onChange={e => setEditForm(f => ({ ...f, intended_class: e.target.value }))}
+                placeholder="e.g. Form 2" />
+            </FormGroup>
+            <FormGroup label="Form">
+              <select
+                value={editForm.form_id}
+                onChange={e => setEditForm(f => ({ ...f, form_id: e.target.value }))}
+                style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 13 }}
+              >
+                <option value="">— None —</option>
+                {(forms ?? []).map((f: any) => <option key={f.id} value={f.id}>{f.name}</option>)}
+              </select>
+            </FormGroup>
+            <FormGroup label="Category">
+              <select
+                value={editForm.category_id}
+                onChange={e => setEditForm(f => ({ ...f, category_id: e.target.value }))}
+                style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 13 }}
+              >
+                <option value="">— None —</option>
+                {(categories ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </FormGroup>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <Btn variant="outline" onClick={() => setEditApp(null)}>Cancel</Btn>
+              <Btn loading={updateIntake.isPending} onClick={() => editApp && updateIntake.mutate({ id: editApp.id, ...editForm })}>Save</Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal open={!!depositAppId} onClose={() => setDepositAppId(null)} title="Record Deposit & Enroll" maxWidth={520}>
+        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 14, lineHeight: 1.6 }}>
+          This is the only way a Student record gets created. Recording a deposit here enrolls the applicant immediately —
+          document verification can be completed later from the Students page.
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormGroup label="Amount">
+            <Input type="number" min={0.01} step="0.01" value={depositForm.amount}
+              onChange={e => setDepositForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
+          </FormGroup>
+          <FormGroup label="Payment Method">
+            <select
+              value={depositForm.payment_method}
+              onChange={e => setDepositForm(f => ({ ...f, payment_method: e.target.value }))}
+              style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 13 }}
+            >
+              <option value="cash">Cash</option>
+              <option value="ecocash">EcoCash</option>
+              <option value="visa">Visa</option>
+              <option value="mastercard">Mastercard</option>
+              <option value="omari">Omari</option>
+              <option value="innbucks">InnBucks</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="other">Other</option>
+            </select>
+          </FormGroup>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormGroup label="Reference # (Optional)">
+            <Input value={depositForm.reference_number}
+              onChange={e => setDepositForm(f => ({ ...f, reference_number: e.target.value }))} placeholder="Transaction / SMS confirmation code" />
+          </FormGroup>
+          <FormGroup label="Payment Date">
+            <Input type="date" value={depositForm.payment_date}
+              onChange={e => setDepositForm(f => ({ ...f, payment_date: e.target.value }))} />
+          </FormGroup>
+        </div>
+        <FormGroup label="Verification Due By">
+          <Input type="date" value={depositForm.verification_due_at}
+            onChange={e => setDepositForm(f => ({ ...f, verification_due_at: e.target.value }))} />
+        </FormGroup>
+        <FormGroup label="Notes (Optional)">
+          <Textarea value={depositForm.notes} onChange={e => setDepositForm(f => ({ ...f, notes: e.target.value }))} placeholder="Any additional notes..." />
+        </FormGroup>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <Btn variant="outline" onClick={() => setDepositAppId(null)}>Cancel</Btn>
+          <Btn
+            loading={recordDeposit.isPending}
+            disabled={!depositForm.amount || Number(depositForm.amount) <= 0}
+            onClick={() => depositAppId && recordDeposit.mutate({ id: depositAppId, ...depositForm })}
+          >
+            Record Deposit & Enroll
+          </Btn>
         </div>
       </Modal>
     </div>

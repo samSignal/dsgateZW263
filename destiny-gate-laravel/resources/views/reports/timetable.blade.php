@@ -5,20 +5,20 @@
     <style>
         @page { size: A4 landscape; margin: 12mm; }
         body { font-family: DejaVu Sans, Arial, sans-serif; color:#0f172a; font-size:10px; }
-        h1 { margin:0; color:#8a6b34; font-size:22px; }
+        h1 { margin:0; color:#0f3d22; font-size:22px; }
         .motto { color:#b88a11; font-weight:700; margin-bottom:12px; }
         table { width:100%; border-collapse:collapse; table-layout:fixed; }
-        th { background:#b6924c; color:#fff; padding:7px; border:1px solid #dbe3ec; }
+        th { background:#1a6b3c; color:#fff; padding:7px; border:1px solid #dbe3ec; }
         td { height:58px; border:1px solid #dbe3ec; padding:6px; vertical-align:top; }
         .break { background:#fffbeb; color:#92400e; font-weight:700; text-align:center; }
-        .lesson { background:#f8fafc; border-left:4px solid #b6924c; padding:5px; border-radius:3px; }
-        .subject { font-weight:800; color:#8a6b34; }
+        .lesson { background:#f8fafc; border-left:4px solid #1a6b3c; padding:5px; border-radius:3px; }
+        .subject { font-weight:800; color:#0f3d22; }
         .meta { color:#475569; font-size:9px; margin-top:2px; }
         .footer { margin-top:12px; border-top:1px solid #e2e8f0; padding-top:6px; color:#64748b; }
     </style>
 </head>
 <body>
-<h1>Willowcrest College</h1>
+<h1>DestinyGate Institute</h1>
 <div class="motto">Weekly Timetable - {{ ucfirst($scope['type']) }}</div>
 @php $days = ['monday','tuesday','wednesday','thursday','friday','saturday']; @endphp
 <table>
@@ -53,6 +53,6 @@
     @endforeach
     </tbody>
 </table>
-<div class="footer">Generated {{ now() }} | Willowcrest College</div>
+<div class="footer">Generated {{ now() }} | DestinyGate Institute</div>
 </body>
 </html>

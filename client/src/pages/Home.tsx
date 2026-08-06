@@ -29,8 +29,8 @@ export default function Home() {
       <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container flex justify-between items-center h-16">
           <div className="flex items-center gap-2">
-            <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-              <GraduationCap size={24} />
+            <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center p-1">
+              <img src="/logo-mark.png" alt="DestinyGate Institute" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-xl font-bold text-foreground">DestinyGate</h1>
           </div>
@@ -48,9 +48,12 @@ export default function Home() {
       {/* Hero Section */}
       <section className="py-20 px-4 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
         <div className="container max-w-4xl mx-auto text-center">
-          <h2 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
+          <h2 className="text-5xl md:text-6xl font-bold text-foreground mb-4">
             Comprehensive School Management System
           </h2>
+          <p className="text-lg text-muted-foreground italic mb-6">
+            "Raising a Godly, Skilled and Confident Generation"
+          </p>
           <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
             DestinyGate brings elegance and efficiency to every aspect of school operations. From student
             management to finance tracking, academics to behaviour records—all in one beautiful, unified platform.
@@ -278,11 +281,17 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <GraduationCap className="text-primary" size={24} />
+                <div className="w-6 h-6 rounded bg-primary/10 border border-primary/20 flex items-center justify-center p-0.5">
+                  <img src="/logo-mark.png" alt="DestinyGate Institute" className="w-full h-full object-contain" />
+                </div>
                 <span className="font-bold text-foreground">DestinyGate</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 Elegant school management for the modern institution
+              </p>
+              <p className="text-xs text-muted-foreground mt-3">
+                15412 Samson Kanyemba Street, Runyararo West, Masvingo<br />
+                0779 672 246 / 0710415364
               </p>
             </div>
             <div>

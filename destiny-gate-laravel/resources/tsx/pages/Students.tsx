@@ -103,7 +103,7 @@ export default function Students() {
               </Td>
               <Td>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <Link to={`/app/students/${s.id}`} style={{ fontSize: 12, color: '#8a6b34', textDecoration: 'none', fontWeight: 500 }}>View →</Link>
+                  <Link to={`/app/students/${s.id}`} style={{ fontSize: 12, color: '#1a6b3c', textDecoration: 'none', fontWeight: 500 }}>View →</Link>
                   {!s.document_verified_at && (
                     <Btn size="sm" variant="outline" onClick={() => openVerify(s)}>Verify Docs</Btn>
                   )}
@@ -150,7 +150,7 @@ export default function Students() {
         <FormGroup label="Admission Date"><Input type="date" value={form.admission_date} onChange={e => setForm(f => ({...f, admission_date: e.target.value}))} required /></FormGroup>
         <FormGroup label="National ID">
           <Input value={form.national_id} onChange={e => setForm(f => ({...f, national_id: e.target.value}))} placeholder="e.g. 63-123456A78" />
-          <p style={{ fontSize: 11, color: '#059669', marginTop: 4, background: '#eef1f8', padding: '6px 10px', borderRadius: 6 }}>
+          <p style={{ fontSize: 11, color: '#059669', marginTop: 4, background: '#f0faf4', padding: '6px 10px', borderRadius: 6 }}>
             🔐 Student will login using their <strong>Student Number</strong> as username and <strong>National ID as default password</strong>. Student number is auto-generated on save.
           </p>
         </FormGroup>

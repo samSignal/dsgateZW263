@@ -253,8 +253,8 @@ export default function Applications() {
 
   const tabs = [
     { key: 'accepted' as const, label: 'Accepted Offers', count: grouped.accepted.length, accent: '#15803d' },
-    { key: 'offered' as const, label: 'Offered', count: grouped.offered.length, accent: '#0f1a2e' },
-    { key: 'enrolled' as const, label: 'Enrolled', count: grouped.enrolled.length, accent: '#8a6b34' },
+    { key: 'offered' as const, label: 'Offered', count: grouped.offered.length, accent: '#0f3d22' },
+    { key: 'enrolled' as const, label: 'Enrolled', count: grouped.enrolled.length, accent: '#1a6b3c' },
     { key: 'waitingList' as const, label: 'Waiting List', count: grouped.waitingList.length, accent: '#d97706' },
     { key: 'pending' as const, label: 'Pending', count: grouped.pending.length, accent: '#7c3aed' },
     { key: 'rejected' as const, label: 'Rejected', count: grouped.rejected.length, accent: '#dc2626' },
@@ -278,7 +278,7 @@ export default function Applications() {
         'Offered Applicants',
         'Applicants who have already received an offer of admission.',
         grouped.offered,
-        '#0f1a2e',
+        '#0f3d22',
         'No offered applicants yet.',
       );
     }
@@ -288,7 +288,7 @@ export default function Applications() {
         'Enrolled',
         'Applicants who paid a deposit and were enrolled as students. Document verification is tracked separately on the Students page.',
         grouped.enrolled,
-        '#8a6b34',
+        '#1a6b3c',
         'No applicants have been enrolled yet.',
       );
     }
@@ -523,7 +523,7 @@ export default function Applications() {
                     </div>
                     <div style={{ marginTop: 8 }}>
                       {url ? (
-                        <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#8a6b34', fontWeight: 700, textDecoration: 'none' }}>
+                        <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 700, textDecoration: 'none' }}>
                           Open document
                         </a>
                       ) : (
@@ -563,7 +563,7 @@ export default function Applications() {
                               href={docUrl(r.new_path) ?? '#'}
                               target="_blank"
                               rel="noreferrer"
-                              style={{ fontSize: 12, color: '#8a6b34', fontWeight: 800, textDecoration: 'none' }}
+                              style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 800, textDecoration: 'none' }}
                             >
                               Open resubmitted document
                             </a>

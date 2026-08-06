@@ -88,7 +88,7 @@ export default function AssessmentsPage() {
                 <Td>
                   <span style={{ fontSize: 12 }}>{a.entered_count}/{a.marks_count}</span>
                   <div style={{ width: 60, height: 4, background: '#f3f4f6', borderRadius: 2, marginTop: 3 }}>
-                    <div style={{ height: '100%', width: a.marks_count > 0 ? `${(a.entered_count / a.marks_count) * 100}%` : '0%', background: '#b6924c', borderRadius: 2 }} />
+                    <div style={{ height: '100%', width: a.marks_count > 0 ? `${(a.entered_count / a.marks_count) * 100}%` : '0%', background: '#1a6b3c', borderRadius: 2 }} />
                   </div>
                 </Td>
                 <Td><Badge variant={statusColors[a.status] ?? 'gray'} style={{ textTransform: 'capitalize' }}>{a.status}</Badge></Td>

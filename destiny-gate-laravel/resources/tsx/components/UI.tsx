@@ -2,13 +2,13 @@ import React from 'react';
 
 // ── Stat Card ─────────────────────────────────────────────────────────────────
 const iconColors = {
-  green:  { bg: '#f7f0e1', color: '#8a6b34' },
+  green:  { bg: '#f0faf4', color: '#1a6b3c' },
   red:    { bg: '#fef2f2', color: '#dc2626' },
   amber:  { bg: '#fffbeb', color: '#d97706' },
   blue:   { bg: '#eff6ff', color: '#2563eb' },
   purple: { bg: '#f5f3ff', color: '#7c3aed' },
 };
-const valColors = { green: '#8a6b34', red: '#dc2626', amber: '#d97706', blue: '#2563eb', purple: '#7c3aed' };
+const valColors = { green: '#1a6b3c', red: '#dc2626', amber: '#d97706', blue: '#2563eb', purple: '#7c3aed' };
 
 interface StatCardProps { label: string; value: string | number; icon?: string; color?: keyof typeof iconColors; trend?: string }
 
@@ -149,7 +149,7 @@ interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const BV_STYLES = {
-  primary: { background: '#b6924c', color: '#0f1a2e', border: 'none' },
+  primary: { background: '#1a6b3c', color: '#fff', border: 'none' },
   outline: { background: '#fff', color: '#374151', border: '1px solid #d1d5db' },
   danger:  { background: '#dc2626', color: '#fff', border: 'none' },
   ghost:   { background: 'transparent', color: '#64748b', border: 'none' },
@@ -245,7 +245,7 @@ export function Spinner() {
       <div style={{
         width: 28, height: 28,
         border: '2.5px solid #e2e8f0',
-        borderTopColor: '#b6924c',
+        borderTopColor: '#1a6b3c',
         borderRadius: '50%',
         animation: 'spin .65s linear infinite',
       }} />

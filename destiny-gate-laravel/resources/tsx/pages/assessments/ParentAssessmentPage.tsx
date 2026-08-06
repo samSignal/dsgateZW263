@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { Btn, Card, CardBody, CardHeader, Table, Td, Spinner, PageHeader, Badge } from '../../components/UI';
 
-const gradeColors: Record<string, string> = { A: '#0f1a2e', B: '#2563eb', C: '#7c3aed', D: '#d97706', E: '#f59e0b', U: '#dc2626' };
+const gradeColors: Record<string, string> = { A: '#0f3d22', B: '#2563eb', C: '#7c3aed', D: '#d97706', E: '#f59e0b', U: '#dc2626' };
 
 export default function ParentAssessmentPage() {
   const [selectedChild, setSelectedChild] = useState<any>(null);
@@ -43,13 +43,13 @@ export default function ParentAssessmentPage() {
         {(children as any[]).map((c: any) => (
           <div key={c.id} onClick={() => setSelectedChild(c)} style={{
             padding: '14px 20px', borderRadius: 12, cursor: 'pointer',
-            border: `2px solid ${selectedChild?.id === c.id ? '#b6924c' : '#e8eaed'}`,
-            background: selectedChild?.id === c.id ? '#eef1f8' : '#fff', minWidth: 180,
+            border: `2px solid ${selectedChild?.id === c.id ? '#1a6b3c' : '#e8eaed'}`,
+            background: selectedChild?.id === c.id ? '#f0faf4' : '#fff', minWidth: 180,
           }}>
             <div style={{ fontWeight: 700, fontSize: 14 }}>{c.name}</div>
             <div style={{ fontSize: 12, color: '#6b7280' }}>{c.student_number}</div>
             <div style={{ fontSize: 12, color: '#6b7280' }}>{c.class_name ?? 'No class'}</div>
-            {c.average && <div style={{ marginTop: 6, fontSize: 13, fontWeight: 700, color: '#8a6b34' }}>Avg: {c.average}%</div>}
+            {c.average && <div style={{ marginTop: 6, fontSize: 13, fontWeight: 700, color: '#1a6b3c' }}>Avg: {c.average}%</div>}
           </div>
         ))}
         {(children as any[]).length === 0 && <p style={{ color: '#9ca3af' }}>No children linked to your account.</p>}
@@ -84,12 +84,12 @@ export default function ParentAssessmentPage() {
               {(progress as any[]).map((p: any) => (
                 <div key={p.subject_name} style={{ background: '#fff', borderRadius: 10, border: '1px solid #e8eaed', padding: '14px 16px' }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>{p.subject_name}</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#8a6b34' }}>{p.average ? `${Number(p.average).toFixed(1)}%` : '—'}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#1a6b3c' }}>{p.average ? `${Number(p.average).toFixed(1)}%` : '—'}</div>
                   <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
                     High: {p.highest ?? '—'} · Low: {p.lowest ?? '—'} · {p.count} assessments
                   </div>
                   <div style={{ height: 4, background: '#f3f4f6', borderRadius: 2, marginTop: 8 }}>
-                    <div style={{ height: '100%', width: `${p.average ?? 0}%`, background: '#b6924c', borderRadius: 2 }} />
+                    <div style={{ height: '100%', width: `${p.average ?? 0}%`, background: '#1a6b3c', borderRadius: 2 }} />
                   </div>
                 </div>
               ))}

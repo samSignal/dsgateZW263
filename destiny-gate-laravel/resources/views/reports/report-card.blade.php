@@ -6,11 +6,12 @@
         @page { margin: 18mm 14mm; }
         body { font-family: DejaVu Sans, Arial, sans-serif; color:#0f172a; font-size:11px; }
         .page { position:relative; }
-        .watermark { position:fixed; top:38%; left:12%; right:12%; text-align:center; font-size:46px; color:#8a6b34; opacity:.055; font-weight:800; transform:rotate(-18deg); }
-        .header { border-bottom:3px solid #b6924c; padding-bottom:12px; margin-bottom:14px; display:table; width:100%; }
+        .watermark { position:fixed; top:38%; left:12%; right:12%; text-align:center; font-size:46px; color:#1a6b3c; opacity:.055; font-weight:800; transform:rotate(-18deg); }
+        .header { border-bottom:3px solid #1a6b3c; padding-bottom:12px; margin-bottom:14px; display:table; width:100%; }
         .brand, .photo { display:table-cell; vertical-align:top; }
-        .brand h1 { margin:0; color:#8a6b34; font-size:24px; letter-spacing:.3px; }
+        .brand h1 { margin:0; color:#0f3d22; font-size:24px; letter-spacing:.3px; }
         .brand .motto { color:#b88a11; font-weight:700; margin-top:3px; }
+        .brand .address { color:#64748b; font-size:9.5px; margin-top:4px; }
         .photo { text-align:right; width:90px; }
         .photo-box { width:72px; height:84px; border:1px solid #cbd5e1; display:inline-block; text-align:center; line-height:84px; color:#94a3b8; }
         .meta { display:table; width:100%; margin:12px 0; }
@@ -20,10 +21,10 @@
         table { width:100%; border-collapse:collapse; margin-top:8px; }
         th { background:#f8fafc; color:#334155; font-size:9px; text-transform:uppercase; letter-spacing:.35px; text-align:left; padding:7px; border:1px solid #dbe3ec; }
         td { padding:7px; border:1px solid #e2e8f0; vertical-align:top; }
-        .section-title { background:#b6924c; color:#fff; padding:6px 9px; font-weight:700; margin-top:13px; border-radius:3px; }
+        .section-title { background:#1a6b3c; color:#fff; padding:6px 9px; font-weight:700; margin-top:13px; border-radius:3px; }
         .cards { display:table; width:100%; border-spacing:8px 0; margin-top:8px; }
         .card { display:table-cell; border:1px solid #e2e8f0; padding:9px; border-radius:4px; }
-        .big { font-size:19px; font-weight:800; color:#8a6b34; }
+        .big { font-size:19px; font-weight:800; color:#0f3d22; }
         .badge { display:inline-block; padding:3px 7px; border-radius:10px; background:#ecfdf5; color:#065f46; font-weight:700; }
         .comments { display:table; width:100%; border-spacing:8px 0; margin-top:8px; }
         .comment { display:table-cell; width:50%; border:1px solid #e2e8f0; min-height:56px; padding:9px; }
@@ -37,7 +38,7 @@
 </head>
 <body>
 <div class="page">
-    <div class="watermark">WILLOWCREST COLLEGE</div>
+    <div class="watermark">DESTINYGATE INSTITUTE</div>
     @if(($report['financial_clearance_status'] ?? 'cleared') !== 'cleared')
         <div style="background:#991b1b;color:#fff;text-align:center;font-weight:800;padding:9px;margin-bottom:10px;letter-spacing:.5px;">
             RESULT WITHHELD - FEES NOT CLEARED
@@ -45,8 +46,9 @@
     @endif
     <div class="header">
         <div class="brand">
-            <h1>Willowcrest College</h1>
-            <div class="motto">Dream it, Achieve it.</div>
+            <h1>DestinyGate Institute</h1>
+            <div class="motto">Academic Excellence, Character, and Purpose</div>
+            <div class="address">15412 Samson Kanyemba Street, Runyararo West, Masvingo</div>
             <div style="margin-top:8px;font-weight:700;">Academic Report Card</div>
         </div>
         <div class="photo"><div class="photo-box">PHOTO</div></div>
@@ -121,7 +123,7 @@
     </div>
 
     <div class="footer">
-        <div>Willowcrest College - {{ $report['report_number'] }}</div>
+        <div>DestinyGate Institute - {{ $report['report_number'] }}</div>
         <div class="right">QR Verification: {{ $report['report_number'] }}</div>
     </div>
 </div>

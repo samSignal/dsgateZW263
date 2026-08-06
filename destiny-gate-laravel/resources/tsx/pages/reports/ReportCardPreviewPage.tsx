@@ -103,7 +103,7 @@ export default function ReportCardPreviewPage() {
     <Card>
       <CardBody>
         <div className="border-b-4 border-emerald-800 pb-4">
-          <div className="text-2xl font-bold text-emerald-800">Willowcrest College</div>
+          <div className="text-2xl font-bold text-emerald-800">DestinyGate Institute</div>
           <div className="font-semibold text-amber-700">Academic Excellence, Character, and Purpose</div>
         </div>
         <Grid cols={4} style={{ marginTop: 16 }}>

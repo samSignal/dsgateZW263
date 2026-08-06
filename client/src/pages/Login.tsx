@@ -1,7 +1,6 @@
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap } from "lucide-react";
 
 export default function Login() {
   return (
@@ -10,12 +9,12 @@ export default function Login() {
         {/* Logo and Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="bg-primary text-primary-foreground p-3 rounded-lg">
-              <GraduationCap size={32} />
+            <div className="w-[72px] h-[72px] rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center p-2.5">
+              <img src="/logo-mark.png" alt="DestinyGate Institute" className="w-full h-full object-contain" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">DestinyGate</h1>
-          <p className="text-muted-foreground">Institute Management System</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">DestinyGate Institute</h1>
+          <p className="text-muted-foreground italic">"Raising a Godly, Skilled and Confident Generation"</p>
         </div>
 
         {/* Login Card */}

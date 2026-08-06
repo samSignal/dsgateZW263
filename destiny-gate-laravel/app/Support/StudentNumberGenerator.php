@@ -5,8 +5,8 @@ namespace App\Support;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Format: W0{YY}{NNNN}{L}
- * Example: W0261234A — W, literal 0, last 2 digits of year, 4-digit sequence
+ * Format: D0{YY}{NNNN}{L}
+ * Example: D0261234A — D, literal 0, last 2 digits of year, 4-digit sequence
  * (per year, based on existing admission count), one random trailing letter.
  * The single source of truth for this format — used by every path that
  * creates a Student, so the manual "Add Student" form and the admissions
@@ -25,7 +25,7 @@ class StudentNumberGenerator
             $count = DB::table('students')->whereYear('admission_date', $year)->count();
             $seq = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
             $letter = chr(random_int(65, 90));
-            $number = "W0{$yy}{$seq}{$letter}";
+            $number = "D0{$yy}{$seq}{$letter}";
 
             $taken = DB::table('students')
                 ->where('student_number', $number)

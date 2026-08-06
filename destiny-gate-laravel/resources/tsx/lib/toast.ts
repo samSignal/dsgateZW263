@@ -55,7 +55,7 @@ export async function confirmAction(title: string, text: string, confirmText = '
     text,
     icon: 'question',
     showCancelButton: true,
-    confirmButtonColor: '#8a6b34',
+    confirmButtonColor: '#1a6b3c',
     cancelButtonColor: '#6b7280',
     confirmButtonText: confirmText,
     cancelButtonText: 'Cancel',

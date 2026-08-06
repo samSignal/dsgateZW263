@@ -39,7 +39,7 @@
         @endforelse
 
         <details style="margin-top:12px;">
-            <summary style="cursor:pointer; color:#8a6b34; font-size:0.9rem;">➕ Add Guardian</summary>
+            <summary style="cursor:pointer; color:#1a6b3c; font-size:0.9rem;">➕ Add Guardian</summary>
             <form method="POST" action="{{ route('students.guardians.store', $student) }}" style="margin-top:12px;">
                 @csrf
                 <div class="grid-2">

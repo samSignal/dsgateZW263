@@ -29,7 +29,7 @@
     <div class="table-card">
         <div style="padding:16px 20px; border-bottom:1px solid #e5e7eb; font-weight:600; display:flex; justify-content:space-between;">
             <span>📋 Recent Applications</span>
-            <a href="{{ route('admin.applications') }}" style="font-size:0.8rem; color:#8a6b34;">View all</a>
+            <a href="{{ route('admin.applications') }}" style="font-size:0.8rem; color:#1a6b3c;">View all</a>
         </div>
         <table>
             <thead><tr><th>Applicant</th><th>Class</th><th>Status</th></tr></thead>
@@ -48,7 +48,7 @@
     <div class="table-card">
         <div style="padding:16px 20px; border-bottom:1px solid #e5e7eb; font-weight:600; display:flex; justify-content:space-between;">
             <span>⚠️ Recent Behaviour Cases</span>
-            <a href="{{ route('headmaster.behaviour') }}" style="font-size:0.8rem; color:#8a6b34;">View all</a>
+            <a href="{{ route('headmaster.behaviour') }}" style="font-size:0.8rem; color:#1a6b3c;">View all</a>
         </div>
         <table>
             <thead><tr><th>Student</th><th>Issue</th><th>Severity</th></tr></thead>
@@ -69,7 +69,7 @@
 <div class="table-card">
     <div style="padding:16px 20px; border-bottom:1px solid #e5e7eb; font-weight:600; display:flex; justify-content:space-between;">
         <span>📢 Announcements</span>
-        <a href="{{ route('headmaster.announcements') }}" style="font-size:0.8rem; color:#8a6b34;">Manage</a>
+        <a href="{{ route('headmaster.announcements') }}" style="font-size:0.8rem; color:#1a6b3c;">Manage</a>
     </div>
     <div style="padding:16px;">
         <form method="POST" action="{{ route('headmaster.announcements.store') }}" style="display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end; margin-bottom:16px;">

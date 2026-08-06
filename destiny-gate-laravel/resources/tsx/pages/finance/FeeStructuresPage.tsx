@@ -78,7 +78,7 @@ export default function FeeStructuresPage() {
               <Td>{s.stream_name ?? '—'}</Td>
               <Td>{s.term_name}</Td>
               <Td>{s.academic_year_name}</Td>
-              <Td><strong style={{ color: '#8a6b34' }}>${Number(s.amount).toLocaleString()}</strong></Td>
+              <Td><strong style={{ color: '#1a6b3c' }}>${Number(s.amount).toLocaleString()}</strong></Td>
               <Td style={{ color: '#6b7280' }}>{s.due_date ?? '—'}</Td>
               <Td><Badge variant={s.is_active ? 'green' : 'gray'}>{s.is_active ? 'Active' : 'Inactive'}</Badge></Td>
               <Td>

@@ -9,7 +9,7 @@ const DAYS = ['monday','tuesday','wednesday','thursday','friday'];
 const DAY_LABELS: Record<string, string> = { monday:'Mon', tuesday:'Tue', wednesday:'Wed', thursday:'Thu', friday:'Fri' };
 
 // Subject colour palette
-const SUBJECT_COLORS = ['#0f1a2e','#2563eb','#7c3aed','#d97706','#dc2626','#0891b2','#059669','#9333ea','#ea580c','#0284c7'];
+const SUBJECT_COLORS = ['#0f3d22','#2563eb','#7c3aed','#d97706','#dc2626','#0891b2','#059669','#9333ea','#ea580c','#0284c7'];
 
 export default function TimetableBuilderPage() {
   const qc = useQueryClient();
@@ -154,7 +154,7 @@ export default function TimetableBuilderPage() {
                   </td>
                   {DAYS.map(d => {
                     const entry = grid[p.id]?.[d];
-                    const color = entry ? (subjectColorMap[entry.subject_id] ?? '#0f1a2e') : null;
+                    const color = entry ? (subjectColorMap[entry.subject_id] ?? '#0f3d22') : null;
                     return (
                       <td key={d} style={{ padding: 4, borderBottom: '1px solid #f3f4f6', borderLeft: '1px solid #f3f4f6', verticalAlign: 'top', minWidth: 130 }}>
                         {p.is_break ? (

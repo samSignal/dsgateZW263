@@ -239,7 +239,7 @@ export default function StudentDetail() {
                   }}>
                     <span style={{ fontSize: 13, color: '#111827' }}>{docLabel(key)}</span>
                     {url ? (
-                      <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#8a6b34', fontWeight: 700, textDecoration: 'none' }}>
+                      <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 700, textDecoration: 'none' }}>
                         Open →
                       </a>
                     ) : (
@@ -342,7 +342,7 @@ export default function StudentDetail() {
             <Input type="email" value={gForm.email} onChange={e => setGForm(f => ({...f, email: e.target.value}))} placeholder="For password reset" />
           </FormGroup>
         </Grid>
-        <div style={{ background: '#eef1f8', border: '1px solid #d1fae5', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#065f46' }}>
+        <div style={{ background: '#f0faf4', border: '1px solid #d1fae5', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#065f46' }}>
           🔐 Parent will login using <strong>phone number</strong> as username and <strong>National ID as default password</strong>. Email is optional but required for password reset.
         </div>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>

@@ -4,7 +4,7 @@ import api from '../../lib/api';
 import { Spinner, PageHeader, Btn, Select } from '../../components/UI';
 
 const DAYS = ['monday','tuesday','wednesday','thursday','friday'];
-const SUBJECT_COLORS = ['#0f1a2e','#2563eb','#7c3aed','#d97706','#dc2626','#0891b2','#059669','#9333ea'];
+const SUBJECT_COLORS = ['#0f3d22','#2563eb','#7c3aed','#d97706','#dc2626','#0891b2','#059669','#9333ea'];
 
 export default function ChildTimetablePage() {
   const [selectedChild, setSelectedChild] = useState<any>(null);
@@ -48,8 +48,8 @@ export default function ChildTimetablePage() {
         {children.map((c: any) => (
           <div key={c.id} onClick={() => setSelectedChild(c)} style={{
             padding: '12px 18px', borderRadius: 10, cursor: 'pointer',
-            border: `2px solid ${selectedChild?.id === c.id ? '#b6924c' : '#e8eaed'}`,
-            background: selectedChild?.id === c.id ? '#eef1f8' : '#fff',
+            border: `2px solid ${selectedChild?.id === c.id ? '#1a6b3c' : '#e8eaed'}`,
+            background: selectedChild?.id === c.id ? '#f0faf4' : '#fff',
           }}>
             <div style={{ fontWeight: 700, fontSize: 13 }}>{c.name}</div>
             <div style={{ fontSize: 11, color: '#6b7280' }}>{c.student_number} · {c.class_name ?? '—'}</div>
@@ -76,9 +76,9 @@ export default function ChildTimetablePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
             <thead>
               <tr>
-                <th style={{ background: '#0f1a2e', color: '#fff', padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, width: 120 }}>PERIOD</th>
+                <th style={{ background: '#0f3d22', color: '#fff', padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, width: 120 }}>PERIOD</th>
                 {DAYS.map(d => (
-                  <th key={d} style={{ background: '#0f1a2e', color: '#fff', padding: '10px 14px', textAlign: 'center', fontSize: 12, fontWeight: 700, borderLeft: '1px solid rgba(255,255,255,.1)' }}>
+                  <th key={d} style={{ background: '#0f3d22', color: '#fff', padding: '10px 14px', textAlign: 'center', fontSize: 12, fontWeight: 700, borderLeft: '1px solid rgba(255,255,255,.1)' }}>
                     {d.charAt(0).toUpperCase() + d.slice(1)}
                   </th>
                 ))}
@@ -93,7 +93,7 @@ export default function ChildTimetablePage() {
                   </td>
                   {DAYS.map(d => {
                     const entry = grid[p.id]?.[d];
-                    const color = entry ? (colorMap[entry.subject_name] ?? '#0f1a2e') : null;
+                    const color = entry ? (colorMap[entry.subject_name] ?? '#0f3d22') : null;
                     return (
                       <td key={d} style={{ padding: 6, borderBottom: '1px solid #f3f4f6', borderLeft: '1px solid #f3f4f6', minWidth: 130 }}>
                         {p.is_break ? (

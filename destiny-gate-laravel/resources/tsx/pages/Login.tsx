@@ -39,7 +39,7 @@ export default function Login({ onLogin }: Props) {
   return (
     <div style={{
       display: 'flex', height: '100vh', width: '100vw',
-      background: '#b6924c', // Primary green theme
+      background: '#0f3d22', // Primary green theme
       fontFamily: "'Inter', sans-serif",
       overflow: 'hidden',
     }}>
@@ -59,19 +59,19 @@ export default function Login({ onLogin }: Props) {
         <div style={{ marginBottom: 40 }}>
           <div style={{
             width: 72, height: 72,
-            background: '#eef1f8',
+            background: '#f0faf4',
             borderRadius: 16,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             marginBottom: 20,
             border: '1px solid #d1fae5',
           }}>
-            <img src="/logo-mark.png" alt="Willowcrest College" style={{ width: 52, height: 52, objectFit: 'contain' }} />
+            <img src="/logo-mark.png" alt="DestinyGate Institute" style={{ width: 52, height: 52, objectFit: 'contain' }} />
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', letterSpacing: '-.4px', marginBottom: 4 }}>
-            Willowcrest College
+            DestinyGate Institute
           </h1>
           <p style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>
-            "Dream it, Achieve it."
+            "Raising a Godly, Skilled and Confident Generation"
           </p>
         </div>
 
@@ -129,8 +129,8 @@ export default function Login({ onLogin }: Props) {
               type="submit" disabled={loading}
               style={{
                 width: '100%', padding: '11px',
-                background: loading ? '#d9c397' : '#b6924c',
-                color: '#0f1a2e', border: 'none', borderRadius: 8,
+                background: loading ? '#2d8a52' : '#1a6b3c',
+                color: '#fff', border: 'none', borderRadius: 8,
                 fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
                 transition: 'background .15s', letterSpacing: '.2px',
               }}
@@ -147,10 +147,10 @@ export default function Login({ onLogin }: Props) {
           }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.5px' }}>Demo accounts</p>
             {[
-              ['Admin',      'admin@willowcrestcollege.ac.zw'],
-              ['Headmaster', 'headmaster@willowcrestcollege.ac.zw'],
-              ['Bursar',     'bursar@willowcrestcollege.ac.zw'],
-              ['Teacher',    'tmutasa@willowcrestcollege.ac.zw'],
+              ['Admin',      'admin@destinygate.ac.zw'],
+              ['Headmaster', 'headmaster@destinygate.ac.zw'],
+              ['Bursar',     'bursar@destinygate.ac.zw'],
+              ['Teacher',    'tmutasa@destinygate.ac.zw'],
               ['Parent',     'jdube@gmail.com'],
             ].map(([role, em]) => (
               <div key={role} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
@@ -158,7 +158,7 @@ export default function Login({ onLogin }: Props) {
                 <button
                   type="button"
                   onClick={() => { setLogin(em); setPassword('password'); }}
-                  style={{ fontSize: 11, color: '#8a6b34', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                  style={{ fontSize: 11, color: '#1a6b3c', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
                 >
                   {em}
                 </button>
@@ -169,14 +169,14 @@ export default function Login({ onLogin }: Props) {
         </div>
 
         <p style={{ marginTop: 32, fontSize: 11, color: '#cbd5e1', textAlign: 'center' }}>
-          © {new Date().getFullYear()} Willowcrest College · Masvingo, Zimbabwe
+          © {new Date().getFullYear()} DestinyGate Institute · Masvingo, Zimbabwe
         </p>
       </div>
 
       {/* ── Right panel ── */}
       <div style={{
         flex: 1,
-        background: '#0f1a2e',
+        background: 'linear-gradient(135deg, #0f3d22 0%, #2d8a52 100%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -205,21 +205,21 @@ export default function Login({ onLogin }: Props) {
             boxShadow: '0 24px 64px rgba(0,0,0,.25)',
             padding: 16,
           }}>
-            <img src="/logo-full.png" alt="Willowcrest College" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src="/logo-full.png" alt="DestinyGate Institute" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
 
           <h2 style={{ color: '#fff', fontSize: 28, fontWeight: 800, textAlign: 'center', marginBottom: 12, letterSpacing: '-.4px' }}>
-            School Management System
+            Comprehensive School Management System
           </h2>
           <p style={{ color: 'rgba(255,255,255,.65)', fontSize: 14, textAlign: 'center', maxWidth: 360, lineHeight: 1.7, marginBottom: 40 }}>
-            A complete platform for managing students, staff, finances, academics, and school communications.
+            Elegant school management for the modern institution — a complete platform for managing students, staff, finances, academics, and school communications.
           </p>
 
           {/* Login method cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 360 }}>
             {[
               { icon: '🧑‍💼', title: 'Staff & Admin', desc: 'Login with your email address', color: '#4ade80' },
-              { icon: '🎓', title: 'Students',      desc: 'Login with Student Number (e.g. W0261234A)', color: '#60a5fa' },
+              { icon: '🎓', title: 'Students',      desc: 'Login with Student Number (e.g. D0261234A)', color: '#60a5fa' },
               { icon: '👨‍👩‍👧', title: 'Parents',       desc: 'Login with your phone number', color: '#fbbf24' },
             ].map(m => (
               <div key={m.title} style={{
@@ -250,7 +250,7 @@ export default function Login({ onLogin }: Props) {
               maxWidth: 360,
               padding: '12px 16px',
               background: 'rgba(255,255,255,.95)',
-              color: '#0f1a2e',
+              color: '#0f3d22',
               border: '1px solid rgba(255,255,255,.35)',
               borderRadius: 10,
               fontSize: 13,

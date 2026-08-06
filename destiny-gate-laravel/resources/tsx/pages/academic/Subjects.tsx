@@ -51,7 +51,7 @@ export default function Subjects() {
 
   return (
     <div>
-      <PageHeader title="Subjects" subtitle="All subjects offered at Willowcrest College" action={<Btn onClick={openAdd}>+ Add Subject</Btn>} />
+      <PageHeader title="Subjects" subtitle="All subjects offered at DestinyGate Institute" action={<Btn onClick={openAdd}>+ Add Subject</Btn>} />
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or code…"

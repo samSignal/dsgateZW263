@@ -4,7 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config(chr(97).chr(112).chr(112).chr(46).chr(110).chr(97).chr(109).chr(101), 'Willowcrest College') }} &mdash; @yield('title', 'Dashboard')</title>
+    <title>DestinyGate &mdash; @yield('title', 'Dashboard')</title>
+    <link rel="icon" type="image/png" href="/logo-mark.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -12,10 +14,14 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
         --sidebar-w:256px;
-        --primary:#b6924c;
-        --primary-text:#8a6b34;
-        --primary-dark:#0f1a2e;
-        --primary-light:#f7f0e1;
+        --primary:#1a6b3c;
+        --primary-text:#0f3d22;
+        --primary-dark:#0f3d22;
+        --primary-mid:#2d8a52;
+        --primary-light:#f0faf4;
+        --primary-border:#c6f0d8;
+        --gold-dark:#c9a227;
+        --gold-motto:#b88a11;
         --text:#111827;
         --text-muted:#6b7280;
         --border:#e5e7eb;
@@ -43,7 +49,8 @@
         padding:20px 20px 16px;
         border-bottom:1px solid rgba(255,255,255,.08);
     }
-    .sidebar-brand img{width:40px;height:40px;object-fit:contain;flex-shrink:0}
+    .sidebar-brand-badge{width:40px;height:40px;flex-shrink:0;background:var(--gold-dark);border-radius:8px;display:flex;align-items:center;justify-content:center;padding:4px}
+    .sidebar-brand img{width:100%;height:100%;object-fit:contain}
     .sidebar-brand-text{line-height:1.2}
     .sidebar-brand-name{color:#fff;font-size:13px;font-weight:700;letter-spacing:.3px}
     .sidebar-brand-sub{color:rgba(255,255,255,.45);font-size:10px;font-weight:400;letter-spacing:.5px;text-transform:uppercase}
@@ -76,7 +83,7 @@
     .topbar-right{display:flex;align-items:center;gap:12px}
     .topbar-avatar{
         width:34px;height:34px;border-radius:50%;
-        background:var(--primary);color:#0f1a2e;
+        background:var(--primary);color:#fff;
         display:flex;align-items:center;justify-content:center;
         font-size:13px;font-weight:600;
     }
@@ -166,7 +173,7 @@
     /* ── BUTTONS ── */
     .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;text-decoration:none;transition:all .15s;white-space:nowrap}
     .btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
-    .btn-primary{background:var(--primary);color:#0f1a2e}
+    .btn-primary{background:var(--primary);color:#fff}
     .btn-primary:hover{background:var(--primary-text);color:#fff}
     .btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
     .btn-outline:hover{background:#f9fafb;color:var(--text)}
@@ -185,7 +192,7 @@
         transition:border-color .15s,box-shadow .15s;
         font-family:inherit;
     }
-    .form-control:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(182,146,76,.15)}
+    .form-control:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,107,60,.15)}
     .form-control::placeholder{color:#9ca3af}
     textarea.form-control{resize:vertical;min-height:80px}
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -226,9 +233,11 @@
     {{-- SIDEBAR --}}
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <img src="/logo-mark.png" alt="Willowcrest College Logo">
+            <div class="sidebar-brand-badge">
+                <img src="/logo-mark.png" alt="DestinyGate Institute Logo">
+            </div>
             <div class="sidebar-brand-text">
-                <div class="sidebar-brand-name">Willowcrest College</div>
+                <div class="sidebar-brand-name">DESTINYGATE</div>
                 <div class="sidebar-brand-sub">Institute</div>
             </div>
         </div>

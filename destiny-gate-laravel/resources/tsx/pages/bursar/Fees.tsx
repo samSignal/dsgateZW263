@@ -18,8 +18,8 @@ export default function Fees() {
               <Td>{f.academic_year}</Td>
               <Td style={{ textTransform: 'uppercase' }}>{f.term}</Td>
               <Td>${Number(f.amount).toLocaleString()}</Td>
-              <Td style={{ color: '#8a6b34' }}>${Number(f.amount_paid).toLocaleString()}</Td>
-              <Td style={{ color: Number(f.balance) > 0 ? '#dc2626' : '#8a6b34', fontWeight: 600 }}>${Number(f.balance).toLocaleString()}</Td>
+              <Td style={{ color: '#1a6b3c' }}>${Number(f.amount_paid).toLocaleString()}</Td>
+              <Td style={{ color: Number(f.balance) > 0 ? '#dc2626' : '#1a6b3c', fontWeight: 600 }}>${Number(f.balance).toLocaleString()}</Td>
               <Td>{statusBadge(f.status)}</Td>
             </tr>
           ))}

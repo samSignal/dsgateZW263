@@ -3,15 +3,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Application Submitted — Willowcrest College</title>
+    <title>Application Submitted — DestinyGate Institute</title>
+    <link rel="icon" type="image/png" href="/logo-mark.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
         .card { background: #fff; border-radius: 16px; padding: 48px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; max-width: 500px; }
         .icon { font-size: 4rem; margin-bottom: 20px; }
-        h1 { color: #8a6b34; margin-bottom: 8px; }
+        h1 { color: #0f3d22; margin-bottom: 8px; }
         p { color: #6b7280; }
         .app-number { background: #d1fae5; color: #065f46; padding: 12px 24px; border-radius: 10px; font-size: 1.2rem; font-weight: 700; margin: 20px 0; display: inline-block; }
-        .btn { background: #b6924c; color: #fff; border: none; padding: 12px 32px; border-radius: 10px; font-size: 1rem; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 16px; }
+        .btn { background: #1a6b3c; color: #fff; border: none; padding: 12px 32px; border-radius: 10px; font-size: 1rem; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 16px; }
     </style>
 </head>
 <body>

@@ -42,7 +42,7 @@ export default function Forms() {
           {data.map(f => (
             <tr key={f.id}>
               <Td>
-                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: '50%', background: '#eef1f8', color: '#8a6b34', fontWeight: 700, fontSize: 12 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: '50%', background: '#f0faf4', color: '#1a6b3c', fontWeight: 700, fontSize: 12 }}>
                   {f.level}
                 </span>
               </Td>

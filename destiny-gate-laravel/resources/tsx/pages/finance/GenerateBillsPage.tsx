@@ -62,9 +62,9 @@ export default function GenerateBillsPage() {
               {(['form', 'stream', 'student'] as const).map(m => (
                 <button key={m} onClick={() => setMode(m)} style={{
                   padding: '8px 16px', borderRadius: 8, border: '1.5px solid',
-                  borderColor: mode === m ? '#b6924c' : '#e8eaed',
-                  background: mode === m ? '#eef1f8' : '#fff',
-                  color: mode === m ? '#8a6b34' : '#374151',
+                  borderColor: mode === m ? '#1a6b3c' : '#e8eaed',
+                  background: mode === m ? '#f0faf4' : '#fff',
+                  color: mode === m ? '#1a6b3c' : '#374151',
                   fontWeight: mode === m ? 600 : 400, fontSize: 13, cursor: 'pointer',
                   textTransform: 'capitalize',
                 }}>{m === 'form' ? 'By Form' : m === 'stream' ? 'By Class' : 'Single Student'}</button>
@@ -133,12 +133,12 @@ export default function GenerateBillsPage() {
                       <div style={{ fontSize: 13, fontWeight: 600 }}>{s.name}</div>
                       <div style={{ fontSize: 11, color: '#6b7280' }}>{s.category_name} · {s.form_name ?? 'All Forms'}</div>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#8a6b34' }}>${Number(s.amount).toLocaleString()}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#1a6b3c' }}>${Number(s.amount).toLocaleString()}</div>
                   </div>
                 ))}
-                <div style={{ marginTop: 12, padding: '10px 14px', background: '#eef1f8', borderRadius: 8, display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ marginTop: 12, padding: '10px 14px', background: '#f0faf4', borderRadius: 8, display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>Total per student</span>
-                  <span style={{ fontSize: 15, fontWeight: 800, color: '#8a6b34' }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#1a6b3c' }}>
                     ${(structures as any[]).reduce((sum: number, s: any) => sum + Number(s.amount), 0).toLocaleString()}
                   </span>
                 </div>

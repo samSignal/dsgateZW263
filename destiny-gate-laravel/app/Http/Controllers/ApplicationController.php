@@ -552,7 +552,7 @@ class ApplicationController extends Controller
 
         $text = implode("\n\n", [
             "Dear {$studentName},",
-            "Thank you for applying to Willowcrest College. Your application has been received.",
+            "Thank you for applying to DestinyGate Institute. Your application has been received.",
             "Application number: {$application->application_number}",
             "Please keep this application number for reference. We will contact you at {$application->email} with updates on your application status.",
         ]);

@@ -293,14 +293,14 @@ export default function Layout({ user, onLogout, children }: Props) {
         <div style={{display:'flex', alignItems:'center', gap:10}}>
           <div style={{
             width:42, height:42, flexShrink:0,
-            background:'#b6924c',
+            background:'#c9a227',
             borderRadius:9, border:'2px solid rgba(255,255,255,.25)',
             display:'flex', alignItems:'center', justifyContent:'center', padding:4,
           }}>
             <img src="/logo-mark.png" alt="Logo" style={{width:'100%', height:'100%', objectFit:'contain'}}/>
           </div>
           <div>
-            <div style={{fontSize:14, fontWeight:800, color:'#fff', letterSpacing:'.3px', lineHeight:1.1}}>WILLOWCREST</div>
+            <div style={{fontSize:14, fontWeight:800, color:'#fff', letterSpacing:'.3px', lineHeight:1.1}}>DESTINYGATE</div>
             <div style={{fontSize:9, color:'rgba(255,255,255,.55)', fontWeight:600, letterSpacing:'1.2px', textTransform:'uppercase', marginTop:2}}>INSTITUTE</div>
           </div>
         </div>
@@ -366,7 +366,7 @@ export default function Layout({ user, onLogout, children }: Props) {
       {/* ── DESKTOP SIDEBAR ── */}
       {!isMobile && sidebarOpen && (
         <aside className="sidebar-desktop" style={{
-          width:200, background:'#0f1a2e',
+          width:200, background:'#0f3d22',
           display:'flex', flexDirection:'column',
           position:'fixed', top:0, left:0, bottom:0, zIndex:100, overflowY:'auto',
           transition:'transform .22s ease',
@@ -379,7 +379,7 @@ export default function Layout({ user, onLogout, children }: Props) {
       {isMobile && sidebarOpen && (
         <>
           <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
-          <aside className="sidebar-mobile" style={{display:'flex', flexDirection:'column', background:'#0f1a2e'}}>
+          <aside className="sidebar-mobile" style={{display:'flex', flexDirection:'column', background:'#0f3d22'}}>
             <SidebarContent onClose={() => setSidebarOpen(false)} />
           </aside>
         </>
@@ -494,17 +494,17 @@ export default function Layout({ user, onLogout, children }: Props) {
               <span style={{
                 position:'absolute',top:-4,right:-4,
                 minWidth:16,height:16,
-                background:'#b6924c',borderRadius:8,
+                background:'#1a6b3c',borderRadius:8,
                 border:'2px solid #fff',
                 display:'flex',alignItems:'center',justifyContent:'center',
-                fontSize:9,fontWeight:700,color:'#0f1a2e',lineHeight:1,
+                fontSize:9,fontWeight:700,color:'#fff',lineHeight:1,
                 padding:'0 3px',
               }}>2</span>
             </div>
 
             {/* User card */}
             <div style={{display:'flex',alignItems:'center',gap:8,padding:'4px 10px 4px 5px',border:'1px solid #e8eaed',borderRadius:8,cursor:'pointer',background:'#fff'}}>
-              <div style={{width:28,height:28,borderRadius:'50%',background:'#b6924c',color:'#0f1a2e',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0}}>{initials}</div>
+              <div style={{width:28,height:28,borderRadius:'50%',background:'#1a6b3c',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0}}>{initials}</div>
               <div className="topbar-user-name">
                 <div style={{fontSize:12,fontWeight:600,color:'#111827',lineHeight:1.2,whiteSpace:'nowrap'}}>{user.name}</div>
                 <div style={{fontSize:10,color:'#9ca3af',textTransform:'capitalize',whiteSpace:'nowrap'}}>
@@ -526,13 +526,13 @@ export default function Layout({ user, onLogout, children }: Props) {
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <div style={{
               width:26,height:26,borderRadius:6,
-              background:'#b6924c',
+              background:'#1a6b3c',
               display:'flex',alignItems:'center',justifyContent:'center',padding:3,
               flexShrink:0,
             }}>
               <img src="/logo-mark.png" alt="Logo" style={{width:'100%',height:'100%',objectFit:'contain'}}/>
             </div>
-            <span>© {new Date().getFullYear()} Willowcrest College. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} DestinyGate Institute. All rights reserved.</span>
           </div>
           <span>SMN Dev Consultancy</span>
         </footer>

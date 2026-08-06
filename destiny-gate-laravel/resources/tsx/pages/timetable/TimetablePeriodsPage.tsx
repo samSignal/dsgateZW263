@@ -44,7 +44,7 @@ export default function TimetablePeriodsPage() {
             const mins  = Math.round((end.getTime() - start.getTime()) / 60000);
             return (
               <tr key={p.id}>
-                <Td><span style={{ fontWeight: 700, color: '#8a6b34' }}>{p.period_number}</span></Td>
+                <Td><span style={{ fontWeight: 700, color: '#1a6b3c' }}>{p.period_number}</span></Td>
                 <Td><strong>{p.name}</strong></Td>
                 <Td>{p.start_time.slice(0,5)}</Td>
                 <Td>{p.end_time.slice(0,5)}</Td>

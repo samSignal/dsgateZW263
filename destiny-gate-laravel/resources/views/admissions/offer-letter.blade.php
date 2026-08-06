@@ -27,7 +27,7 @@
         .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
         .actions { margin-top: 18px; padding-top: 14px; border-top: 1px solid #e5e7eb; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         .btn { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; padding: 10px 16px; font-size: 12px; font-weight: bold; cursor: pointer; text-decoration: none; }
-        .btn-primary { background: #b6924c; color: #fff; }
+        .btn-primary { background: #1a6b3c; color: #fff; }
         .accepted { color: #166534; font-weight: bold; }
     </style>
 </head>

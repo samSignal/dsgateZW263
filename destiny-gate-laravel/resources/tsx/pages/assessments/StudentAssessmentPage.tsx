@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { Alert, Btn, Card, CardBody, CardHeader, Table, Td, Spinner, PageHeader } from '../../components/UI';
 
-const gradeColors: Record<string, string> = { A: '#0f1a2e', B: '#2563eb', C: '#7c3aed', D: '#d97706', E: '#f59e0b', U: '#dc2626' };
+const gradeColors: Record<string, string> = { A: '#0f3d22', B: '#2563eb', C: '#7c3aed', D: '#d97706', E: '#f59e0b', U: '#dc2626' };
 
 export default function StudentAssessmentPage() {
   const [yearId, setYearId] = useState('');
@@ -43,10 +43,10 @@ export default function StudentAssessmentPage() {
           {(progress as any[]).map((p: any) => (
             <div key={p.subject_name} style={{ background: '#fff', borderRadius: 10, border: '1px solid #e8eaed', padding: '14px 16px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{p.subject_name}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#8a6b34' }}>{p.average ? `${Number(p.average).toFixed(1)}%` : '—'}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#1a6b3c' }}>{p.average ? `${Number(p.average).toFixed(1)}%` : '—'}</div>
               <div style={{ fontSize: 10, color: '#6b7280', marginTop: 3 }}>{p.count} assessments</div>
               <div style={{ height: 4, background: '#f3f4f6', borderRadius: 2, marginTop: 6 }}>
-                <div style={{ height: '100%', width: `${p.average ?? 0}%`, background: '#b6924c', borderRadius: 2 }} />
+                <div style={{ height: '100%', width: `${p.average ?? 0}%`, background: '#1a6b3c', borderRadius: 2 }} />
               </div>
             </div>
           ))}

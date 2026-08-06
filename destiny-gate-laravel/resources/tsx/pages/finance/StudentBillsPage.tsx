@@ -64,8 +64,8 @@ export default function StudentBillsPage() {
                   </Td>
                   <Td>{b.description}</Td>
                   <Td>${Number(b.amount).toLocaleString()}</Td>
-                  <Td style={{ color: '#8a6b34' }}>${Number(b.amount_paid).toLocaleString()}</Td>
-                  <Td style={{ color: Number(b.balance) > 0 ? '#dc2626' : '#8a6b34', fontWeight: 600 }}>${Number(b.balance).toLocaleString()}</Td>
+                  <Td style={{ color: '#1a6b3c' }}>${Number(b.amount_paid).toLocaleString()}</Td>
+                  <Td style={{ color: Number(b.balance) > 0 ? '#dc2626' : '#1a6b3c', fontWeight: 600 }}>${Number(b.balance).toLocaleString()}</Td>
                   <Td>{statusBadge(b.status)}</Td>
                   <Td style={{ color: '#6b7280' }}>{b.due_date ?? '—'}</Td>
                   <Td>

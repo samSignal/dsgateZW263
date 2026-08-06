@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
         // ---- Admin ----
         $admin = User::create([
             'name'     => 'System Administrator',
-            'email'    => 'admin@willowcrestcollege.ac.zw',
+            'email'    => 'admin@destinygate.ac.zw',
             'password' => Hash::make('password'),
             'role'     => 'admin',
             'is_active'=> true,
@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
         // ---- Headmaster ----
         $hmUser = User::create([
             'name'     => 'Dr. Emmanuel Chikwanda',
-            'email'    => 'headmaster@willowcrestcollege.ac.zw',
+            'email'    => 'headmaster@destinygate.ac.zw',
             'password' => Hash::make('password'),
             'role'     => 'headmaster',
         ]);
@@ -40,7 +40,7 @@ class DatabaseSeeder extends Seeder
             'staff_id'        => 'STF-0001',
             'first_name'      => 'Emmanuel',
             'last_name'       => 'Chikwanda',
-            'email'           => 'headmaster@willowcrestcollege.ac.zw',
+            'email'           => 'headmaster@destinygate.ac.zw',
             'department'      => 'Administration',
             'position'        => 'Headmaster',
             'roles'           => ['headmaster'],
@@ -50,7 +50,7 @@ class DatabaseSeeder extends Seeder
         // ---- Bursar ----
         $bursarUser = User::create([
             'name'     => 'Mrs. Grace Moyo',
-            'email'    => 'bursar@willowcrestcollege.ac.zw',
+            'email'    => 'bursar@destinygate.ac.zw',
             'password' => Hash::make('password'),
             'role'     => 'bursar',
         ]);
@@ -59,7 +59,7 @@ class DatabaseSeeder extends Seeder
             'staff_id'   => 'STF-0002',
             'first_name' => 'Grace',
             'last_name'  => 'Moyo',
-            'email'      => 'bursar@willowcrestcollege.ac.zw',
+            'email'      => 'bursar@destinygate.ac.zw',
             'department' => 'Finance',
             'position'   => 'Bursar',
             'roles'      => ['bursar'],
@@ -68,7 +68,7 @@ class DatabaseSeeder extends Seeder
         // ---- Teachers ----
         $teacher1User = User::create([
             'name'     => 'Mr. Tendai Mutasa',
-            'email'    => 'tmutasa@willowcrestcollege.ac.zw',
+            'email'    => 'tmutasa@destinygate.ac.zw',
             'password' => Hash::make('password'),
             'role'     => 'teacher',
         ]);
@@ -77,7 +77,7 @@ class DatabaseSeeder extends Seeder
             'staff_id'   => 'STF-0003',
             'first_name' => 'Tendai',
             'last_name'  => 'Mutasa',
-            'email'      => 'tmutasa@willowcrestcollege.ac.zw',
+            'email'      => 'tmutasa@destinygate.ac.zw',
             'department' => 'Sciences',
             'position'   => 'Science Teacher',
             'roles'      => ['teacher'],
@@ -85,7 +85,7 @@ class DatabaseSeeder extends Seeder
 
         $teacher2User = User::create([
             'name'     => 'Ms. Rudo Ncube',
-            'email'    => 'rncube@willowcrestcollege.ac.zw',
+            'email'    => 'rncube@destinygate.ac.zw',
             'password' => Hash::make('password'),
             'role'     => 'teacher',
         ]);
@@ -94,7 +94,7 @@ class DatabaseSeeder extends Seeder
             'staff_id'   => 'STF-0004',
             'first_name' => 'Rudo',
             'last_name'  => 'Ncube',
-            'email'      => 'rncube@willowcrestcollege.ac.zw',
+            'email'      => 'rncube@destinygate.ac.zw',
             'department' => 'Humanities',
             'position'   => 'English Teacher',
             'roles'      => ['teacher'],
@@ -138,7 +138,7 @@ class DatabaseSeeder extends Seeder
             'admission_number' => 'DGI-' . date('Y') . '-0001',
             'first_name'       => 'Tatenda',
             'last_name'        => 'Dube',
-            'email'            => 'tatenda.dube@student.willowcrestcollege.ac.zw',
+            'email'            => 'tatenda.dube@student.destinygate.ac.zw',
             'date_of_birth'    => '2010-03-15',
             'gender'           => 'male',
             'class_id'         => $class1->id,
@@ -273,10 +273,10 @@ class DatabaseSeeder extends Seeder
         $this->command->info('✅ Demo data seeded successfully!');
         $this->command->info('');
         $this->command->info('Login credentials:');
-        $this->command->info('  Admin:      admin@willowcrestcollege.ac.zw / password');
-        $this->command->info('  Headmaster: headmaster@willowcrestcollege.ac.zw / password');
-        $this->command->info('  Bursar:     bursar@willowcrestcollege.ac.zw / password');
-        $this->command->info('  Teacher:    tmutasa@willowcrestcollege.ac.zw / password');
+        $this->command->info('  Admin:      admin@destinygate.ac.zw / password');
+        $this->command->info('  Headmaster: headmaster@destinygate.ac.zw / password');
+        $this->command->info('  Bursar:     bursar@destinygate.ac.zw / password');
+        $this->command->info('  Teacher:    tmutasa@destinygate.ac.zw / password');
         $this->command->info('  Parent:     jdube@gmail.com / password');
     }
 }

@@ -5,7 +5,7 @@ import api from '../../lib/api';
 import { toastSuccess, toastError, confirmAction } from '../../lib/toast';
 import { Spinner, PageHeader, Btn, Alert, Badge } from '../../components/UI';
 
-const gradeColors: Record<string, string> = { A: '#0f1a2e', B: '#2563eb', C: '#7c3aed', D: '#d97706', E: '#f59e0b', U: '#dc2626' };
+const gradeColors: Record<string, string> = { A: '#0f3d22', B: '#2563eb', C: '#7c3aed', D: '#d97706', E: '#f59e0b', U: '#dc2626' };
 
 export default function EnterMarksPage() {
   const { id } = useParams<{ id: string }>();

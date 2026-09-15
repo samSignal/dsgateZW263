@@ -9,6 +9,8 @@ class TeacherSubject extends Model
 {
     use HasFactory;
 
+    protected $table = 'teacher_subjects';
+
     protected $fillable = ['staff_id', 'class_id', 'subject_id', 'academic_year'];
 
     public function staff()

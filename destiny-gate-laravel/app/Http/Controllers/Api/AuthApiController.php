@@ -25,13 +25,7 @@ class AuthApiController extends Controller
             ->orWhere('username', $login)
             ->first();
 
-        if (!$user) {
-            throw ValidationException::withMessages([
-                'login' => ['No account found with these credentials.'],
-            ]);
-        }
-
-        if (!Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'login' => ['The provided credentials are incorrect.'],
             ]);
@@ -109,20 +103,9 @@ class AuthApiController extends Controller
     {
         $request->validate(['email' => 'required|email']);
 
-        $user = DB::table('users')->where('email', $request->email)->first();
-
-        if (!$user) {
-            // Check if this is a guardian with no email
-            $guardian = DB::table('guardians')->where('email', $request->email)->first();
-            if (!$guardian) {
-                return response()->json([
-                    'message' => 'No account found with this email address. Please contact the school office.',
-                ], 404);
-            }
-        }
-
-        // In a real system, send reset email here
-        // For now, return success message
+        // In a real system, send reset email here if an account exists.
+        // Always return the same generic response so this endpoint can't be used
+        // to enumerate which email addresses have accounts.
         return response()->json([
             'message' => 'If an account exists with this email, a password reset link has been sent.',
         ]);
@@ -132,23 +115,10 @@ class AuthApiController extends Controller
     {
         $request->validate(['username' => 'required|string']);
 
-        // Find guardian by phone (username)
-        $user = DB::table('users')->where('username', $request->username)->where('role', 'parent')->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'No parent account found with this phone number.'], 404);
-        }
-
-        if (!$user->email) {
-            return response()->json([
-                'message' => 'No email address is registered for this account. Please contact the school office.',
-                'has_email' => false,
-            ], 422);
-        }
-
+        // Always return the same generic response so this endpoint can't be used
+        // to enumerate registered phone numbers or which accounts have an email on file.
         return response()->json([
-            'message'   => 'A password reset link has been sent to ' . substr($user->email, 0, 3) . '***',
-            'has_email' => true,
+            'message' => 'If an account exists with this phone number and has an email on file, a password reset link has been sent.',
         ]);
     }
 }

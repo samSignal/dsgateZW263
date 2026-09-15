@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { toastSuccess, toastError, confirmDelete } from '../../lib/toast';
 import { Card, Table, Td, Spinner, PageHeader, Btn, Badge, Modal, FormGroup, Input, Select, Grid, Alert } from '../../components/UI';
@@ -21,6 +21,7 @@ export default function Subjects() {
   const { data = [], isLoading } = useQuery<Subject[]>({
     queryKey: ['subjects', search, filterGroup],
     queryFn: () => api.get('/subjects', { params: { search: search || undefined, subject_group_id: filterGroup || undefined } }).then(r => r.data),
+    placeholderData: keepPreviousData, // otherwise every keystroke flashes the whole page to a spinner
   });
 
   const openAdd  = () => { setEditing(null); setForm(empty); setFormErr(''); setOpen(true); };

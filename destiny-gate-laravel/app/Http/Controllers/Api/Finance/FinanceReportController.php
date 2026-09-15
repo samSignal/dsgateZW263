@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\Api\Finance;
 
+use App\Http\Controllers\Api\Finance\Concerns\ExportsReports;
 use App\Http\Controllers\Controller;
+use App\Support\FeeAccountService;
 use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class FinanceReportController extends Controller
 {
+    use ExportsReports;
+
     /* ── Dashboard Summary ────────────────────────────────────────────────── */
 
     public function dashboardSummary(Request $request)
@@ -17,7 +21,7 @@ class FinanceReportController extends Controller
         $termId = $request->term_id;
 
         $billsQ = DB::table('student_bills')->where('status', '!=', 'cancelled');
-        $paymQ  = DB::table('finance_payments');
+        $paymQ  = DB::table('finance_payments')->where('status', 'active');
 
         if ($yearId) { $billsQ->where('academic_year_id', $yearId); $paymQ->where('academic_year_id', $yearId); }
         if ($termId) { $billsQ->where('term_id', $termId);          $paymQ->where('term_id', $termId); }
@@ -51,8 +55,10 @@ class FinanceReportController extends Controller
                 'students.first_name as student_first_name',
                 'students.last_name as student_last_name',
                 'students.student_number',
+                'students.admission_number',
                 'users.name as received_by_name'
             )
+            ->where('fp.status', 'active')
             ->whereDate('fp.payment_date', $date)
             ->orderByDesc('fp.id')
             ->get();
@@ -62,6 +68,16 @@ class FinanceReportController extends Controller
 
         $total = $payments->sum('amount');
         $byMethod = $payments->groupBy('payment_method')->map(fn($g) => $g->sum('amount'));
+
+        if ($request->format === 'pdf') {
+            return $this->exportPdf('reports.finance.daily-register', compact('date', 'total', 'payments'), "daily-register-{$date}.pdf");
+        }
+        if ($request->format === 'csv') {
+            return $this->exportCsv("daily-register-{$date}.csv",
+                ['Receipt #', 'Student', 'Method', 'Received By', 'Amount'],
+                $payments->map(fn ($p) => [$p->receipt_number, $p->student_name, $p->payment_method, $p->received_by_name, $p->amount])
+            );
+        }
 
         return response()->json(['date' => $date, 'total' => $total, 'by_method' => $byMethod, 'payments' => $payments]);
     }
@@ -74,6 +90,7 @@ class FinanceReportController extends Controller
         $month = $request->month ?? date('m');
 
         $payments = DB::table('finance_payments')
+            ->where('status', 'active')
             ->whereYear('payment_date', $year)
             ->whereMonth('payment_date', $month)
             ->selectRaw('DATE(payment_date) as date, SUM(amount) as total, COUNT(*) as count')
@@ -98,10 +115,12 @@ class FinanceReportController extends Controller
                 'students.first_name as student_first_name',
                 'students.last_name as student_last_name',
                 'students.student_number',
+                'students.admission_number',
                 'users.name as received_by_name'
             )
             ->where('fp.academic_year_id', $request->academic_year_id)
             ->where('fp.term_id', $request->term_id)
+            ->where('fp.status', 'active')
             ->orderByDesc('fp.payment_date')
             ->get();
         foreach ($payments as $p) {
@@ -110,6 +129,21 @@ class FinanceReportController extends Controller
 
         $total    = $payments->sum('amount');
         $byMethod = $payments->groupBy('payment_method')->map(fn($g) => $g->sum('amount'));
+
+        if (in_array($request->format, ['pdf', 'csv'])) {
+            $academicYearName = DB::table('academic_years')->where('id', $request->academic_year_id)->value('name');
+            $termName         = DB::table('terms')->where('id', $request->term_id)->value('name');
+
+            if ($request->format === 'pdf') {
+                return $this->exportPdf('reports.finance.term-collection',
+                    compact('payments', 'total', 'academicYearName', 'termName'),
+                    "term-collection-{$academicYearName}-{$termName}.pdf");
+            }
+            return $this->exportCsv("term-collection-{$academicYearName}-{$termName}.csv",
+                ['Receipt #', 'Student', 'Method', 'Date', 'Amount'],
+                $payments->map(fn ($p) => [$p->receipt_number, $p->student_name, $p->payment_method, $p->payment_date, $p->amount])
+            );
+        }
 
         return response()->json(['total' => $total, 'by_method' => $byMethod, 'payments' => $payments]);
     }
@@ -125,12 +159,13 @@ class FinanceReportController extends Controller
                 'students.first_name as student_first_name',
                 'students.last_name as student_last_name',
                 'students.student_number',
+                'students.admission_number',
                 DB::raw('SUM(sb.balance) as total_balance'),
                 DB::raw('SUM(sb.amount) as total_billed'),
                 DB::raw('SUM(sb.amount_paid) as total_paid')
             )
             ->whereIn('sb.status', ['unpaid', 'partial'])
-            ->groupBy('students.id', 'students.first_name', 'students.last_name', 'students.student_number')
+            ->groupBy('students.id', 'students.first_name', 'students.last_name', 'students.student_number', 'students.admission_number')
             ->orderByDesc('total_balance');
 
         if ($request->academic_year_id) $q->where('sb.academic_year_id', $request->academic_year_id);
@@ -144,6 +179,16 @@ class FinanceReportController extends Controller
 
         if ($request->form_id) {
             $rows = $rows->filter(fn ($row) => (int) $row->form_id === (int) $request->form_id)->values();
+        }
+
+        if ($request->format === 'pdf') {
+            return $this->exportPdf('reports.finance.debtors', compact('rows'), 'fees-arrears-report.pdf');
+        }
+        if ($request->format === 'csv') {
+            return $this->exportCsv('fees-arrears-report.csv',
+                ['Student', 'Student #', 'Form', 'Billed', 'Paid', 'Balance'],
+                $rows->map(fn ($r) => [$r->student_name, $r->student_number ?: $r->admission_number, $r->form_name, $r->total_billed, $r->total_paid, $r->total_balance])
+            );
         }
 
         return response()->json($rows);
@@ -169,7 +214,7 @@ class FinanceReportController extends Controller
                 if ($request->term_id)          $sub->where('student_bills.term_id', $request->term_id);
             })
             ->where('students.status', 'active')
-            ->select('students.id', 'students.first_name', 'students.last_name', 'students.student_number')
+            ->select('students.id', 'students.first_name', 'students.last_name', 'students.student_number', 'students.admission_number')
             ->orderBy('students.first_name');
 
         $rows = $q->get();
@@ -248,6 +293,72 @@ class FinanceReportController extends Controller
         return response()->json($rows);
     }
 
+    /* ── Cashier Reconciliation ───────────────────────────────────────────── */
+
+    public function cashierReconciliation(Request $request)
+    {
+        $dateFrom = $request->date_from ?? $request->date ?? date('Y-m-d');
+        $dateTo   = $request->date_to   ?? $dateFrom;
+
+        $rows = DB::table('finance_payments as fp')
+            ->join('users', 'fp.received_by', '=', 'users.id')
+            ->select(
+                'fp.received_by',
+                'users.name as cashier_name',
+                'fp.payment_method',
+                DB::raw('COUNT(*) as payment_count'),
+                DB::raw('SUM(fp.amount) as total_amount')
+            )
+            ->where('fp.status', 'active')
+            ->whereBetween('fp.payment_date', [$dateFrom, $dateTo])
+            ->groupBy('fp.received_by', 'users.name', 'fp.payment_method')
+            ->orderBy('users.name')
+            ->orderBy('fp.payment_method')
+            ->get();
+
+        $cashiers = [];
+        foreach ($rows as $row) {
+            $key = $row->received_by;
+            if (!isset($cashiers[$key])) {
+                $cashiers[$key] = (object) [
+                    'received_by'   => $row->received_by,
+                    'cashier_name'  => $row->cashier_name,
+                    'by_method'     => [],
+                    'payment_count' => 0,
+                    'total_amount'  => 0,
+                ];
+            }
+            $cashiers[$key]->by_method[$row->payment_method] = (float) $row->total_amount;
+            $cashiers[$key]->payment_count += (int) $row->payment_count;
+            $cashiers[$key]->total_amount  += (float) $row->total_amount;
+        }
+
+        $cashiers = array_values($cashiers);
+        $grandTotal = array_sum(array_map(fn ($c) => $c->total_amount, $cashiers));
+
+        if ($request->format === 'pdf') {
+            return $this->exportPdf('reports.finance.cashier-reconciliation',
+                compact('cashiers', 'grandTotal', 'dateFrom', 'dateTo'),
+                "cashier-reconciliation-{$dateFrom}.pdf");
+        }
+        if ($request->format === 'csv') {
+            $csvRows = [];
+            foreach ($cashiers as $c) {
+                foreach ($c->by_method as $method => $amount) {
+                    $csvRows[] = [$c->cashier_name, $method, $amount];
+                }
+            }
+            return $this->exportCsv("cashier-reconciliation-{$dateFrom}.csv", ['Cashier', 'Method', 'Amount'], $csvRows);
+        }
+
+        return response()->json([
+            'date_from'   => $dateFrom,
+            'date_to'     => $dateTo,
+            'cashiers'    => $cashiers,
+            'grand_total' => $grandTotal,
+        ]);
+    }
+
     /* ── Student Statement ────────────────────────────────────────────────── */
 
     public function studentStatement(int $studentId, Request $request)
@@ -272,10 +383,30 @@ class FinanceReportController extends Controller
         $totalPaid    = DB::table('student_bills')->where('student_id', $studentId)->where('status', '!=', 'cancelled')->sum('amount_paid');
         $totalBalance = DB::table('student_bills')->where('student_id', $studentId)->where('status', '!=', 'cancelled')->sum('balance');
 
+        // §2.3 formula: Opening Balance + Current Charges + Other Charges − Payments = Outstanding Balance.
+        // "Current Charges" and "Other Charges" are both fee categories billed within the term, already
+        // combined in current_term_charges — the spec doesn't require them tracked as separate figures.
+        $termId = $request->term_id ?: DB::table('terms')->where('is_current', true)->value('id');
+        $yearId = $request->academic_year_id ?: DB::table('terms')->where('id', $termId)->value('academic_year_id');
+        $accountSummary = ($termId && $yearId) ? FeeAccountService::accountSummary($studentId, (int) $yearId, (int) $termId) : null;
+
+        if ($request->format === 'pdf') {
+            return $this->exportPdf('reports.finance.statement',
+                ['student' => $student, 'transactions' => $transactions, 'accountSummary' => $accountSummary],
+                "statement-{$student->admission_number}.pdf");
+        }
+        if ($request->format === 'csv') {
+            return $this->exportCsv("statement-{$student->admission_number}.csv",
+                ['Date', 'Description', 'Type', 'Debit', 'Credit', 'Balance'],
+                $transactions->map(fn ($t) => [$t->created_at, $t->description, $t->transaction_type, $t->debit, $t->credit, $t->balance_after])
+            );
+        }
+
         return response()->json([
-            'student'       => $student,
-            'transactions'  => $transactions,
-            'summary'       => ['total_billed' => $totalBilled, 'total_paid' => $totalPaid, 'total_balance' => $totalBalance],
+            'student'         => $student,
+            'transactions'    => $transactions,
+            'summary'         => ['total_billed' => $totalBilled, 'total_paid' => $totalPaid, 'total_balance' => $totalBalance],
+            'account_summary' => $accountSummary,
         ]);
     }
 }

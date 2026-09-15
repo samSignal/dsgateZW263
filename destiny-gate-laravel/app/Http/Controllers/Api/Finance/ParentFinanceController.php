@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Support\FeeAccountService;
 use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,15 +28,13 @@ class ParentFinanceController extends Controller
 
         $children = DB::table('students')
             ->whereIn('students.id', $studentIds)
-            ->select('students.id', 'students.first_name', 'students.last_name', 'students.student_number')
+            ->select('students.id', 'students.first_name', 'students.last_name', 'students.student_number', 'students.admission_number')
             ->get()
             ->map(function ($s) {
                 $s->name = trim(($s->first_name ?? '') . ' ' . ($s->last_name ?? ''));
                 StudentStreamResolver::attachResolvedFields($s);
-                $s->balance = DB::table('student_bills')
-                    ->where('student_id', $s->id)
-                    ->where('status', '!=', 'cancelled')
-                    ->sum('balance');
+                $s->balance = FeeAccountService::outstandingBalance($s->id);
+                $s->is_billed = FeeAccountService::hasAnyBills($s->id);
                 return $s;
             });
 
@@ -90,10 +89,7 @@ class ParentFinanceController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        $balance = DB::table('student_bills')
-            ->where('student_id', $studentId)
-            ->where('status', '!=', 'cancelled')
-            ->sum('balance');
+        $balance = FeeAccountService::outstandingBalance($studentId);
 
         return response()->json(['transactions' => $transactions, 'balance' => $balance]);
     }

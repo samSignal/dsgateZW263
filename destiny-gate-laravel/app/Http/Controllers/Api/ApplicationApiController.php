@@ -7,10 +7,31 @@ use App\Models\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class ApplicationApiController extends Controller
 {
+    /**
+     * Stream an applicant-uploaded document (ID copy, birth certificate, results, etc.)
+     * to an authenticated, authorized staff member only. Restricted to the
+     * applications/ prefix so this can't be used to browse the wider public disk.
+     */
+    public function document(Request $request, string $path)
+    {
+        $path = ltrim($path, '/');
+
+        if (str_contains($path, '..') || !str_starts_with($path, 'applications/')) {
+            abort(404);
+        }
+
+        if (!Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+
+        return response()->file(Storage::disk('public')->path($path));
+    }
+
     public function store(Request $request)
     {
         try {

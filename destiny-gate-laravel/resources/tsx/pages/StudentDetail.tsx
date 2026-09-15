@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toastSuccess, toastError } from '../lib/toast';
 import api from '../lib/api';
-import { Card, CardHeader, CardBody, Table, Td, Spinner, PageHeader, Alert, Btn, statusBadge, Badge, Grid, FormGroup, Input, Select, Modal } from '../components/UI';
+import { Card, CardHeader, CardBody, Table, Td, Spinner, Alert, Btn, statusBadge, Badge, Grid, FormGroup, Input, Select, Modal } from '../components/UI';
 
 export default function StudentDetail() {
   const { id } = useParams();
@@ -56,6 +56,13 @@ export default function StudentDetail() {
     retry: false,
   });
 
+  const { data: enrollmentHistory } = useQuery({
+    queryKey: ['student-enrollment-history', id],
+    queryFn: () => api.get(`/students/${id}/enrollment-history`).then(r => r.data),
+    retry: false,
+  });
+  const roadmap = enrollmentHistory?.roadmap;
+
   // Finance module is admin/headmaster only — bursar/teacher will 403 here; fail quietly.
   const { data: balanceData } = useQuery({
     queryKey: ['student-balance', id],
@@ -74,7 +81,17 @@ export default function StudentDetail() {
   const docUrl = (path?: string | null) => {
     if (!path) return null;
     const p = String(path).replace(/^\/+/, '');
-    return `/uploads/${p.startsWith('storage/') ? p.slice('storage/'.length) : p}`;
+    return `/documents/${p.startsWith('storage/') ? p.slice('storage/'.length) : p}`;
+  };
+  const openDoc = async (path: string) => {
+    try {
+      const res = await api.get(path, { responseType: 'blob' });
+      const blobUrl = URL.createObjectURL(res.data);
+      window.open(blobUrl, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    } catch {
+      toastError('Could not open document.');
+    }
   };
   const docLabel = (k: string) => ({
     doc_student_id_path: 'Student ID / Birth Certificate',
@@ -91,13 +108,52 @@ export default function StudentDetail() {
   if (isLoading) return <Spinner />;
   if (!student) return <div>Student not found.</div>;
 
+  const initials = `${student.first_name?.[0] ?? ''}${student.last_name?.[0] ?? ''}`.toUpperCase();
+  const balance = balanceData?.balance ?? 0;
+  const balanceBadge = balance > 0
+    ? <Badge variant="red">{money(balance)} owed</Badge>
+    : balanceData?.is_billed
+      ? <Badge variant="green">Fully Paid</Badge>
+      : balanceData
+        ? <Badge variant="gray">Not Yet Billed</Badge>
+        : null;
+
   return (
     <div>
-      <PageHeader
-        title={`${student.first_name} ${student.last_name}`}
-        subtitle={`${student.admission_number} · ${student.resolved_form_name ? `${student.resolved_form_name}${student.resolved_stream_name ? ` ${student.resolved_stream_name}` : ''}` : 'Unassigned'}`}
-        action={<div style={{ display: 'flex', gap: 8 }}>{statusBadge(student.status)}</div>}
-      />
+      <Link to="/app/students" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#64748b', textDecoration: 'none', marginBottom: 12, fontWeight: 600 }}>
+        ← All Students
+      </Link>
+
+      {/* Profile hero — everything a staff member checks first, in one glance */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap',
+        background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
+        boxShadow: '0 1px 3px rgba(0,0,0,.05)', padding: '20px 24px', marginBottom: 20,
+      }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
+          background: '#f0faf4', color: '#1a6b3c',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 20, fontWeight: 800, letterSpacing: '-.5px',
+        }}>
+          {initials || '?'}
+        </div>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>{student.first_name} {student.last_name}</div>
+          <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>
+            <code style={{ background: '#eff6ff', color: '#1e40af', padding: '2px 7px', borderRadius: 5, fontSize: 11, fontWeight: 700 }}>{student.student_number ?? student.admission_number}</code>
+            {' · '}
+            {student.resolved_form_name ? `${student.resolved_form_name}${student.resolved_stream_name ? ` ${student.resolved_stream_name}` : ''}` : 'Unassigned'}
+            {student.resolved_category_name ? ` · ${student.resolved_category_name}` : ''}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          {statusBadge(student.status)}
+          {roadmap && <Badge variant="blue">{roadmap.track_label}</Badge>}
+          {balanceBadge}
+        </div>
+      </div>
+
       {msg && <Alert type="success" message={msg} />}
 
       <Grid cols={2}>
@@ -105,21 +161,23 @@ export default function StudentDetail() {
         <Card>
           <CardHeader title="Personal Information" />
           <CardBody>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <Grid cols={2} style={{ marginBottom: 0, rowGap: 14 }}>
               {[
                 ['Email', student.email ?? '—'],
+                ['National ID', student.national_id ?? '—'],
                 ['Date of Birth', student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString() : '—'],
                 ['Gender', student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1) : '—'],
-                ['Blood Type', student.blood_type ?? '—'],
                 ['Admission Date', new Date(student.admission_date).toLocaleDateString()],
+                ['Blood Type', student.blood_type ?? '—'],
                 ['Allergies', student.allergies ?? '—'],
+                ['Medical Conditions', student.medical_conditions ?? '—'],
               ].map(([k, v]) => (
-                <tr key={k}>
-                  <td style={{ padding: '6px 0', color: '#6b7280', fontSize: 13, width: '40%' }}>{k}</td>
-                  <td style={{ padding: '6px 0', fontSize: 13, color: '#111827' }}>{v}</td>
-                </tr>
+                <div key={k}>
+                  <div style={{ fontSize: 11, color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.3px' }}>{k}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginTop: 3 }}>{v}</div>
+                </div>
               ))}
-            </table>
+            </Grid>
           </CardBody>
         </Card>
 
@@ -130,10 +188,10 @@ export default function StudentDetail() {
             {student.guardians?.length === 0 && <p style={{ color: '#9ca3af', fontSize: 13 }}>No guardians added yet.</p>}
             {student.guardians?.map((g: any) => (
               <div key={g.id} style={{ padding: '10px 0', borderBottom: '1px solid #f3f4f6' }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{g.first_name} {g.last_name}
+                <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>{g.first_name} {g.last_name}
                   {g.is_primary_contact && <Badge variant="green" style={{ marginLeft: 8 }}>Primary</Badge>}
                 </div>
-                <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{g.relationship} · {g.phone}</div>
+                <div style={{ fontSize: 12, color: '#6b7280', marginTop: 3 }}>{g.relationship} · {g.phone}{g.email ? ` · ${g.email}` : ''}</div>
               </div>
             ))}
           </CardBody>
@@ -165,6 +223,78 @@ export default function StudentDetail() {
         </CardBody>
       </Card>
 
+      {/* Enrollment History — expected O-Level/A-Level progression to graduation, plus any
+          recorded per-term placement history */}
+      {roadmap && (
+        <Card style={{ marginBottom: 20 }}>
+          <CardHeader
+            title="Enrollment History"
+            action={<Badge variant="blue">{roadmap.track_label} track — stage {(roadmap.current_index ?? 0) + 1} of {roadmap.total_stages}</Badge>}
+          />
+          <CardBody style={{ padding: 0 }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ fontSize: 13, color: '#374151', marginBottom: 10 }}>
+                Currently <strong>{roadmap.current_form_name}, {roadmap.current_term_name}</strong>.{' '}
+                {roadmap.is_at_graduation
+                  ? <span style={{ color: '#166534', fontWeight: 700 }}>🎓 At graduation stage — {roadmap.graduation_label}.</span>
+                  : <>Graduates at <strong>{roadmap.graduation_label}</strong>.</>}
+              </div>
+
+              {/* Progress bar — one segment per stage, so the graduation milestone at the
+                  far end stays visible regardless of how many stages there are */}
+              <div style={{ display: 'flex', gap: 3 }}>
+                {roadmap.stages.map((s: any) => (
+                  <div key={s.index} title={`${s.form_name}, Term ${s.term_number} (${s.expected_year})`} style={{
+                    flex: 1, height: 8, borderRadius: 4,
+                    background: s.status === 'upcoming' ? '#e2e8f0' : s.status === 'current' ? '#1a6b3c' : '#86d4a4',
+                    outline: s.status === 'current' ? '2px solid #0f3d21' : 'none',
+                    outlineOffset: 1,
+                  }} />
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af', marginTop: 4 }}>
+                <span>{roadmap.stages[0].form_name} · {roadmap.stages[0].expected_year}</span>
+                <span>{roadmap.graduation_label.split(',')[0]} · {roadmap.stages[roadmap.stages.length - 1].expected_year} 🎓</span>
+              </div>
+            </div>
+
+            <Table headers={['Stage', 'Form', 'Term', 'Year', 'Status', 'Milestone']}>
+              {roadmap.stages.map((s: any) => (
+                <tr key={s.index} style={s.status === 'current' ? { background: '#f0faf4' } : undefined}>
+                  <Td style={{ color: '#9ca3af' }}>{s.index + 1}</Td>
+                  <Td style={{ fontWeight: 600 }}>{s.form_name}</Td>
+                  <Td>Term {s.term_number}</Td>
+                  <Td>{s.expected_year}</Td>
+                  <Td>
+                    {s.status === 'completed' && <Badge variant="green">Completed</Badge>}
+                    {s.status === 'current' && <Badge variant="blue">Current</Badge>}
+                    {s.status === 'upcoming' && <Badge variant="gray">Upcoming</Badge>}
+                  </Td>
+                  <Td>{s.is_graduation ? <strong style={{ color: '#166534' }}>🎓 Graduation</strong> : '—'}</Td>
+                </tr>
+              ))}
+            </Table>
+
+            {enrollmentHistory?.history?.length > 0 && (
+              <div style={{ padding: '18px 20px' }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Recorded Placement History</div>
+                <Table headers={['Academic Year', 'Term', 'Form', 'Class', 'Status']}>
+                  {enrollmentHistory.history.map((h: any) => (
+                    <tr key={h.id}>
+                      <Td>{h.academic_year_name}</Td>
+                      <Td>{h.term_name}</Td>
+                      <Td>{h.form_name}</Td>
+                      <Td>{h.stream_name}</Td>
+                      <Td>{statusBadge(h.enrollment_status)}</Td>
+                    </tr>
+                  ))}
+                </Table>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      )}
+
       {/* Financial Summary — balance owed + full transaction ledger */}
       {(balanceData || statement) && (
         <Card style={{ marginBottom: 20 }}>
@@ -173,8 +303,10 @@ export default function StudentDetail() {
             action={
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 11, color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.5px' }}>Balance</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: (balanceData?.balance ?? 0) > 0 ? '#dc2626' : '#166534' }}>
-                  {(balanceData?.balance ?? 0) > 0 ? `${money(balanceData.balance)} owed` : 'Fully Paid'}
+                <div style={{ fontSize: 20, fontWeight: 800, color: (balanceData?.balance ?? 0) > 0 ? '#dc2626' : balanceData?.is_billed ? '#166534' : '#6b7280' }}>
+                  {(balanceData?.balance ?? 0) > 0 && `${money(balanceData.balance)} owed`}
+                  {(balanceData?.balance ?? 0) < 0 && `${signedMoney(balanceData.balance)} credit`}
+                  {(balanceData?.balance ?? 0) === 0 && (balanceData?.is_billed ? 'Fully Paid' : 'Not Yet Billed')}
                 </div>
               </div>
             }
@@ -239,9 +371,9 @@ export default function StudentDetail() {
                   }}>
                     <span style={{ fontSize: 13, color: '#111827' }}>{docLabel(key)}</span>
                     {url ? (
-                      <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 700, textDecoration: 'none' }}>
+                      <button type="button" onClick={() => openDoc(url)} style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
                         Open →
-                      </a>
+                      </button>
                     ) : (
                       <span style={{ fontSize: 11, color: '#9ca3af' }}>Not uploaded</span>
                     )}

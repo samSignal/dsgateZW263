@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { toastSuccess, toastError, confirmAction } from '../../lib/toast';
-import { Card, Table, Td, Spinner, PageHeader, Btn, Badge, Select, statusBadge } from '../../components/UI';
+import { StatCard, Card, Table, Td, Spinner, PageHeader, Btn, Badge, Select, statusBadge } from '../../components/UI';
 
 export default function StudentBillsPage() {
   const qc = useQueryClient();
@@ -18,6 +19,13 @@ export default function StudentBillsPage() {
     queryFn: () => api.get('/finance/bills', { params: { search: search || undefined, ...filters, page } }).then(r => r.data),
   });
 
+  const { data: summary } = useQuery({
+    queryKey: ['finance-summary', filters.academic_year_id, filters.term_id],
+    queryFn: () => api.get('/finance/reports/summary', {
+      params: { academic_year_id: filters.academic_year_id || undefined, term_id: filters.term_id || undefined },
+    }).then(r => r.data),
+  });
+
   const cancel = useMutation({
     mutationFn: (id: number) => api.post(`/finance/bills/${id}/cancel`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['student-bills'] }); toastSuccess('Bill cancelled.'); },
@@ -30,6 +38,13 @@ export default function StudentBillsPage() {
   return (
     <div>
       <PageHeader title="Student Bills" subtitle="All student fee bills and invoices" />
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-6">
+        <StatCard label="Total Billed"     value={`$${Number(summary?.total_expected ?? 0).toLocaleString()}`}    icon="📋" color="blue" />
+        <StatCard label="Collected"        value={`$${Number(summary?.total_collected ?? 0).toLocaleString()}`}   icon="💰" color="green" />
+        <StatCard label="Outstanding"      value={`$${Number(summary?.total_outstanding ?? 0).toLocaleString()}`} icon="⚠️" color="red" />
+        <StatCard label="Collection Rate"  value={`${summary?.collection_rate ?? 0}%`}                            icon="📊" color="green" />
+      </div>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
         <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Search student or bill number…"
@@ -59,8 +74,10 @@ export default function StudentBillsPage() {
                 <tr key={b.id}>
                   <Td><code style={{ fontSize: 11, background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>{b.bill_number}</code></Td>
                   <Td>
-                    <div style={{ fontWeight: 600, fontSize: 13 }}>{b.student_name}</div>
-                    <div style={{ fontSize: 11, color: '#6b7280' }}>{b.student_number}</div>
+                    <Link to={`/app/students/${b.student_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <div style={{ fontWeight: 600, fontSize: 13, color: '#1a6b3c' }}>{b.student_name}</div>
+                      <div style={{ fontSize: 11, color: '#6b7280' }}>{b.student_number || b.admission_number}</div>
+                    </Link>
                   </Td>
                   <Td>{b.description}</Td>
                   <Td>${Number(b.amount).toLocaleString()}</Td>

@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { toastSuccess, toastError, confirmAction } from '../../lib/toast';
-import { Card, CardHeader, CardBody, Spinner, PageHeader, Btn, FormGroup, Select, Alert } from '../../components/UI';
+import { Card, CardHeader, CardBody, Spinner, PageHeader, Btn, FormGroup, Select, Alert, Grid, Table, Td, Badge } from '../../components/UI';
+
+const STATUS_META: Record<string, { label: string; variant: 'green' | 'amber' | 'red' | 'gray' }> = {
+  paid:     { label: 'Paid',       variant: 'green' },
+  partial:  { label: 'Partial',    variant: 'amber' },
+  unpaid:   { label: 'Owing',      variant: 'red'   },
+  unbilled: { label: 'Not Billed', variant: 'gray'  },
+};
 
 export default function GenerateBillsPage() {
+  const qc = useQueryClient();
   const [mode, setMode] = useState<'form' | 'stream' | 'student'>('form');
   const [form, setForm] = useState({ academic_year_id: '', term_id: '', form_id: '', stream_id: '', student_id: '', fee_structure_ids: [] as string[] });
   const [err, setErr] = useState('');
@@ -26,13 +34,44 @@ export default function GenerateBillsPage() {
     enabled: !!(form.academic_year_id && form.term_id),
   });
 
+  // Billing status browser — independent of the Generate mode/form above, so you can search
+  // "not billed" across every form/class at once instead of being stuck to whatever the
+  // Generate panel currently targets.
+  const [viewFormId, setViewFormId] = useState('');
+  const [viewStreamId, setViewStreamId] = useState('');
+  const [viewStatus, setViewStatus] = useState<'all' | 'unbilled' | 'billed'>('all');
+  const [viewSearch, setViewSearch] = useState('');
+  const filteredViewStreams = (streams as any[]).filter(s => !viewFormId || String(s.form_id) === viewFormId);
+
+  const statusFilter: any = { academic_year_id: form.academic_year_id, term_id: form.term_id };
+  if (viewStreamId) statusFilter.stream_id = viewStreamId;
+  else if (viewFormId) statusFilter.form_id = viewFormId;
+
+  const { data: studentStatus = [], isFetching: statusLoading } = useQuery({
+    queryKey: ['bill-status', form.academic_year_id, form.term_id, viewFormId, viewStreamId],
+    queryFn: () => api.get('/finance/bills/status', { params: statusFilter }).then(r => r.data),
+    enabled: !!(form.academic_year_id && form.term_id),
+  });
+  const billedCount = (studentStatus as any[]).filter(s => s.is_billed).length;
+  const unbilledCount = (studentStatus as any[]).length - billedCount;
+
+  const visibleStatus = (studentStatus as any[]).filter(s => {
+    if (viewStatus === 'unbilled' && s.is_billed) return false;
+    if (viewStatus === 'billed' && !s.is_billed) return false;
+    if (viewSearch && !`${s.name} ${s.student_number ?? ''} ${s.admission_number ?? ''}`.toLowerCase().includes(viewSearch.toLowerCase())) return false;
+    return true;
+  });
+
   const generate = useMutation({
     mutationFn: (d: any) => {
       if (mode === 'form')   return api.post('/finance/bills/generate-form', d);
       if (mode === 'stream') return api.post('/finance/bills/generate-stream', d);
       return api.post('/finance/bills/generate-student', d);
     },
-    onSuccess: (res) => { setResult(res.data.message); toastSuccess(res.data.message); setErr(''); },
+    onSuccess: (res) => {
+      setResult(res.data.message); toastSuccess(res.data.message); setErr('');
+      qc.invalidateQueries({ queryKey: ['bill-status'] });
+    },
     onError: (e: any) => { setErr(e.response?.data?.message ?? 'Failed to generate bills.'); setResult(''); },
   });
 
@@ -107,6 +146,7 @@ export default function GenerateBillsPage() {
             {mode === 'student' && (
               <FormGroup label="Student ID">
                 <input value={form.student_id} onChange={e => setForm(f => ({ ...f, student_id: e.target.value }))} placeholder="Enter student ID" style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 13 }} />
+                <p style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>Tip: pick a year and term below, then click a student in the Billing Status table to fill this in.</p>
               </FormGroup>
             )}
 
@@ -147,6 +187,93 @@ export default function GenerateBillsPage() {
           </CardBody>
         </Card>
       </div>
+
+      {/* Billing status — who's been billed already vs still outstanding, searchable across all forms/classes */}
+      {form.academic_year_id && form.term_id && (
+        <Card style={{ marginTop: 20 }}>
+          <CardHeader
+            title="Student Billing Status"
+            action={
+              !statusLoading && (studentStatus as any[]).length > 0 ? (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Badge variant="green">{billedCount} billed</Badge>
+                  {unbilledCount > 0 && <Badge variant="gray">{unbilledCount} not yet billed</Badge>}
+                </div>
+              ) : null
+            }
+          />
+          <CardBody>
+            {/* Scope + filter controls — independent of the Generate panel above */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
+              <div style={{ minWidth: 160 }}>
+                <FormGroup label="Form">
+                  <Select value={viewFormId} onChange={e => { setViewFormId(e.target.value); setViewStreamId(''); }}>
+                    <option value="">All Forms</option>
+                    {(forms as any[]).map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  </Select>
+                </FormGroup>
+              </div>
+              <div style={{ minWidth: 160 }}>
+                <FormGroup label="Class">
+                  <Select value={viewStreamId} onChange={e => setViewStreamId(e.target.value)}>
+                    <option value="">All Classes</option>
+                    {filteredViewStreams.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </Select>
+                </FormGroup>
+              </div>
+              <div style={{ minWidth: 160 }}>
+                <FormGroup label="Billing Status">
+                  <Select value={viewStatus} onChange={e => setViewStatus(e.target.value as any)}>
+                    <option value="all">All Students</option>
+                    <option value="unbilled">Not Billed Only</option>
+                    <option value="billed">Billed Only</option>
+                  </Select>
+                </FormGroup>
+              </div>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <FormGroup label="Search">
+                  <input value={viewSearch} onChange={e => setViewSearch(e.target.value)} placeholder="Search by name or student number…"
+                    style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 13 }} />
+                </FormGroup>
+              </div>
+            </div>
+
+            {statusLoading ? (
+              <div style={{ padding: 24 }}><Spinner /></div>
+            ) : (studentStatus as any[]).length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px 20px', color: '#9ca3af' }}>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>🧑‍🎓</div>
+                <p style={{ fontSize: 13 }}>No active students found for this selection.</p>
+              </div>
+            ) : visibleStatus.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px 20px', color: '#9ca3af' }}>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>🔍</div>
+                <p style={{ fontSize: 13 }}>No students match this filter.</p>
+              </div>
+            ) : (
+              <Table headers={['Student #', 'Name', 'Class', 'Status', 'Balance']}>
+                {visibleStatus.map(s => (
+                  <tr
+                    key={s.id}
+                    onClick={mode === 'student' ? () => setForm(f => ({ ...f, student_id: String(s.id) })) : undefined}
+                    style={mode === 'student' ? { cursor: 'pointer' } : undefined}
+                    onMouseEnter={e => { if (mode === 'student') e.currentTarget.style.background = '#f8fafc'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = ''; }}
+                  >
+                    <Td><code style={{ background: '#eff6ff', color: '#1e40af', padding: '2px 7px', borderRadius: 5, fontSize: 11 }}>{s.student_number ?? s.admission_number}</code></Td>
+                    <Td><strong>{s.name}</strong></Td>
+                    <Td>{s.class_name ?? '—'}</Td>
+                    <Td><Badge variant={STATUS_META[s.status]?.variant ?? 'gray'}>{STATUS_META[s.status]?.label ?? s.status}</Badge></Td>
+                    <Td style={{ fontWeight: 700, color: s.balance > 0 ? '#dc2626' : s.is_billed ? '#166534' : '#9ca3af' }}>
+                      {s.is_billed ? `$${Number(s.balance).toLocaleString()}` : '—'}
+                    </Td>
+                  </tr>
+                ))}
+              </Table>
+            )}
+          </CardBody>
+        </Card>
+      )}
     </div>
   );
 }

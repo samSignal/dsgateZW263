@@ -37,9 +37,17 @@ class FinancialClearance
                 'amount_paid' => 0.0,
                 'outstanding_balance' => 0.0,
                 'status' => 'cleared',
+                'is_billed' => false,
                 'message' => null,
             ];
         }
+
+        $isBilled = DB::table('student_bills')
+            ->where('student_id', $studentId)
+            ->where('academic_year_id', $academicYearId)
+            ->where('term_id', $termId)
+            ->where('status', '!=', 'cancelled')
+            ->exists();
 
         $required = (float) DB::table('student_bills')
             ->where('student_id', $studentId)
@@ -78,13 +86,21 @@ class FinancialClearance
 
         $paid = max($paidFromBills, $paidFromPayments, $paidFromAllocations);
 
+        // 'unbilled' is reported distinctly from 'cleared' so admin/parent views can tell
+        // "never billed" apart from "billed and paid off" instead of showing both as
+        // balance-zero/fully-paid. It's still treated as passing by isCleared() below —
+        // gating results on a billing gap that's the school's fault, not the student's,
+        // would newly withhold results for every unbilled student the moment this shipped.
+        $status = !$isBilled ? 'unbilled' : ($balance <= 0 ? 'cleared' : 'pending');
+
         return [
             'academic_year_id' => (int) $academicYearId,
             'term_id' => (int) $termId,
             'required_balance' => round($required, 2),
             'amount_paid' => round($paid, 2),
             'outstanding_balance' => round($balance, 2),
-            'status' => $balance <= 0 ? 'cleared' : 'pending',
+            'status' => $status,
+            'is_billed' => $isBilled,
             'message' => $balance <= 0 ? null : 'Your results are currently unavailable because your school fees balance for this term has not been fully cleared. Please contact the bursar\'s office.',
             'parent_message' => $balance <= 0 ? null : 'Results for this student are currently withheld pending fee clearance.',
         ];
@@ -92,6 +108,6 @@ class FinancialClearance
 
     public static function isCleared(int $studentId, ?int $academicYearId = null, ?int $termId = null): bool
     {
-        return self::summary($studentId, $academicYearId, $termId)['status'] === 'cleared';
+        return self::summary($studentId, $academicYearId, $termId)['status'] !== 'pending';
     }
 }

@@ -20,15 +20,21 @@ class FeeCategoryController extends Controller
         return response()->json($cats);
     }
 
+    private const FREQUENCIES = ['per_term', 'once_off', 'as_applicable', 'per_event', 'per_project'];
+
     public function store(Request $request)
     {
         $data = $request->validate([
+            'code'        => 'nullable|string|max:20|unique:fee_categories,code',
             'name'        => 'required|string|max:100|unique:fee_categories,name',
             'description' => 'nullable|string|max:500',
+            'frequency'   => 'nullable|in:' . implode(',', self::FREQUENCIES),
         ]);
         $id = DB::table('fee_categories')->insertGetId([
+            'code'        => $data['code'] ?? null,
             'name'        => $data['name'],
             'description' => $data['description'] ?? null,
+            'frequency'   => $data['frequency'] ?? null,
             'is_active'   => true,
             'created_at'  => now(),
             'updated_at'  => now(),
@@ -41,12 +47,16 @@ class FeeCategoryController extends Controller
         $cat = DB::table('fee_categories')->find($id);
         abort_if(!$cat, 404, 'Category not found.');
         $data = $request->validate([
+            'code'        => 'nullable|string|max:20|unique:fee_categories,code,' . $id,
             'name'        => 'required|string|max:100|unique:fee_categories,name,' . $id,
             'description' => 'nullable|string|max:500',
+            'frequency'   => 'nullable|in:' . implode(',', self::FREQUENCIES),
         ]);
         DB::table('fee_categories')->where('id', $id)->update([
+            'code'        => $data['code'] ?? null,
             'name'        => $data['name'],
             'description' => $data['description'] ?? null,
+            'frequency'   => $data['frequency'] ?? null,
             'updated_at'  => now(),
         ]);
         return response()->json(DB::table('fee_categories')->find($id));

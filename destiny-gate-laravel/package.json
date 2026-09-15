@@ -10,6 +10,7 @@
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",
         "@tailwindcss/vite": "^4.0.0",
+        "@types/qrcode": "^1.5.6",
         "alpinejs": "^3.4.2",
         "autoprefixer": "^10.4.2",
         "concurrently": "^9.0.1",
@@ -26,6 +27,7 @@
         "axios": "^1.16.0",
         "clsx": "^2.1.1",
         "lucide-react": "^1.14.0",
+        "qrcode": "^1.5.4",
         "react": "^19.2.6",
         "react-dom": "^19.2.6",
         "react-router-dom": "^7.15.0",

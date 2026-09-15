@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Support\FeeAccountService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,7 @@ class StudentPurchasePaymentController extends Controller
         $data = $request->validate([
             'student_purchase_id' => 'required|exists:student_purchases,id',
             'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'required|in:cash,ecocash,bank_transfer,swipe,online,other',
+            'payment_method' => 'required|in:cash,ecocash,bank_transfer,swipe,online,other,account_credit',
             'reference_number' => 'nullable|string|max:100',
             'payment_date' => 'required|date',
         ]);
@@ -29,6 +30,19 @@ class StudentPurchasePaymentController extends Controller
             if ((float) $data['amount'] > (float) $purchase->balance) {
                 DB::rollBack();
                 return response()->json(['message' => 'Payment cannot exceed purchase balance.'], 422);
+            }
+
+            if ($data['payment_method'] === 'account_credit') {
+                $available = FeeAccountService::availableCredit($purchase->student_id);
+                if ((float) $data['amount'] > $available + 0.01) {
+                    DB::rollBack();
+                    return response()->json(['message' => "Only \${$available} of fee credit is available for this student."], 422);
+                }
+                FeeAccountService::consumeCredit(
+                    $purchase->student_id, (float) $data['amount'],
+                    'student_purchases', $purchase->id,
+                    "Fee credit applied to Shop purchase {$purchase->purchase_number}"
+                );
             }
 
             DB::table('student_purchase_payments')->insert([

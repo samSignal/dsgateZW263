@@ -92,7 +92,17 @@ export default function Applications() {
   const docUrl = (path?: string | null) => {
     if (!path) return null;
     const p = String(path).replace(/^\/+/, '');
-    return `/uploads/${p.startsWith('storage/') ? p.slice('storage/'.length) : p}`;
+    return `/documents/${p.startsWith('storage/') ? p.slice('storage/'.length) : p}`;
+  };
+  const openDoc = async (path: string) => {
+    try {
+      const res = await api.get(path, { responseType: 'blob' });
+      const blobUrl = URL.createObjectURL(res.data);
+      window.open(blobUrl, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    } catch {
+      toastError('Could not open document.');
+    }
   };
 
   const docLabel = (k?: string) => {
@@ -523,9 +533,9 @@ export default function Applications() {
                     </div>
                     <div style={{ marginTop: 8 }}>
                       {url ? (
-                        <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 700, textDecoration: 'none' }}>
+                        <button type="button" onClick={() => openDoc(url)} style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
                           Open document
-                        </a>
+                        </button>
                       ) : (
                         <span style={{ fontSize: 12, color: '#94a3b8' }}>Not uploaded</span>
                       )}
@@ -559,14 +569,13 @@ export default function Applications() {
 
                         {String(r.status).toLowerCase() === 'fulfilled' && r.new_path && (
                           <div style={{ marginTop: 8 }}>
-                            <a
-                              href={docUrl(r.new_path) ?? '#'}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 800, textDecoration: 'none' }}
+                            <button
+                              type="button"
+                              onClick={() => { const u = docUrl(r.new_path); if (u) openDoc(u); }}
+                              style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 800, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'none' }}
                             >
                               Open resubmitted document
-                            </a>
+                            </button>
                           </div>
                         )}
                       </div>

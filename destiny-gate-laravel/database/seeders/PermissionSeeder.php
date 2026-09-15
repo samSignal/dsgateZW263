@@ -36,6 +36,7 @@ class PermissionSeeder extends Seeder
             'payments-list','payments-create',
             'fee-structures-list','fee-structures-create','fee-structures-edit','fee-structures-delete',
             'finance-reports-view',
+            'finance.reverse-payment',
             // School Shop
             'shop.view','shop.manage_categories','shop.manage_items','shop.record_purchase',
             'shop.record_payment','shop.cancel_purchase','shop.view_reports','shop.parent_view',

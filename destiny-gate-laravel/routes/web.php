@@ -3,7 +3,6 @@
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 
 require __DIR__.'/auth.php';
 
@@ -21,18 +20,6 @@ Route::middleware('guest')->group(function () {
     Route::post('/applications/offer-letter/{token}/accept', [ApplicationController::class, 'acceptOfferLetter'])->name('applications.offer-letter.accept');
     Route::get('/applications/{application}/success', [ApplicationController::class, 'success'])->name('applications.success');
 });
-
-Route::get('/uploads/{path}', function (string $path) {
-    if (str_contains($path, '..') || str_starts_with($path, '.')) {
-        abort(404);
-    }
-
-    if (!Storage::disk('public')->exists($path)) {
-        abort(404);
-    }
-
-    return response()->file(Storage::disk('public')->path($path));
-})->where('path', '.*');
 
 Route::get('/dashboard', function () {
     return view('spa');

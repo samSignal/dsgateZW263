@@ -1,4 +1,42 @@
+/* Utilities only (no @tailwind base/components) — this stylesheet is shared with public
+   Blade pages (welcome, guest layout, application form) and Preflight's element reset
+   would visually regress those. The React app only needs utility classes for layout. */
+@tailwind utilities;
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Print isolation for receipts (and anything else opting in with .print-area): when a
+   .print-area exists on the page, printing shows ONLY that element — not the sidebar,
+   modal chrome, or the Print button itself. Scoped with :has() so pages that print their
+   whole view as-is (timetables, attendance/academic reports) are unaffected.
+   Modal renders inline (no portal — see components/UI.tsx), so a receipt shown in one sits
+   nested inside the full page behind it (sidebar nav, a long table, etc). visibility:hidden
+   alone doesn't remove that content from layout, so it can still span several printed pages
+   — and because .print-area is position:fixed, it then reprints once per page (this was the
+   "3 duplicate receipts" bug: whatever page was open behind the modal happened to be ~3
+   pages tall). Forcing height:0 on everything outside .print-area collapses that layout
+   footprint to nothing, so the print job is exactly as tall as the receipt itself. `revert`
+   (not `auto`) on the .print-area override so images/SVGs with explicit intrinsic sizing
+   (the QR code, the stamp) aren't distorted by an inherited height override. */
+@media print {
+  body:has(.print-area) * { visibility: hidden; height: 0 !important; overflow: hidden !important; }
+  body:has(.print-area) .print-area,
+  body:has(.print-area) .print-area * { visibility: visible; height: revert !important; overflow: revert !important; }
+  /* fixed (not absolute) so this escapes the Modal's own position:fixed overlay
+     reliably — receipts are usually shown inside one. */
+  .print-area { position: fixed; inset: 0; width: auto; height: auto !important; background: #fff; overflow: visible !important; }
+  .no-print { display: none !important; }
+}
+
+/* 58mm Bluetooth thermal receipt printer support. Opt-in: toggled by the receipt's own
+   "58mm Print" button, which swaps .print-area's content to the compact thermal layout
+   and adds this class before calling window.print(). Named CSS page (Paged Media spec) so
+   the OS print dialog offers ~58mm paper — supported in Chromium browsers (what a phone
+   or tablet paired with a Bluetooth thermal printer is overwhelmingly likely to run);
+   browsers without support just fall back to the default page size, so this degrades
+   gracefully rather than breaking normal printing. */
+@page thermal-58mm { size: 58mm auto; margin: 2mm; }
+.print-area.thermal-mode { page: thermal-58mm; width: 54mm; font-family: ui-monospace, 'Courier New', monospace; }
 
 :root {
   --primary: #1a6b3c;

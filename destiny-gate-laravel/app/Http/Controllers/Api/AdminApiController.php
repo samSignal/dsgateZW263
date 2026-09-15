@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\SchoolClass;
 use App\Models\Application;
 use App\Models\ApplicationDeposit;
+use App\Support\BillGenerationService;
 use App\Support\StudentNumberGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -20,14 +21,199 @@ class AdminApiController extends Controller
 {
     public function dashboard()
     {
+        $currentTerm = DB::table('terms')->where('is_current', true)->first();
+
         return response()->json([
+            // Kept for any other consumer of this endpoint — the dashboard UI itself
+            // reads the fields below.
             'total_users'    => User::count(),
-            'total_students' => Student::where('status', 'active')->count(),
-            'total_staff'    => Staff::where('is_active', true)->count(),
             'total_classes'  => SchoolClass::count(),
-            'pending_apps'   => Application::where('status', 'pending')->where('is_draft', false)->count(),
             'recent_users'   => User::latest()->take(5)->get(['id','name','email','role','created_at']),
+
+            'admin_name'      => auth()->user()->name,
+            'total_students'  => Student::where('status', 'active')->count(),
+            'total_staff'     => Staff::where('is_active', true)->count(),
+            'pending_apps'    => Application::where('status', 'pending')->where('is_draft', false)->count(),
+            'owing_students'  => DB::table('student_bills')->whereIn('status', ['unpaid', 'partial'])->distinct()->count('student_id'),
+            'unbilled'        => $this->dashboardUnbilledStudents($currentTerm),
+            'fees_this_term'  => $this->dashboardFeesThisTerm($currentTerm),
+            'attendance_rate' => $this->dashboardAttendanceRate(),
+            'monthly_collections' => $this->dashboardMonthlyCollections(),
+            'top_classes'         => $this->dashboardTopClasses($currentTerm),
+            'attendance_breakdown'=> $this->dashboardAttendanceBreakdown(),
+            'recent_activities'   => $this->dashboardRecentActivities(),
+            'reminders'           => $this->dashboardReminders($currentTerm),
+            'pending_actions'     => $this->dashboardPendingActions(),
         ]);
+    }
+
+    /** Active students with zero bill rows for the current term — see the whole "no bill
+     *  ≠ fully paid" investigation this billing module was built around. */
+    private function dashboardUnbilledStudents(?object $term): array
+    {
+        if (!$term) return ['count' => 0, 'students' => []];
+
+        $billedIds = DB::table('student_bills')
+            ->where('academic_year_id', $term->academic_year_id)
+            ->where('term_id', $term->id)
+            ->where('status', '!=', 'cancelled')
+            ->distinct()->pluck('student_id');
+
+        $unbilled = DB::table('students')
+            ->where('status', 'active')
+            ->whereNotIn('id', $billedIds)
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name', 'student_number', 'admission_number']);
+
+        return [
+            'count'    => $unbilled->count(),
+            'students' => $unbilled->take(8)->map(fn ($s) => [
+                'id'     => $s->id,
+                'name'   => trim("{$s->first_name} {$s->last_name}"),
+                'number' => $s->student_number ?? $s->admission_number,
+            ])->values(),
+        ];
+    }
+
+    private function dashboardFeesThisTerm(?object $term): array
+    {
+        if (!$term) return ['collected' => 0.0, 'expected' => 0.0];
+        return [
+            'collected' => (float) DB::table('finance_payments')->where('academic_year_id', $term->academic_year_id)->where('term_id', $term->id)->where('status', 'active')->sum('amount'),
+            'expected'  => (float) DB::table('student_bills')->where('academic_year_id', $term->academic_year_id)->where('term_id', $term->id)->where('status', '!=', 'cancelled')->sum('amount'),
+        ];
+    }
+
+    /** Percentage of 'present' among all attendance records ever taken — null if none exist yet. */
+    private function dashboardAttendanceRate(): ?float
+    {
+        $total = DB::table('student_attendance_records')->count();
+        if ($total === 0) return null;
+        $present = DB::table('student_attendance_records')->where('status', 'present')->count();
+        return round($present / $total * 100, 1);
+    }
+
+    private function dashboardAttendanceBreakdown(): array
+    {
+        $rows = DB::table('student_attendance_records')
+            ->select('status', DB::raw('count(*) as cnt'))
+            ->groupBy('status')
+            ->pluck('cnt', 'status');
+        $total = $rows->sum();
+        if ($total === 0) return [];
+
+        $colors = ['present' => '#1a6b3c', 'late' => '#f59e0b', 'absent' => '#ef4444', 'excused' => '#2563eb', 'sick' => '#7c3aed', 'early_departure' => '#9ca3af'];
+        $out = [];
+        foreach ($rows as $status => $cnt) {
+            $out[] = ['name' => ucfirst(str_replace('_', ' ', $status)), 'value' => round($cnt / $total * 100, 1), 'color' => $colors[$status] ?? '#9ca3af'];
+        }
+        return $out;
+    }
+
+    /** Last 6 calendar months of real fee collections (finance_payments) vs. amounts billed in that same month. */
+    private function dashboardMonthlyCollections(): array
+    {
+        $months = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $months[] = now()->subMonths($i)->format('Y-m');
+        }
+
+        $collected = DB::table('finance_payments')
+            ->where('status', 'active')
+            ->where('payment_date', '>=', now()->subMonths(6)->startOfMonth())
+            ->selectRaw("DATE_FORMAT(payment_date, '%Y-%m') as ym, SUM(amount) as total")
+            ->groupBy('ym')->pluck('total', 'ym');
+
+        $billed = DB::table('student_bills')
+            ->where('status', '!=', 'cancelled')
+            ->where('created_at', '>=', now()->subMonths(6)->startOfMonth())
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, SUM(amount) as total")
+            ->groupBy('ym')->pluck('total', 'ym');
+
+        return array_map(fn ($ym) => [
+            'month'     => date('M', strtotime("{$ym}-01")),
+            'collected' => round((float) ($collected[$ym] ?? 0), 2),
+            'target'    => round((float) ($billed[$ym] ?? 0), 2),
+        ], $months);
+    }
+
+    /** Per-class (stream) average for the current term, from real results — empty until marks exist. */
+    private function dashboardTopClasses(?object $term): array
+    {
+        if (!$term) return [];
+        $rows = DB::table('results_aggregates as ra')
+            ->join('streams as st', 'ra.stream_id', '=', 'st.id')
+            ->join('forms as f', 'st.form_id', '=', 'f.id')
+            ->where('ra.academic_year_id', $term->academic_year_id)
+            ->where('ra.term_id', $term->id)
+            ->whereNotNull('ra.term_average')
+            ->select('st.id', DB::raw("CONCAT(f.name, ' ', st.name) as name"), DB::raw('AVG(ra.term_average) as avg'))
+            ->groupBy('st.id', 'f.name', 'st.name')
+            ->orderByDesc('avg')
+            ->limit(5)
+            ->get();
+
+        return $rows->map(fn ($r) => ['name' => $r->name, 'pct' => round((float) $r->avg, 1)])->values()->all();
+    }
+
+    /** Merges recently created students, payments received, and behaviour issues into one real feed. */
+    private function dashboardRecentActivities(): array
+    {
+        $events = [];
+
+        foreach (DB::table('students')->orderByDesc('created_at')->limit(5)->get(['first_name', 'last_name', 'created_at']) as $s) {
+            $events[] = ['icon' => '👤', 'bg' => '#f0faf4', 'text' => "New student registered: {$s->first_name} {$s->last_name}", 'at' => $s->created_at];
+        }
+        foreach (DB::table('finance_payments as fp')->join('students as s', 'fp.student_id', '=', 's.id')->orderByDesc('fp.created_at')->limit(5)->get(['s.first_name', 's.last_name', 'fp.amount', 'fp.created_at']) as $p) {
+            $events[] = ['icon' => '💰', 'bg' => '#fffbeb', 'text' => "Payment of \${$p->amount} received from {$p->first_name} {$p->last_name}", 'at' => $p->created_at];
+        }
+        foreach (DB::table('behaviour_records as br')->join('students as s', 'br.student_id', '=', 's.id')->orderByDesc('br.created_at')->limit(5)->get(['s.first_name', 's.last_name', 'br.issue_type', 'br.created_at']) as $b) {
+            $events[] = ['icon' => '⚠️', 'bg' => '#fef2f2', 'text' => "Behaviour record logged for {$b->first_name} {$b->last_name}: {$b->issue_type}", 'at' => $b->created_at];
+        }
+        foreach (DB::table('applications')->orderByDesc('created_at')->limit(5)->get(['first_name', 'last_name', 'created_at']) as $a) {
+            $events[] = ['icon' => '📝', 'bg' => '#eff6ff', 'text' => "New admission application: {$a->first_name} {$a->last_name}", 'at' => $a->created_at];
+        }
+
+        usort($events, fn ($a, $b) => strtotime($b['at']) <=> strtotime($a['at']));
+        return array_map(fn ($e) => ['icon' => $e['icon'], 'bg' => $e['bg'], 'text' => $e['text'], 'time' => \Carbon\Carbon::parse($e['at'])->diffForHumans()], array_slice($events, 0, 6));
+    }
+
+    /** Real, derived reminders — no fake calendar events. */
+    private function dashboardReminders(?object $term): array
+    {
+        $reminders = [];
+
+        $owing = DB::table('student_bills')->whereIn('status', ['unpaid', 'partial'])->distinct()->count('student_id');
+        if ($owing > 0) $reminders[] = ['icon' => '⚠️', 'text' => "{$owing} student(s) have outstanding fees", 'date' => null];
+
+        $pendingApps = Application::where('status', 'pending')->where('is_draft', false)->count();
+        if ($pendingApps > 0) $reminders[] = ['icon' => '📥', 'text' => "{$pendingApps} admission application(s) awaiting review", 'date' => null];
+
+        if ($term) {
+            $reminders[] = ['icon' => '📅', 'text' => "{$term->name} ends", 'date' => date('M j, Y', strtotime($term->end_date))];
+        }
+
+        $dueSoon = DB::table('student_bills')->whereIn('status', ['unpaid', 'partial'])->whereNotNull('due_date')->whereBetween('due_date', [now()->toDateString(), now()->addDays(14)->toDateString()])->count();
+        if ($dueSoon > 0) $reminders[] = ['icon' => '📌', 'text' => "{$dueSoon} bill(s) due within 14 days", 'date' => null];
+
+        return $reminders;
+    }
+
+    /** Replaces the old fake "Notifications" panel with real things that actually need doing. */
+    private function dashboardPendingActions(): array
+    {
+        $actions = [];
+
+        $unverified = DB::table('students')->where('status', 'active')->whereNull('document_verified_at')->count();
+        if ($unverified > 0) $actions[] = ['dot' => '#f59e0b', 'text' => "{$unverified} student(s) awaiting document verification"];
+
+        $unmapped = DB::table('students')->where('status', 'active')->whereNull('stream_id')->whereNull('class_id')->count();
+        if ($unmapped > 0) $actions[] = ['dot' => '#ef4444', 'text' => "{$unmapped} student(s) not yet placed in a class"];
+
+        $noGuardian = DB::table('students as s')->where('s.status', 'active')->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('guardians as g')->whereColumn('g.student_id', 's.id'))->count();
+        if ($noGuardian > 0) $actions[] = ['dot' => '#2563eb', 'text' => "{$noGuardian} student(s) have no guardian on file"];
+
+        return $actions;
     }
 
     public function users(Request $request)
@@ -253,6 +439,13 @@ class AdminApiController extends Controller
             }
 
             $student = $this->createStudentFromApplication($locked, $data);
+
+            // Bills this student against whatever fee structures apply to their form for the
+            // current term — same trigger as StudentApiController::store(), so admissions
+            // enrollments get billed exactly like manually added students do. Left to resolve
+            // the current term itself (rather than passing $locked->academic_year_id) so the
+            // year/term pairing used to match fee structures stays internally consistent.
+            BillGenerationService::autoGenerateForStudent($student->id);
 
             $deposit = ApplicationDeposit::create([
                 'application_id'   => $locked->id,

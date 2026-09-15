@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Support\BillGenerationService;
+use App\Support\FeeAccountService;
 use App\Support\StudentStreamResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,69 +14,9 @@ class StudentBillController extends Controller
 {
     /* ── helpers ─────────────────────────────────────────────────────────── */
 
-    private function nextBillNumber(): string
-    {
-        $year = date('Y');
-        $last = DB::table('student_bills')
-            ->where('bill_number', 'like', "BILL-{$year}-%")
-            ->orderByDesc('id')->value('bill_number');
-        $seq = $last ? (int) substr($last, -5) + 1 : 1;
-        return "BILL-{$year}-" . str_pad($seq, 5, '0', STR_PAD_LEFT);
-    }
-
     private function createBill(int $studentId, int $yearId, int $termId, int $catId, string $desc, float $amount, ?string $dueDate, ?int $fsId): ?int
     {
-        // Prevent duplicate bill for same student + fee_structure
-        if ($fsId) {
-            $exists = DB::table('student_bills')
-                ->where('student_id', $studentId)
-                ->where('fee_structure_id', $fsId)
-                ->where('status', '!=', 'cancelled')
-                ->exists();
-            if ($exists) return null;
-        }
-
-        $billId = DB::table('student_bills')->insertGetId([
-            'bill_number'      => $this->nextBillNumber(),
-            'student_id'       => $studentId,
-            'academic_year_id' => $yearId,
-            'term_id'          => $termId,
-            'fee_structure_id' => $fsId,
-            'fee_category_id'  => $catId,
-            'description'      => $desc,
-            'amount'           => $amount,
-            'amount_paid'      => 0,
-            'balance'          => $amount,
-            'status'           => 'unpaid',
-            'due_date'         => $dueDate,
-            'created_by'       => Auth::id(),
-            'created_at'       => now(),
-            'updated_at'       => now(),
-        ]);
-
-        // Audit trail
-        $runningBalance = DB::table('student_bills')
-            ->where('student_id', $studentId)
-            ->where('status', '!=', 'cancelled')
-            ->sum('balance');
-
-        DB::table('student_account_transactions')->insert([
-            'student_id'       => $studentId,
-            'academic_year_id' => $yearId,
-            'term_id'          => $termId,
-            'transaction_type' => 'bill',
-            'reference_type'   => 'student_bills',
-            'reference_id'     => $billId,
-            'description'      => $desc,
-            'debit'            => $amount,
-            'credit'           => 0,
-            'balance_after'    => $runningBalance,
-            'created_by'       => Auth::id(),
-            'created_at'       => now(),
-            'updated_at'       => now(),
-        ]);
-
-        return $billId;
+        return BillGenerationService::createBill($studentId, $yearId, $termId, $catId, $desc, $amount, $dueDate, $fsId);
     }
 
     /* ── index ────────────────────────────────────────────────────────────── */
@@ -108,6 +50,7 @@ class StudentBillController extends Controller
                 $x->where('students.first_name', 'like', $s)
                   ->orWhere('students.last_name', 'like', $s)
                   ->orWhere('students.student_number', 'like', $s)
+                  ->orWhere('students.admission_number', 'like', $s)
                   ->orWhere('sb.bill_number', 'like', $s);
             });
         }
@@ -141,6 +84,7 @@ class StudentBillController extends Controller
                 'students.first_name',
                 'students.last_name',
                 'students.student_number',
+                'students.admission_number',
                 'fee_categories.name as category_name',
                 'academic_years.name as academic_year_name',
                 'terms.name as term_name'
@@ -156,6 +100,74 @@ class StudentBillController extends Controller
             ->where('pa.student_bill_id', $id)->get();
 
         return response()->json([...(array)$bill, 'allocations' => $allocations]);
+    }
+
+    /* ── billing status (billed vs not-yet-billed) for the Generate Bills screen ─── */
+
+    public function billingStatus(Request $request)
+    {
+        $data = $request->validate([
+            'academic_year_id' => 'required|exists:academic_years,id',
+            'term_id'          => 'required|exists:terms,id',
+            'form_id'          => 'nullable|exists:forms,id',
+            'stream_id'        => 'nullable|exists:streams,id',
+        ]);
+
+        if (!empty($data['stream_id'])) {
+            $studentIds = StudentStreamResolver::studentIdsForStream((int) $data['stream_id'], (int) $data['academic_year_id']);
+        } elseif (!empty($data['form_id'])) {
+            $studentIds = StudentStreamResolver::studentIdsForForm((int) $data['form_id'], (int) $data['academic_year_id']);
+        } else {
+            $studentIds = DB::table('students')->where('status', 'active')->pluck('id')->map(fn ($id) => (int) $id)->all();
+        }
+
+        if (empty($studentIds)) {
+            return response()->json([]);
+        }
+
+        $students = DB::table('students')
+            ->whereIn('id', $studentIds)
+            ->select('id', 'first_name', 'last_name', 'student_number', 'admission_number')
+            ->orderBy('first_name')
+            ->get();
+        $students = collect(StudentStreamResolver::attachResolvedFieldsToCollection($students));
+
+        $bills = DB::table('student_bills')
+            ->whereIn('student_id', $studentIds)
+            ->where('academic_year_id', $data['academic_year_id'])
+            ->where('term_id', $data['term_id'])
+            ->where('status', '!=', 'cancelled')
+            ->select(
+                'student_id',
+                DB::raw('SUM(amount) as total_billed'),
+                DB::raw('SUM(amount_paid) as total_paid'),
+                DB::raw('SUM(balance) as total_balance')
+            )
+            ->groupBy('student_id')
+            ->get()
+            ->keyBy('student_id');
+
+        $result = $students->map(function ($s) use ($bills) {
+            $b = $bills->get($s->id);
+            $isBilled = (bool) $b;
+            $balance = $b ? (float) $b->total_balance : 0.0;
+            $status = !$isBilled ? 'unbilled' : ($balance <= 0 ? 'paid' : ((float) $b->total_paid > 0 ? 'partial' : 'unpaid'));
+
+            return [
+                'id'                => $s->id,
+                'name'              => trim(($s->first_name ?? '') . ' ' . ($s->last_name ?? '')),
+                'student_number'    => $s->student_number,
+                'admission_number'  => $s->admission_number,
+                'class_name'        => $s->resolved_stream_name ?? null,
+                'is_billed'         => $isBilled,
+                'total_billed'      => $b ? round((float) $b->total_billed, 2) : 0.0,
+                'total_paid'        => $b ? round((float) $b->total_paid, 2) : 0.0,
+                'balance'           => round($balance, 2),
+                'status'            => $status,
+            ];
+        })->values();
+
+        return response()->json($result);
     }
 
     /* ── generate for one student ─────────────────────────────────────────── */
@@ -202,11 +214,15 @@ class StudentBillController extends Controller
             'term_id'          => 'required|exists:terms,id',
         ]);
 
-        // Get active fee structures for this form/year/term
+        // Active fee structures for this form/year/term — includes school-wide structures
+        // (form_id null) alongside ones scoped to this exact form, matching how
+        // BillGenerationService::autoGenerateForStudent() bills a newly enrolled student.
         $structures = DB::table('finance_fee_structures')
             ->where('academic_year_id', $data['academic_year_id'])
             ->where('term_id', $data['term_id'])
-            ->where('form_id', $data['form_id'])
+            ->where(function ($q) use ($data) {
+                $q->whereNull('form_id')->orWhere('form_id', $data['form_id']);
+            })
             ->where('is_active', true)
             ->get();
 
@@ -249,6 +265,9 @@ class StudentBillController extends Controller
 
         $stream = DB::table('streams')->find($data['stream_id']);
 
+        // Also includes school-wide structures (form_id AND stream_id both null), which the
+        // stream-specific/form-specific branches below don't otherwise catch — see the same
+        // fix in generateForForm() above.
         $structures = DB::table('finance_fee_structures')
             ->where('academic_year_id', $data['academic_year_id'])
             ->where('term_id', $data['term_id'])
@@ -256,6 +275,9 @@ class StudentBillController extends Controller
                 $q->where('stream_id', $data['stream_id'])
                   ->orWhere(function ($q2) use ($stream) {
                       $q2->where('form_id', $stream->form_id)->whereNull('stream_id');
+                  })
+                  ->orWhere(function ($q3) {
+                      $q3->whereNull('form_id')->whereNull('stream_id');
                   });
             })
             ->where('is_active', true)
@@ -314,7 +336,7 @@ class StudentBillController extends Controller
             'description'      => 'Bill cancelled: ' . $bill->description,
             'debit'            => 0,
             'credit'           => $bill->amount,
-            'balance_after'    => 0,
+            'balance_after'    => FeeAccountService::currentLedgerBalance($bill->student_id) - $bill->amount,
             'created_by'       => Auth::id(),
             'created_at'       => now(),
             'updated_at'       => now(),
@@ -325,22 +347,28 @@ class StudentBillController extends Controller
 
     /* ── student outstanding balance ──────────────────────────────────────── */
 
-    public function studentBalance(int $studentId)
+    public function studentBalance(int $studentId, Request $request)
     {
-        $balance = DB::table('student_bills')
-            ->where('student_id', $studentId)
-            ->where('status', '!=', 'cancelled')
-            ->sum('balance');
+        $balance = FeeAccountService::outstandingBalance($studentId);
 
         $bills = DB::table('student_bills as sb')
             ->join('fee_categories', 'sb.fee_category_id', '=', 'fee_categories.id')
             ->join('terms', 'sb.term_id', '=', 'terms.id')
-            ->select('sb.*', 'fee_categories.name as category_name', 'terms.name as term_name')
+            ->select('sb.*', 'fee_categories.name as category_name', 'fee_categories.code as category_code', 'terms.name as term_name')
             ->where('sb.student_id', $studentId)
             ->where('sb.status', '!=', 'cancelled')
             ->orderBy('sb.due_date')
             ->get();
 
-        return response()->json(['balance' => $balance, 'bills' => $bills]);
+        $response = ['balance' => $balance, 'bills' => $bills, 'is_billed' => $bills->isNotEmpty()];
+
+        // §2.3 Opening Balance breakdown — only computable once a term is given (defaults to the current term if not).
+        $termId = $request->term_id ?: DB::table('terms')->where('is_current', true)->value('id');
+        $yearId = $request->academic_year_id ?: DB::table('terms')->where('id', $termId)->value('academic_year_id');
+        if ($termId && $yearId) {
+            $response['account_summary'] = FeeAccountService::accountSummary($studentId, (int) $yearId, (int) $termId);
+        }
+
+        return response()->json($response);
     }
 }

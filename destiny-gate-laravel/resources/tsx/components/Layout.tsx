@@ -45,6 +45,7 @@ function navForRole(role: string): NavGroup[] {
       ]},
       { section: 'ACADEMICS', items: [
         { label: 'Students',          path: '/app/students',                  icon: Ic.users },
+        { label: 'Class List',        path: '/app/students/class-list',       icon: Ic.clip },
         { label: 'Assessments',       path: '/app/assessments',               icon: Ic.chart },
         { label: 'Assessment Types',  path: '/app/assessments/types',         icon: Ic.clip },
         { label: 'Assessment Reports',path: '/app/assessments/reports',       icon: Ic.bar },
@@ -76,13 +77,15 @@ function navForRole(role: string): NavGroup[] {
         { label: 'Student Bills',      path: '/app/finance/bills',       icon: Ic.clip },
         { label: 'Generate Bills',     path: '/app/finance/generate',    icon: Ic.bar },
         { label: 'Record Payment',     path: '/app/finance/payments',    icon: Ic.dollar },
-        { label: 'Finance Reports',    path: '/app/finance',             icon: Ic.bar },
+        { label: 'Payment History',    path: '/app/finance/history',     icon: Ic.bar },
+        { label: 'Cashier Reconciliation', path: '/app/finance/reconciliation', icon: Ic.dollar },
       ]},
       { section: 'SCHOOL SHOP', items: [
         { label: 'Shop Dashboard',      path: '/app/shop',                icon: Ic.shop },
         { label: 'Categories',          path: '/app/shop/categories',     icon: Ic.grid },
         { label: 'Items & Stock',       path: '/app/shop/items',          icon: Ic.clip },
         { label: 'Record Purchase',     path: '/app/shop/record',         icon: Ic.shop },
+        { label: 'Preorders',           path: '/app/shop/preorders',      icon: Ic.clip },
         { label: 'Shop Reports',        path: '/app/shop/reports',        icon: Ic.bar },
       ]},
       { section: 'DISCIPLINE', items: [
@@ -120,6 +123,7 @@ function navForRole(role: string): NavGroup[] {
       ]},
       { section: 'ACADEMICS', items: [
         { label: 'Students',   path: '/app/students',               icon: Ic.users },
+        { label: 'Class List', path: '/app/students/class-list',    icon: Ic.clip },
         { label: 'Attendance', path: '/app/discipline/attendance/reports', icon: Ic.attend },
         { label: 'Results',    path: '/app/assessments/reports',    icon: Ic.chart },
         { label: 'Report Cards', path: '/app/reports',              icon: Ic.log },
@@ -154,15 +158,15 @@ function navForRole(role: string): NavGroup[] {
         { label: 'Rooms & Labs',      path: '/app/timetable/rooms',    icon: Ic.book },
         { label: 'Teacher Schedules', path: '/app/timetable/teachers', icon: Ic.user },
       ]},      { section: 'FINANCE', items: [
-        { label: 'Student Fees',   path: '/app/bursar/fees',           icon: Ic.dollar },
-        { label: 'Payments',       path: '/app/bursar/payments',       icon: Ic.clip },
-        { label: 'Fee Structures', path: '/app/bursar/fee-structures', icon: Ic.clip },
-        { label: 'School Shop',    path: '/app/shop',                  icon: Ic.shop },
-        { label: 'Record Purchase',path: '/app/shop/record',           icon: Ic.shop },
+        { label: 'Finance Overview', path: '/app/finance',          icon: Ic.dollar },
+        { label: 'Student Bills',    path: '/app/finance/bills',    icon: Ic.clip },
+        { label: 'Record Payment',   path: '/app/finance/payments', icon: Ic.dollar },
+        { label: 'Payment History',  path: '/app/finance/history',  icon: Ic.bar },
+        { label: 'School Shop',      path: '/app/shop',             icon: Ic.shop },
+        { label: 'Record Purchase',  path: '/app/shop/record',      icon: Ic.shop },
+        { label: 'Preorders',        path: '/app/shop/preorders',   icon: Ic.clip },
       ]},
       { section: 'REPORTS', items: [
-        { label: 'Debtors List',  path: '/app/bursar/debtors', icon: Ic.alert },
-        { label: 'Paid Students', path: '/app/bursar/paid',    icon: Ic.users },
         { label: 'Shop Reports',  path: '/app/shop/reports',   icon: Ic.bar },
       ]},
     ];
@@ -180,6 +184,7 @@ function navForRole(role: string): NavGroup[] {
       { section: '', items: [{ label: 'Items & Stock', path: '/app/shop/items', icon: Ic.clip }] },
       { section: 'SCHOOL SHOP', items: [
         { label: 'Record Purchase', path: '/app/shop/record', icon: Ic.shop },
+        { label: 'Preorders',       path: '/app/shop/preorders', icon: Ic.clip },
       ]},
     ];
     case 'student': return [{ section: '', items: [
@@ -207,6 +212,101 @@ export function RoleBadge({ role }: { role: string }) {
 interface Props { user: User; onLogout: () => void; children: React.ReactNode }
 
 const STUDENT_SEARCH_ROLES = ['admin', 'headmaster', 'teacher', 'bursar'];
+
+/* Defined outside Layout (not inline in its render body) so this stays the SAME component
+   across Layout re-renders — e.g. every route navigation, since Layout calls useLocation().
+   An inline component recreated each render gets a new type identity, which makes React
+   unmount + remount this whole subtree on every click, wiping the sidebar's scroll position. */
+function SidebarContent({
+  nav, isActivePath, userName, userRole, initials, onLogoutClick, loggingOut, onClose,
+}: {
+  nav: NavGroup[];
+  isActivePath: (path: string) => boolean;
+  userName: string;
+  userRole: string;
+  initials: string;
+  onLogoutClick: () => void;
+  loggingOut: boolean;
+  onClose?: () => void;
+}) {
+  return (
+    <>
+      {/* Brand */}
+      <div style={{
+        padding:'16px 14px 14px',
+        borderBottom:'1px solid rgba(255,255,255,.1)',
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+      }}>
+        <div style={{display:'flex', alignItems:'center', gap:10}}>
+          <div style={{
+            width:42, height:42, flexShrink:0,
+            background:'#c9a227',
+            borderRadius:9, border:'2px solid rgba(255,255,255,.25)',
+            display:'flex', alignItems:'center', justifyContent:'center', padding:4,
+          }}>
+            <img src="/logo-mark.png" alt="Logo" style={{width:'100%', height:'100%', objectFit:'contain'}}/>
+          </div>
+          <div>
+            <div style={{fontSize:14, fontWeight:800, color:'#fff', letterSpacing:'.3px', lineHeight:1.1}}>DESTINYGATE</div>
+            <div style={{fontSize:9, color:'rgba(255,255,255,.55)', fontWeight:600, letterSpacing:'1.2px', textTransform:'uppercase', marginTop:2}}>INSTITUTE</div>
+          </div>
+        </div>
+        {onClose && (
+          <button onClick={onClose} style={{background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,.6)', fontSize:20, lineHeight:1, padding:4}}>×</button>
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav style={{flex:1, padding:'6px 0 12px', overflowY:'auto'}}>
+        {nav.map((group, gi) => (
+          <div key={gi}>
+            {group.section && (
+              <div style={{padding:'12px 14px 4px', fontSize:9.5, fontWeight:700, color:'rgba(255,255,255,.35)', letterSpacing:'1px', textTransform:'uppercase'}}>
+                {group.section}
+              </div>
+            )}
+            {group.items.map(item => {
+              const active = isActivePath(item.path);
+              return (
+                <Link key={item.label} to={item.path} style={{
+                  display:'flex', alignItems:'center', gap:9,
+                  padding:'8px 10px 8px 14px', margin:'1px 6px',
+                  borderRadius:8,
+                  color: active ? '#fff' : 'rgba(255,255,255,.65)',
+                  background: active ? 'rgba(255,255,255,.15)' : 'transparent',
+                  fontSize:13, fontWeight: active ? 600 : 400,
+                  transition:'all .12s',
+                  borderLeft: active ? '3px solid #4ade80' : '3px solid transparent',
+                }}>
+                  <span style={{opacity: active ? 1 : .6, flexShrink:0}}>{item.icon}</span>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      {/* User card */}
+      <div style={{padding:'10px 12px 14px', borderTop:'1px solid rgba(255,255,255,.1)'}}>
+        <div style={{display:'flex', alignItems:'center', gap:9, padding:'8px 10px', borderRadius:8, background:'rgba(255,255,255,.08)', cursor:'pointer'}}>
+          <div style={{width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,.2)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, flexShrink:0}}>{initials}</div>
+          <div style={{flex:1, minWidth:0}}>
+            <div style={{fontSize:12, fontWeight:600, color:'#fff', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{userName}</div>
+            <div style={{fontSize:10, color:'rgba(255,255,255,.5)', textTransform:'capitalize', whiteSpace:'nowrap'}}>
+              {userRole === 'admin' ? 'Super Admin' : userRole}
+            </div>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2,flexShrink:0}}>
+            <button onClick={onLogoutClick} disabled={loggingOut} title="Sign out" style={{background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,.4)', padding:2, display:'flex'}}>
+              {Ic.logout}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
 
 export default function Layout({ user, onLogout, children }: Props) {
   const location = useLocation();
@@ -281,85 +381,6 @@ export default function Layout({ user, onLogout, children }: Props) {
 
   const pageTitle = nav.flatMap(g=>g.items).find(i=>isActive(i.path))?.label ?? 'Dashboard';
 
-  /* ── Sidebar content (shared between desktop + mobile) ── */
-  const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
-    <>
-      {/* Brand */}
-      <div style={{
-        padding:'16px 14px 14px',
-        borderBottom:'1px solid rgba(255,255,255,.1)',
-        display:'flex', alignItems:'center', justifyContent:'space-between',
-      }}>
-        <div style={{display:'flex', alignItems:'center', gap:10}}>
-          <div style={{
-            width:42, height:42, flexShrink:0,
-            background:'#c9a227',
-            borderRadius:9, border:'2px solid rgba(255,255,255,.25)',
-            display:'flex', alignItems:'center', justifyContent:'center', padding:4,
-          }}>
-            <img src="/logo-mark.png" alt="Logo" style={{width:'100%', height:'100%', objectFit:'contain'}}/>
-          </div>
-          <div>
-            <div style={{fontSize:14, fontWeight:800, color:'#fff', letterSpacing:'.3px', lineHeight:1.1}}>DESTINYGATE</div>
-            <div style={{fontSize:9, color:'rgba(255,255,255,.55)', fontWeight:600, letterSpacing:'1.2px', textTransform:'uppercase', marginTop:2}}>INSTITUTE</div>
-          </div>
-        </div>
-        {onClose && (
-          <button onClick={onClose} style={{background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,.6)', fontSize:20, lineHeight:1, padding:4}}>×</button>
-        )}
-      </div>
-
-      {/* Nav */}
-      <nav style={{flex:1, padding:'6px 0 12px', overflowY:'auto'}}>
-        {nav.map((group, gi) => (
-          <div key={gi}>
-            {group.section && (
-              <div style={{padding:'12px 14px 4px', fontSize:9.5, fontWeight:700, color:'rgba(255,255,255,.35)', letterSpacing:'1px', textTransform:'uppercase'}}>
-                {group.section}
-              </div>
-            )}
-            {group.items.map(item => {
-              const active = isActive(item.path);
-              return (
-                <Link key={item.label} to={item.path} style={{
-                  display:'flex', alignItems:'center', gap:9,
-                  padding:'8px 10px 8px 14px', margin:'1px 6px',
-                  borderRadius:8,
-                  color: active ? '#fff' : 'rgba(255,255,255,.65)',
-                  background: active ? 'rgba(255,255,255,.15)' : 'transparent',
-                  fontSize:13, fontWeight: active ? 600 : 400,
-                  transition:'all .12s',
-                  borderLeft: active ? '3px solid #4ade80' : '3px solid transparent',
-                }}>
-                  <span style={{opacity: active ? 1 : .6, flexShrink:0}}>{item.icon}</span>
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* User card */}
-      <div style={{padding:'10px 12px 14px', borderTop:'1px solid rgba(255,255,255,.1)'}}>
-        <div style={{display:'flex', alignItems:'center', gap:9, padding:'8px 10px', borderRadius:8, background:'rgba(255,255,255,.08)', cursor:'pointer'}}>
-          <div style={{width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,.2)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, flexShrink:0}}>{initials}</div>
-          <div style={{flex:1, minWidth:0}}>
-            <div style={{fontSize:12, fontWeight:600, color:'#fff', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{user.name}</div>
-            <div style={{fontSize:10, color:'rgba(255,255,255,.5)', textTransform:'capitalize', whiteSpace:'nowrap'}}>
-              {user.role === 'admin' ? 'Super Admin' : user.role}
-            </div>
-          </div>
-          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2,flexShrink:0}}>
-            <button onClick={handleLogout} disabled={loggingOut} title="Sign out" style={{background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,.4)', padding:2, display:'flex'}}>
-              {Ic.logout}
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-
   return (
     <div style={{display:'flex',minHeight:'100vh',background:'#f5f6fa',fontFamily:"'Inter',-apple-system,sans-serif",fontSize:13}}>
 
@@ -371,7 +392,10 @@ export default function Layout({ user, onLogout, children }: Props) {
           position:'fixed', top:0, left:0, bottom:0, zIndex:100, overflowY:'auto',
           transition:'transform .22s ease',
         }}>
-          <SidebarContent />
+          <SidebarContent
+            nav={nav} isActivePath={isActive} userName={user.name} userRole={user.role}
+            initials={initials} onLogoutClick={handleLogout} loggingOut={loggingOut}
+          />
         </aside>
       )}
 
@@ -380,7 +404,11 @@ export default function Layout({ user, onLogout, children }: Props) {
         <>
           <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
           <aside className="sidebar-mobile" style={{display:'flex', flexDirection:'column', background:'#0f3d22'}}>
-            <SidebarContent onClose={() => setSidebarOpen(false)} />
+            <SidebarContent
+              nav={nav} isActivePath={isActive} userName={user.name} userRole={user.role}
+              initials={initials} onLogoutClick={handleLogout} loggingOut={loggingOut}
+              onClose={() => setSidebarOpen(false)}
+            />
           </aside>
         </>
       )}

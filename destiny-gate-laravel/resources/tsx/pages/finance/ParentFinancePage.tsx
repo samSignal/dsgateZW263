@@ -49,10 +49,12 @@ export default function ParentFinancePage() {
                 minWidth: 180,
               }}>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{c.name}</div>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>{c.student_number}</div>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>{c.student_number || c.admission_number}</div>
                 <div style={{ fontSize: 12, color: '#6b7280' }}>{c.class_name ?? 'No class'}</div>
-                <div style={{ marginTop: 8, fontSize: 15, fontWeight: 800, color: Number(c.balance) > 0 ? '#dc2626' : '#1a6b3c' }}>
-                  ${Number(c.balance).toLocaleString()} {Number(c.balance) > 0 ? 'owing' : '✓ clear'}
+                <div style={{ marginTop: 8, fontSize: 15, fontWeight: 800, color: Number(c.balance) > 0 ? '#dc2626' : c.is_billed ? '#1a6b3c' : '#6b7280' }}>
+                  {Number(c.balance) > 0 && `$${Number(c.balance).toLocaleString()} owing`}
+                  {Number(c.balance) < 0 && `-$${Math.abs(Number(c.balance)).toLocaleString()} credit`}
+                  {Number(c.balance) === 0 && (c.is_billed ? '✓ clear' : 'Not yet billed')}
                 </div>
               </div>
             ))}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { toastSuccess, toastError, confirmDelete, confirmAction } from '../../lib/toast';
-import { Card, Table, Td, Spinner, PageHeader, Btn, Badge, Modal, FormGroup, Input, Select, Grid, Alert } from '../../components/UI';
+import { StatCard, Card, Table, Td, Spinner, PageHeader, Btn, Badge, Modal, FormGroup, Input, Select, Grid, Alert } from '../../components/UI';
 
 interface FeeStructure { id: number; name: string; amount: number; academic_year_name: string; term_name: string; form_name: string | null; stream_name: string | null; category_name: string; is_active: boolean; is_required: boolean; due_date: string | null }
 
@@ -30,6 +30,10 @@ export default function FeeStructuresPage() {
   const filteredTerms = (terms as any[]).filter(t => !form.academic_year_id || String(t.academic_year_id) === form.academic_year_id);
   const filteredStreams = (streams as any[]).filter(s => !form.form_id || String(s.form_id) === form.form_id);
 
+  const activeStructures = data.filter(s => s.is_active);
+  const formsCovered = new Set(activeStructures.map(s => s.form_name ?? 'All Forms')).size;
+  const totalValue = activeStructures.reduce((sum, s) => sum + Number(s.amount), 0);
+
   const save = useMutation({
     mutationFn: (d: typeof empty) => editing ? api.put(`/finance/structures/${editing.id}`, d) : api.post('/finance/structures', d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['fee-structures'] }); setOpen(false); toastSuccess(editing ? 'Structure updated.' : 'Fee structure created.'); },
@@ -53,6 +57,12 @@ export default function FeeStructuresPage() {
   return (
     <div>
       <PageHeader title="Fee Structures" subtitle="Define fees per form, term, and academic year" action={<Btn onClick={() => { setEditing(null); setForm(empty); setFormErr(''); setOpen(true); }}>+ Add Structure</Btn>} />
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 mb-6">
+        <StatCard label="Active Structures" value={activeStructures.length} icon="📄" color="blue" />
+        <StatCard label="Forms Covered"     value={formsCovered}            icon="🏫" color="purple" />
+        <StatCard label="Total Value"       value={`$${totalValue.toLocaleString()}`} icon="💰" color="green" trend="sum of active structures" />
+      </div>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
         {[

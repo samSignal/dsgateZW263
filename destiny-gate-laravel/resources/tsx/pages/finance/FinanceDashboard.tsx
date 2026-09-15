@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import api from '../../lib/api';
-import { StatCard, Card, CardHeader, Table, Td, Spinner, PageHeader } from '../../components/UI';
+import { downloadReport } from '../../lib/download';
+import { StatCard, Card, CardHeader, Table, Td, Spinner, PageHeader, Btn } from '../../components/UI';
 
 export default function FinanceDashboard() {
   const [yearId, setYearId] = useState('');
@@ -76,11 +77,17 @@ export default function FinanceDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* Today's collections */}
         <Card>
-          <CardHeader title={`Today's Collections (${daily?.date ?? '—'})`} action={<span style={{ fontSize: 14, fontWeight: 700, color: '#1a6b3c' }}>${Number(daily?.total ?? 0).toLocaleString()}</span>} />
+          <CardHeader title={`Today's Collections (${daily?.date ?? '—'})`} action={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#1a6b3c' }}>${Number(daily?.total ?? 0).toLocaleString()}</span>
+              <Btn size="sm" variant="outline" onClick={() => downloadReport('/finance/reports/daily', { format: 'pdf' }, `daily-register-${daily?.date ?? 'today'}.pdf`)}>PDF</Btn>
+              <Btn size="sm" variant="outline" onClick={() => downloadReport('/finance/reports/daily', { format: 'csv' }, `daily-register-${daily?.date ?? 'today'}.csv`)}>CSV</Btn>
+            </div>
+          } />
           <Table headers={['Student', 'Amount', 'Method', 'Receipt']}>
             {(daily?.payments ?? []).slice(0, 8).map((p: any) => (
               <tr key={p.id}>
-                <Td><strong>{p.student_name}</strong></Td>
+                <Td><Link to={`/app/students/${p.student_id}`} style={{ textDecoration: 'none', color: '#1a6b3c', fontWeight: 700 }}>{p.student_name}</Link></Td>
                 <Td style={{ color: '#1a6b3c', fontWeight: 600 }}>${Number(p.amount).toLocaleString()}</Td>
                 <Td style={{ textTransform: 'capitalize' }}>{p.payment_method?.replace('_', ' ')}</Td>
                 <Td><code style={{ fontSize: 11, background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>{p.receipt_number}</code></Td>
@@ -92,11 +99,20 @@ export default function FinanceDashboard() {
 
         {/* Top debtors */}
         <Card>
-          <CardHeader title="Top Debtors" action={<Link to="/app/finance/debtors" style={{ fontSize: 12, color: '#1a6b3c', fontWeight: 600 }}>View All →</Link>} />
+          <CardHeader title="Top Debtors" action={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Btn size="sm" variant="outline" onClick={() => downloadReport('/finance/reports/debtors', { academic_year_id: yearId || undefined, term_id: termId || undefined, format: 'pdf' }, 'fees-arrears-report.pdf')}>PDF</Btn>
+              <Btn size="sm" variant="outline" onClick={() => downloadReport('/finance/reports/debtors', { academic_year_id: yearId || undefined, term_id: termId || undefined, format: 'csv' }, 'fees-arrears-report.csv')}>CSV</Btn>
+            </div>
+          } />
           <Table headers={['Student', 'Form', 'Balance']}>
             {(debtors as any[]).slice(0, 8).map((d: any) => (
               <tr key={d.student_id}>
-                <Td><strong>{d.student_name}</strong><br /><span style={{ fontSize: 11, color: '#6b7280' }}>{d.student_number}</span></Td>
+                <Td>
+                  <Link to={`/app/students/${d.student_id}`} style={{ textDecoration: 'none' }}>
+                    <strong style={{ color: '#1a6b3c' }}>{d.student_name}</strong><br /><span style={{ fontSize: 11, color: '#6b7280' }}>{d.student_number || d.admission_number}</span>
+                  </Link>
+                </Td>
                 <Td>{d.form_name ?? '—'}</Td>
                 <Td style={{ color: '#dc2626', fontWeight: 700 }}>${Number(d.total_balance).toLocaleString()}</Td>
               </tr>
@@ -105,6 +121,19 @@ export default function FinanceDashboard() {
           </Table>
         </Card>
       </div>
+
+      <Card style={{ marginTop: 20 }}>
+        <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>Fee Collection by Term / Academic Year</div>
+            <div style={{ fontSize: 11.5, color: '#9ca3af', marginTop: 2 }}>{yearId && termId ? 'Uses the year/term filter above' : 'Select a year and term above to export this report'}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Btn size="sm" variant="outline" disabled={!yearId || !termId} onClick={() => downloadReport('/finance/reports/term', { academic_year_id: yearId, term_id: termId, format: 'pdf' }, 'term-collection-report.pdf')}>Export PDF</Btn>
+            <Btn size="sm" variant="outline" disabled={!yearId || !termId} onClick={() => downloadReport('/finance/reports/term', { academic_year_id: yearId, term_id: termId, format: 'csv' }, 'term-collection-report.csv')}>Export CSV</Btn>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

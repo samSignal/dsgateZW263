@@ -212,7 +212,7 @@ class StudentStreamResolver
             ->whereNull('s.stream_id')
             ->where('st.id', $streamId);
         if ($activeOnly) $legacy->where('s.status', 'active');
-        if ($yearName) $legacy->where('c.academic_year', $yearName);
+        if ($yearName) self::whereClassAcademicYear($legacy, $yearName);
 
         $legacyIds = $legacy->pluck('s.id')->map(fn ($id) => (int) $id)->toArray();
 
@@ -244,7 +244,7 @@ class StudentStreamResolver
             ->whereNull('s.stream_id')
             ->where('f.id', $formId);
         if ($activeOnly) $legacy->where('s.status', 'active');
-        if ($yearName) $legacy->where('c.academic_year', $yearName);
+        if ($yearName) self::whereClassAcademicYear($legacy, $yearName);
 
         $legacyIds = $legacy->pluck('s.id')->map(fn ($id) => (int) $id)->toArray();
 
@@ -276,7 +276,7 @@ class StudentStreamResolver
             ->whereNull('s.stream_id')
             ->where('st.category_id', $categoryId);
         if ($activeOnly) $legacy->where('s.status', 'active');
-        if ($yearName) $legacy->where('c.academic_year', $yearName);
+        if ($yearName) self::whereClassAcademicYear($legacy, $yearName);
 
         $legacyIds = $legacy->pluck('s.id')->map(fn ($id) => (int) $id)->toArray();
 
@@ -335,13 +335,26 @@ class StudentStreamResolver
         ];
     }
 
+    /**
+     * classes.academic_year is a school-year span like "2026/2027" while academic_years.name
+     * is just the starting year ("2026") — an exact-equality match between the two never
+     * fires, silently dropping every legacy (class_id-only) student from bulk by-form/
+     * by-stream/by-category lookups. Match by prefix instead: "2026" against "2026/2027".
+     */
+    private static function whereClassAcademicYear($query, string $yearName): void
+    {
+        $query->where('c.academic_year', 'like', $yearName . '%');
+    }
+
     private static function academicYearIdForClass(?object $class): ?int
     {
         if (!$class || empty($class->academic_year)) {
             return null;
         }
 
-        return DB::table('academic_years')->where('name', $class->academic_year)->value('id');
+        return DB::table('academic_years')
+            ->whereRaw('? like concat(name, \'%\')', [$class->academic_year])
+            ->value('id');
     }
 
     private static function mappingRow(object $student, object $mapping): array

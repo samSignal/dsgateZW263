@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\Application;
 use App\Models\BehaviourRecord;
-use App\Models\Payment;
 use App\Models\Student;
 use App\Models\Staff;
 use App\Models\SchoolClass;
 use App\Services\OpenAiSchoolAssistant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class HeadmasterApiController extends Controller
@@ -79,7 +79,10 @@ class HeadmasterApiController extends Controller
         return [
             'total_students'      => Student::where('status', 'active')->count(),
             'total_staff'         => Staff::where('is_active', true)->count(),
-            'fees_collected'      => Payment::whereYear('payment_date', date('Y'))->sum('amount'),
+            // Real Finance module data (finance_payments), not the legacy/abandoned
+            // Payment model — that table has a couple of leftover demo rows and nothing
+            // to do with actual billing, which all runs through student_bills now.
+            'fees_collected'      => (float) DB::table('finance_payments')->where('status', 'active')->whereYear('payment_date', date('Y'))->sum('amount'),
             'behaviour_cases'     => BehaviourRecord::whereYear('issue_date', date('Y'))->count(),
             'pending_apps'        => Application::where('status', 'pending')->count(),
             'classes_count'       => SchoolClass::count(),

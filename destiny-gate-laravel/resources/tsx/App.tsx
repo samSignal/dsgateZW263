@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import ChangePassword from './pages/ChangePassword';
+import VerifyPaymentPage from './pages/public/VerifyPaymentPage';
 
 // Pages
 import AdminDashboard    from './pages/admin/Dashboard';
@@ -12,14 +13,11 @@ import Staff             from './pages/admin/Staff';
 import Classes           from './pages/admin/Classes';
 import Applications      from './pages/admin/Applications';
 import Students          from './pages/Students';
+import ClassListPage     from './pages/ClassListPage';
 import StudentDetail     from './pages/StudentDetail';
 import HeadmasterDash    from './pages/headmaster/Dashboard';
 import Behaviour         from './pages/headmaster/Behaviour';
 import BursarDash        from './pages/bursar/Dashboard';
-import Fees              from './pages/bursar/Fees';
-import Payments          from './pages/bursar/Payments';
-import Debtors           from './pages/bursar/Debtors';
-import FeeStructures     from './pages/bursar/FeeStructures';
 import TeacherDash       from './pages/teacher/Dashboard';
 import ClassStudents     from './pages/teacher/ClassStudents';
 import ParentPortal      from './pages/parent/Portal';
@@ -43,6 +41,8 @@ import FeeStructuresPage from './pages/finance/FeeStructuresPage';
 import StudentBillsPage  from './pages/finance/StudentBillsPage';
 import GenerateBillsPage from './pages/finance/GenerateBillsPage';
 import RecordPaymentPage from './pages/finance/RecordPaymentPage';
+import PaymentHistoryPage from './pages/finance/PaymentHistoryPage';
+import CashierReconciliationPage from './pages/finance/CashierReconciliationPage';
 import ParentFinancePage from './pages/finance/ParentFinancePage';
 // Assessment Module
 import AssessmentTypesPage    from './pages/assessments/AssessmentTypesPage';
@@ -58,6 +58,7 @@ import ShopDashboard from './pages/shop/ShopDashboard';
 import ShopCategoriesPage from './pages/shop/ShopCategoriesPage';
 import ShopItemsPage from './pages/shop/ShopItemsPage';
 import RecordPurchasePage from './pages/shop/RecordPurchasePage';
+import PreordersPage from './pages/shop/PreordersPage';
 import PurchaseDetailsPage from './pages/shop/PurchaseDetailsPage';
 import PurchasePaymentsPage from './pages/shop/PurchasePaymentsPage';
 import ShopReportsPage from './pages/shop/ShopReportsPage';
@@ -118,7 +119,12 @@ function dashboardPath(role: string): string {
 export default function App() {
   const { user, login, logout, clearMustChangePassword } = useAuth();
 
-  const publicRoutes = <></>;
+  const publicRoutes = (
+    <>
+      <Route path="/verify-payment" element={<VerifyPaymentPage />} />
+      <Route path="/verify-payment/:reference" element={<VerifyPaymentPage />} />
+    </>
+  );
 
   // Not logged in
   if (!user) {
@@ -163,17 +169,13 @@ export default function App() {
         <Route path="/app/teacher/classes"          element={<TeacherDash />} />
         <Route path="/app/teacher/classes/:classId" element={<ClassStudents />} />
 
-        {/* Bursar */}
+        {/* Bursar — day-to-day finance now lives under /app/finance/* (see Finance Module) */}
         <Route path="/app/bursar"                element={<BursarDash />} />
-        <Route path="/app/bursar/fees"           element={<Fees />} />
-        <Route path="/app/bursar/payments"       element={<Payments />} />
-        <Route path="/app/bursar/debtors"        element={<Debtors />} />
-        <Route path="/app/bursar/fee-structures" element={<FeeStructures />} />
-        <Route path="/app/bursar/paid"           element={<Fees />} />
 
         {/* Students */}
-        <Route path="/app/students"     element={<Students />} />
-        <Route path="/app/students/:id" element={<StudentDetail />} />
+        <Route path="/app/students"            element={<Students />} />
+        <Route path="/app/students/class-list" element={<ClassListPage />} />
+        <Route path="/app/students/:id"        element={<StudentDetail />} />
 
         {/* Portals */}
         <Route path="/app/parent"  element={<ParentPortal />} />
@@ -204,6 +206,8 @@ export default function App() {
         <Route path="/app/finance/bills"        element={<StudentBillsPage />} />
         <Route path="/app/finance/generate"     element={<GenerateBillsPage />} />
         <Route path="/app/finance/payments"     element={<RecordPaymentPage />} />
+        <Route path="/app/finance/history"      element={<PaymentHistoryPage />} />
+        <Route path="/app/finance/reconciliation" element={<CashierReconciliationPage />} />
         <Route path="/app/finance/parent"       element={<ParentFinancePage />} />
 
         {/* Assessment Module */}
@@ -221,6 +225,7 @@ export default function App() {
         <Route path="/app/shop/categories"              element={<ShopCategoriesPage />} />
         <Route path="/app/shop/items"                   element={<ShopItemsPage />} />
         <Route path="/app/shop/record"                  element={<RecordPurchasePage />} />
+        <Route path="/app/shop/preorders"               element={<PreordersPage />} />
         <Route path="/app/shop/purchases/:id"           element={<PurchaseDetailsPage />} />
         <Route path="/app/shop/purchases/:id/payments"  element={<PurchasePaymentsPage />} />
         <Route path="/app/shop/reports"                 element={<ShopReportsPage />} />

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthApiController;
+use App\Http\Controllers\Api\PaymentVerificationController;
 use App\Http\Controllers\Api\AdminApiController;
 use App\Http\Controllers\Api\StudentApiController;
 use App\Http\Controllers\Api\BursarApiController;
@@ -72,10 +73,19 @@ use App\Http\Controllers\Api\StreamNative\ReportCardPreviewController as StreamN
 use App\Http\Controllers\Api\StreamNative\ParentResultsController as StreamNativeParentResultsController;
 
 // ── Public ──────────────────────────────────────────────
-Route::post('/login',                    [AuthApiController::class, 'login']);
-Route::post('/apply',                    [ApplicationApiController::class, 'store']);
-Route::post('/forgot-password',          [AuthApiController::class, 'forgotPassword']);
-Route::post('/guardian-forgot-password', [AuthApiController::class, 'guardianForgotPassword']);
+// Throttled per IP+login to slow down credential stuffing / brute force without
+// locking out a whole office network sharing one IP.
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/login',                    [AuthApiController::class, 'login']);
+    Route::post('/forgot-password',          [AuthApiController::class, 'forgotPassword']);
+    Route::post('/guardian-forgot-password', [AuthApiController::class, 'guardianForgotPassword']);
+});
+Route::middleware('throttle:20,1')->post('/apply', [ApplicationApiController::class, 'store']);
+
+// Public payment verification (QR code target) — no auth, so a parent can scan a receipt
+// without logging in. Throttled since the reference includes a guessable-in-theory random
+// suffix; this just makes brute-forcing it impractically slow, on top of already being ~1e9 combos.
+Route::middleware('throttle:20,1')->get('/public/verify-payment/{reference}', [PaymentVerificationController::class, 'verify']);
 
 // ── Authenticated ────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
@@ -84,6 +94,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout',     [AuthApiController::class, 'logout']);
     Route::post('/change-password', [AuthApiController::class, 'changePassword']);
     Route::get('/my-permissions',   [RolePermissionController::class, 'myPermissions']);
+
+    Route::middleware('role:admin,headmaster,teacher,bursar')
+        ->get('/documents/{path}', [ApplicationApiController::class, 'document'])
+        ->where('path', '.*');
 
     // ── Admin ──────────────────────────────────────────
     Route::middleware('role:admin')->prefix('admin')->group(function () {
@@ -133,22 +147,22 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ── Bursar ─────────────────────────────────────────
+    // The rest of the legacy bursar surface (fees/payments/fee-structures/debtors/paid) was
+    // removed — it was disconnected from real billing (fee-structure creation was a dead
+    // end, nothing ever read it to generate a bill) and fully superseded by the modern
+    // Finance module, which bursar now has direct access to (see the finance route group).
     Route::middleware('role:admin,bursar')->prefix('bursar')->group(function () {
         Route::get('/dashboard',                    [BursarApiController::class, 'dashboard']);
-        Route::get('/fees',                         [BursarApiController::class, 'fees']);
-        Route::post('/payments',                    [BursarApiController::class, 'recordPayment']);
-        Route::get('/payments',                     [BursarApiController::class, 'paymentHistory']);
-        Route::get('/fee-structures',               [BursarApiController::class, 'feeStructures']);
-        Route::post('/fee-structures',              [BursarApiController::class, 'storeFeeStructure']);
-        Route::get('/reports/debtors',              [BursarApiController::class, 'debtorsList']);
-        Route::get('/reports/paid',                 [BursarApiController::class, 'paidStudents']);
     });
 
     // ── Students (staff access) ────────────────────────
     Route::middleware('role:admin,headmaster,teacher,bursar')->group(function () {
         Route::get('/students',                      [StudentApiController::class, 'index']);
         Route::post('/students',                     [StudentApiController::class, 'store']);
+        Route::post('/students/bulk-import',         [StudentApiController::class, 'bulkImport'])->middleware('role:admin');
+        Route::get('/students/class-list',           [StudentApiController::class, 'classList']);
         Route::get('/students/{id}',                 [StudentApiController::class, 'show']);
+        Route::get('/students/{id}/enrollment-history', [StudentApiController::class, 'enrollmentHistory']);
         Route::patch('/students/{id}',               [StudentApiController::class, 'update']);
         Route::post('/students/{id}/guardians',      [StudentApiController::class, 'addGuardian']);
         Route::get('/classes',                       [StudentApiController::class, 'classes']);
@@ -300,26 +314,37 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post  ('/finance/structures/{id}/deactivate',     [FeeStructureController::class, 'deactivate']);
         Route::delete('/finance/structures/{id}',                [FeeStructureController::class, 'destroy']);
 
-        // Student Bills
-        Route::get   ('/finance/bills',                          [StudentBillController::class, 'index']);
-        Route::get   ('/finance/bills/{id}',                     [StudentBillController::class, 'show']);
+        // Student Bills — generate/cancel stay admin/headmaster only (billing policy
+        // decisions); viewing what's billed moves to the bursar-inclusive group below,
+        // since a bursar needs to see what's owed to actually collect it.
         Route::post  ('/finance/bills/generate-student',         [StudentBillController::class, 'generateForStudent']);
         Route::post  ('/finance/bills/generate-form',            [StudentBillController::class, 'generateForForm']);
         Route::post  ('/finance/bills/generate-stream',          [StudentBillController::class, 'generateForStream']);
         Route::post  ('/finance/bills/{id}/cancel',              [StudentBillController::class, 'cancelBill']);
+    });
+
+    // ── Finance Module (day-to-day money handling — bursar's actual job) ──
+    Route::middleware('role:admin,headmaster,bursar')->group(function () {
+        Route::get   ('/finance/bills',                          [StudentBillController::class, 'index']);
+        Route::get   ('/finance/bills/status',                   [StudentBillController::class, 'billingStatus']);
+        Route::get   ('/finance/bills/{id}',                     [StudentBillController::class, 'show']);
         Route::get   ('/finance/student/{id}/balance',           [StudentBillController::class, 'studentBalance']);
 
-        // Payments
         Route::get   ('/finance/payments',                       [PaymentController::class, 'index']);
         Route::post  ('/finance/payments',                       [PaymentController::class, 'store']);
         Route::get   ('/finance/payments/{id}/receipt',          [PaymentController::class, 'receipt']);
         Route::get   ('/finance/student/{id}/payments',          [PaymentController::class, 'studentPayments']);
+        Route::get   ('/finance/student/{id}/guardians',         [PaymentController::class, 'studentGuardians']);
+        // Reversing a payment is a control action, not day-to-day collection — stays
+        // gated by an explicit permission on top of the role check.
+        Route::middleware('permission:finance.reverse-payment')
+              ->post ('/finance/payments/{id}/reverse',          [PaymentController::class, 'reverse']);
 
-        // Reports
         Route::get   ('/finance/reports/summary',                [FinanceReportController::class, 'dashboardSummary']);
         Route::get   ('/finance/reports/daily',                  [FinanceReportController::class, 'dailyCollections']);
         Route::get   ('/finance/reports/monthly',                [FinanceReportController::class, 'monthlyCollections']);
         Route::get   ('/finance/reports/term',                   [FinanceReportController::class, 'termCollections']);
+        Route::get   ('/finance/reports/cashier-reconciliation', [FinanceReportController::class, 'cashierReconciliation']);
         Route::get   ('/finance/reports/debtors',                [FinanceReportController::class, 'debtors']);
         Route::get   ('/finance/reports/fully-paid',             [FinanceReportController::class, 'fullyPaid']);
         Route::get   ('/finance/reports/partially-paid',         [FinanceReportController::class, 'partiallyPaid']);
@@ -360,10 +385,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/items/{id}/deactivate',     [ShopItemController::class, 'deactivate'])->middleware('role:admin,storekeeper');
 
         Route::get('/purchases/search-students',  [StudentPurchaseController::class, 'searchStudents'])->middleware('role:admin,bursar,storekeeper');
+        Route::get('/purchases/preorders',        [StudentPurchaseController::class, 'preorders'])->middleware('role:admin,bursar,storekeeper');
         Route::get('/purchases',                  [StudentPurchaseController::class, 'index']);
         Route::post('/purchases',                 [StudentPurchaseController::class, 'store'])->middleware('role:admin,bursar,storekeeper');
         Route::get('/purchases/{id}',             [StudentPurchaseController::class, 'show']);
         Route::post('/purchases/{id}/cancel',     [StudentPurchaseController::class, 'cancel'])->middleware('role:admin,bursar');
+        Route::post('/purchases/{id}/collect',    [StudentPurchaseController::class, 'markCollected'])->middleware('role:admin,bursar,storekeeper');
+        Route::post('/purchases/{id}/fulfill',    [StudentPurchaseController::class, 'fulfillPreorder'])->middleware('role:admin,bursar,storekeeper');
         Route::get('/student/{id}/purchases',     [StudentPurchaseController::class, 'studentPurchases']);
 
         Route::post('/payments',                  [StudentPurchasePaymentController::class, 'store'])->middleware('role:admin,bursar');

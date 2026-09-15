@@ -24,7 +24,7 @@ class ShopItemController extends Controller
         if ($request->filled('search')) {
             $s = '%' . $request->search . '%';
             $q->where(function ($x) use ($s) {
-                $x->where('si.item_name', 'like', $s)->orWhere('si.item_code', 'like', $s)->orWhere('sc.name', 'like', $s);
+                $x->where('si.item_name', 'like', $s)->orWhere('si.item_code', 'like', $s)->orWhere('si.size', 'like', $s)->orWhere('sc.name', 'like', $s);
             });
         }
 
@@ -43,6 +43,7 @@ class ShopItemController extends Controller
         $data = $request->validate([
             'shop_category_id' => 'required|exists:shop_categories,id',
             'item_name' => 'required|string|max:150',
+            'size' => 'nullable|string|max:50',
             'item_code' => 'required|string|max:50|unique:shop_items,item_code',
             'description' => 'nullable|string|max:1000',
             'unit_price' => 'required|numeric|min:0',
@@ -54,6 +55,7 @@ class ShopItemController extends Controller
         $id = DB::table('shop_items')->insertGetId([
             'shop_category_id' => $data['shop_category_id'],
             'item_name' => $data['item_name'],
+            'size' => $data['size'] ?? null,
             'item_code' => $data['item_code'],
             'description' => $data['description'] ?? null,
             'unit_price' => $data['unit_price'],
@@ -74,6 +76,7 @@ class ShopItemController extends Controller
         $data = $request->validate([
             'shop_category_id' => 'required|exists:shop_categories,id',
             'item_name' => 'required|string|max:150',
+            'size' => 'nullable|string|max:50',
             'item_code' => 'required|string|max:50|unique:shop_items,item_code,' . $id,
             'description' => 'nullable|string|max:1000',
             'unit_price' => 'required|numeric|min:0',
@@ -85,6 +88,7 @@ class ShopItemController extends Controller
         DB::table('shop_items')->where('id', $id)->update([
             'shop_category_id' => $data['shop_category_id'],
             'item_name' => $data['item_name'],
+            'size' => $data['size'] ?? null,
             'item_code' => $data['item_code'],
             'description' => $data['description'] ?? null,
             'unit_price' => $data['unit_price'],

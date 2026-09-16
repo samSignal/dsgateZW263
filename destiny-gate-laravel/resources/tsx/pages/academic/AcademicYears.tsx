@@ -3,11 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { toastSuccess, toastError, confirmDelete, confirmAction } from '../../lib/toast';
 import { Card, Table, Td, Spinner, PageHeader, Btn, Badge, Modal, FormGroup, Input, Grid, Alert } from '../../components/UI';
+import { useAuth } from '../../hooks/useAuth';
 
 interface AcademicYear { id: number; name: string; start_date: string; end_date: string; is_active: boolean }
 const empty = { name: '', start_date: '', end_date: '' };
 
 export default function AcademicYears() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const qc = useQueryClient();
   const [open, setOpen]       = useState(false);
   const [editing, setEditing] = useState<AcademicYear | null>(null);
@@ -72,7 +75,7 @@ export default function AcademicYears() {
               <Td>{y.is_active ? <Badge variant="green">Active</Badge> : <Badge variant="gray">Inactive</Badge>}</Td>
               <Td>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  {!y.is_active && <Btn size="sm" variant="outline" loading={activate.isPending} onClick={() => handleActivate(y)}>Activate</Btn>}
+                  {!y.is_active && isAdmin && <Btn size="sm" variant="outline" loading={activate.isPending} onClick={() => handleActivate(y)}>Activate</Btn>}
                   <Btn size="sm" variant="outline" onClick={() => openEdit(y)}>Edit</Btn>
                   {!y.is_active && <Btn size="sm" variant="danger" onClick={() => handleDelete(y)}>Delete</Btn>}
                 </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../../lib/api';
 import { toastSuccess } from '../../lib/toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -15,8 +15,14 @@ export default function PaymentHistoryPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const canReverse = user?.role === 'admin';
+  // Lets other pages (e.g. the "Fees Collection" chart on the main Dashboard) deep-link
+  // straight into a filtered date range, like /finance/history?date_from=...&date_to=...
+  const [urlParams] = useSearchParams();
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ academic_year_id: '', term_id: '', payment_method: '', date_from: '', date_to: '' });
+  const [filters, setFilters] = useState({
+    academic_year_id: '', term_id: '', payment_method: '',
+    date_from: urlParams.get('date_from') ?? '', date_to: urlParams.get('date_to') ?? '',
+  });
   const [page, setPage] = useState(1);
   const [receiptId, setReceiptId] = useState<number | null>(null);
   const [reversingPayment, setReversingPayment] = useState<any>(null);

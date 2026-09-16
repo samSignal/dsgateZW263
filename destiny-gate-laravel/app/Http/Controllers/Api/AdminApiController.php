@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\SchoolClass;
 use App\Models\Application;
 use App\Models\ApplicationDeposit;
+use App\Support\AuditLogger;
 use App\Support\BillGenerationService;
 use App\Support\StudentNumberGenerator;
 use Illuminate\Http\Request;
@@ -31,6 +32,8 @@ class AdminApiController extends Controller
             'recent_users'   => User::latest()->take(5)->get(['id','name','email','role','created_at']),
 
             'admin_name'      => auth()->user()->name,
+            'current_academic_year_id' => $currentTerm->academic_year_id ?? null,
+            'current_term_id' => $currentTerm->id ?? null,
             'total_students'  => Student::where('status', 'active')->count(),
             'total_staff'     => Staff::where('is_active', true)->count(),
             'pending_apps'    => Application::where('status', 'pending')->where('is_draft', false)->count(),
@@ -132,6 +135,7 @@ class AdminApiController extends Controller
 
         return array_map(fn ($ym) => [
             'month'     => date('M', strtotime("{$ym}-01")),
+            'ym'        => $ym,
             'collected' => round((float) ($collected[$ym] ?? 0), 2),
             'target'    => round((float) ($billed[$ym] ?? 0), 2),
         ], $months);
@@ -153,7 +157,7 @@ class AdminApiController extends Controller
             ->limit(5)
             ->get();
 
-        return $rows->map(fn ($r) => ['name' => $r->name, 'pct' => round((float) $r->avg, 1)])->values()->all();
+        return $rows->map(fn ($r) => ['stream_id' => $r->id, 'name' => $r->name, 'pct' => round((float) $r->avg, 1)])->values()->all();
     }
 
     /** Merges recently created students, payments received, and behaviour issues into one real feed. */
@@ -229,6 +233,36 @@ class AdminApiController extends Controller
         ]);
         $user->update(['role' => $request->role]);
         return response()->json(['message' => "Role updated to {$request->role}.", 'user' => $user]);
+    }
+
+    /** Admin-issued reset — generates a one-time temporary password (shown once in the
+     *  response, never emailed) and forces the user to change it on next login. */
+    public function resetUserPassword(Request $request, User $user)
+    {
+        $temporaryPassword = Str::password(12);
+
+        $user->update([
+            'password'             => Hash::make($temporaryPassword),
+            'must_change_password' => true,
+        ]);
+
+        // Revoke existing sessions so a leaked/old token can't keep using the previous password's session.
+        $user->tokens()->delete();
+
+        AuditLogger::log(
+            auth()->id(),
+            auth()->user()->name,
+            auth()->user()->role,
+            'password_reset',
+            "Reset password for {$user->name} ({$user->email})",
+            $request,
+            200
+        );
+
+        return response()->json([
+            'message'            => 'Password reset. Share this temporary password with the user — it will not be shown again.',
+            'temporary_password' => $temporaryPassword,
+        ]);
     }
 
     public function staff()

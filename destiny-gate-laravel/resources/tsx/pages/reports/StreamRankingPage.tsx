@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../../lib/api';
 import { Badge, Btn, Card, PageHeader, Select, Table, Td } from '../../components/UI';
 
 export default function StreamRankingPage() {
-  const [filters, setFilters] = useState({ academic_year_id: '', term_id: '', stream_id: '' });
+  // Lets other pages (e.g. "Top Performing Classes" on the main Dashboard) deep-link
+  // straight into a filtered ranking, like /reports/rankings/stream?stream_id=3&...
+  const [urlParams] = useSearchParams();
+  const [filters, setFilters] = useState({
+    academic_year_id: urlParams.get('academic_year_id') ?? '',
+    term_id: urlParams.get('term_id') ?? '',
+    stream_id: urlParams.get('stream_id') ?? '',
+  });
   const { data: years = [] } = useQuery({ queryKey: ['academic-years'], queryFn: () => api.get('/academic-years').then(r => r.data) });
   const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => api.get('/terms').then(r => r.data) });
   const { data: streams = [] } = useQuery({ queryKey: ['streams'], queryFn: () => api.get('/streams').then(r => r.data) });

@@ -13,7 +13,7 @@ export default function BursarDashboard() {
     <div>
       <PageHeader title="Bursar Dashboard" subtitle="Finance and fee management" />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
+      <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
         <StatCard label="Collected (This Year)" value={`$${Number(data.total_collected).toLocaleString()}`} icon="💰" color="green" />
         <StatCard label="Outstanding Balance"   value={`$${Number(data.total_outstanding).toLocaleString()}`} icon="⚠️" color="red" />
         <StatCard label="Paid in Full"          value={data.paid_in_full} icon="✅" color="green" />

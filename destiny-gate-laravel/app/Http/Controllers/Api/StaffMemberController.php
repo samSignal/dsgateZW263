@@ -103,7 +103,7 @@ class StaffMemberController extends Controller
             'employment_date' => 'required|date',
             // Optional user account
             'create_account'  => 'boolean',
-            'role'            => 'nullable|in:admin,headmaster,teacher,bursar,parent,student,user',
+            'role'            => 'nullable|in:admin,headmaster,teacher,bursar,storekeeper,clerk,parent,student,user',
         ]);
 
         DB::beginTransaction();
@@ -120,6 +120,7 @@ class StaffMemberController extends Controller
                     'password'   => Hash::make($defaultPassword),
                     'role'       => $data['role'] ?? 'user',
                     'is_active'  => true,
+                    'must_change_password' => true,
                     'created_at' => now(),
                     'updated_at' => now(),
                     'last_signed_in' => now(),
@@ -310,7 +311,7 @@ class StaffMemberController extends Controller
         abort_if(!$staff, 404, 'Staff member not found.');
 
         $data = $request->validate([
-            'role'            => 'required|in:admin,headmaster,teacher,bursar,user',
+            'role'            => 'required|in:admin,headmaster,teacher,bursar,storekeeper,clerk,user',
             'create_account'  => 'boolean',
         ]);
 
@@ -332,6 +333,7 @@ class StaffMemberController extends Controller
                     'password'       => Hash::make($defaultPassword),
                     'role'           => $data['role'],
                     'is_active'      => true,
+                    'must_change_password' => true,
                     'created_at'     => now(),
                     'updated_at'     => now(),
                     'last_signed_in' => now(),

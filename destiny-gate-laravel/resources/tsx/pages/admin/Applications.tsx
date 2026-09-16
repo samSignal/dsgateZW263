@@ -435,7 +435,7 @@ export default function Applications() {
       <Modal open={!!viewApp} onClose={() => setViewApp(null)} title="Application Details" maxWidth={820}>
         {viewApp && (
           <div>
-            <div style={{
+            <div className="two-col-grid" style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gap: 12,
@@ -462,7 +462,7 @@ export default function Applications() {
             </div>
 
             <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a', margin: '10px 0 8px' }}>Student</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
               <div style={{ background: '#fff', border: '1px solid #eef2f7', borderRadius: 10, padding: 12 }}>
                 <div style={{ fontSize: 11, color: '#64748b', fontWeight: 700, letterSpacing: '.4px', textTransform: 'uppercase' }}>Name</div>
                 <div style={{ marginTop: 6, fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
@@ -487,7 +487,7 @@ export default function Applications() {
             </div>
 
             <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a', margin: '10px 0 8px' }}>Guardians</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
               {[
                 { n: viewApp.guardian_name, e: viewApp.guardian_email, p: viewApp.guardian_phone, title: 'Guardian 1' },
                 { n: viewApp.guardian2_name, e: viewApp.guardian2_email, p: viewApp.guardian2_phone, title: 'Guardian 2' },
@@ -517,7 +517,7 @@ export default function Applications() {
             </div>
 
             <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a', margin: '10px 0 8px' }}>Documents</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
               {[
                 { key: 'doc_student_id_path', label: 'Student ID / Birth Certificate', path: viewApp.doc_student_id_path },
                 { key: 'doc_results_path', label: 'Results', path: viewApp.doc_results_path },
@@ -680,7 +680,7 @@ export default function Applications() {
           This is the only way a Student record gets created. Recording a deposit here enrolls the applicant immediately —
           document verification can be completed later from the Students page.
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <FormGroup label="Amount">
             <Input type="number" min={0.01} step="0.01" value={depositForm.amount}
               onChange={e => setDepositForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
@@ -702,7 +702,7 @@ export default function Applications() {
             </select>
           </FormGroup>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <FormGroup label="Reference # (Optional)">
             <Input value={depositForm.reference_number}
               onChange={e => setDepositForm(f => ({ ...f, reference_number: e.target.value }))} placeholder="Transaction / SMS confirmation code" />

@@ -37,7 +37,7 @@ export default function StudentPortal() {
         </Card>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+      <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
         <Card>
           <CardHeader title="My Results" />
           <Table headers={['Subject', 'Average', 'Grade', 'GPA Points']}>

@@ -135,6 +135,18 @@ class PermissionSeeder extends Seeder
             'announcements-list',
         ]);
 
+        // CLERK — cashier for fees and shop payments; day-to-day collection only,
+        // no fee/shop configuration, no bill generation, no payment reversal.
+        $clerk = Role::firstOrCreate(['name' => 'clerk', 'guard_name' => 'web']);
+        $clerk->syncPermissions([
+            'dashboard-view',
+            'students-list','students-show',
+            'payments-list','payments-create',
+            'finance-reports-view',
+            'shop.view','shop.record_purchase','shop.record_payment','shop.view_reports',
+            'announcements-list',
+        ]);
+
         // STOREKEEPER
         $storekeeper = Role::firstOrCreate(['name' => 'storekeeper', 'guard_name' => 'web']);
         $storekeeper->syncPermissions([

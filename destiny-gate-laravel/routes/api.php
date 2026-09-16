@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthApiController;
 use App\Http\Controllers\Api\PaymentVerificationController;
 use App\Http\Controllers\Api\AdminApiController;
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\StudentApiController;
 use App\Http\Controllers\Api\BursarApiController;
 use App\Http\Controllers\Api\HeadmasterApiController;
@@ -94,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout',     [AuthApiController::class, 'logout']);
     Route::post('/change-password', [AuthApiController::class, 'changePassword']);
     Route::get('/my-permissions',   [RolePermissionController::class, 'myPermissions']);
+    Route::get('/current-term',     [TermController::class, 'current']);
 
     Route::middleware('role:admin,headmaster,teacher,bursar')
         ->get('/documents/{path}', [ApplicationApiController::class, 'document'])
@@ -104,6 +106,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard',                    [AdminApiController::class, 'dashboard']);
         Route::get('/users',                        [AdminApiController::class, 'users']);
         Route::patch('/users/{user}/role',          [AdminApiController::class, 'updateUserRole']);
+        Route::post('/users/{user}/reset-password', [AdminApiController::class, 'resetUserPassword']);
         Route::get('/staff',                        [AdminApiController::class, 'staff']);
         Route::post('/staff',                       [AdminApiController::class, 'storeStaff']);
         Route::get('/classes',                      [AdminApiController::class, 'classes']);
@@ -116,6 +119,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/applications/{application}/approve', [AdminApiController::class, 'approveApplication']);
         Route::post('/applications/{application}/reject',  [AdminApiController::class, 'rejectApplication']);
         Route::put('/applications/{application}',           [AdminApiController::class, 'updateApplicationIntake']);
+
+        // System Audit — who's logged in right now, and a trail of every mutating action
+        // taken by anyone. Deliberately admin-only: it can reveal IPs and behavior of
+        // every other user, including other staff.
+        Route::get('/audit/sessions', [AuditLogController::class, 'activeSessions']);
+        Route::get('/audit/logs',     [AuditLogController::class, 'index']);
+        Route::get('/audit/meta',     [AuditLogController::class, 'meta']);
     });
 
     // ── Admissions enrollment (deposit + verification — needs bursar/headmaster too, not admin-only) ──
@@ -157,16 +167,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── Students (staff access) ────────────────────────
     Route::middleware('role:admin,headmaster,teacher,bursar')->group(function () {
-        Route::get('/students',                      [StudentApiController::class, 'index']);
         Route::post('/students',                     [StudentApiController::class, 'store']);
         Route::post('/students/bulk-import',         [StudentApiController::class, 'bulkImport'])->middleware('role:admin');
         Route::get('/students/class-list',           [StudentApiController::class, 'classList']);
-        Route::get('/students/{id}',                 [StudentApiController::class, 'show']);
         Route::get('/students/{id}/enrollment-history', [StudentApiController::class, 'enrollmentHistory']);
         Route::patch('/students/{id}',               [StudentApiController::class, 'update']);
         Route::post('/students/{id}/guardians',      [StudentApiController::class, 'addGuardian']);
         Route::get('/classes',                       [StudentApiController::class, 'classes']);
         Route::get('/subjects',                      [StudentApiController::class, 'subjects']);
+    });
+
+    // Read-only student lookup — also needed by the cashier (clerk) to find who a fee
+    // payment or shop purchase is for, without granting any student-editing rights.
+    Route::middleware('role:admin,headmaster,teacher,bursar,clerk')->group(function () {
+        Route::get('/students',        [StudentApiController::class, 'index']);
+        Route::get('/students/{id}',   [StudentApiController::class, 'show']);
     });
 
     // ── Parent ─────────────────────────────────────────
@@ -212,23 +227,27 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me/graduation',                [StreamNativeGraduationController::class, 'me']);
     });
 
+    // Academic years / terms — read-only, also needed by the bursar's (and now the
+    // clerk/cashier's) Finance Dashboard filters and report exports — neither can
+    // manage the academic structure, just see what years/terms exist to filter by.
+    Route::middleware('role:admin,headmaster,bursar,clerk')->group(function () {
+        Route::get('/academic-years',      [AcademicYearController::class, 'index']);
+        Route::get('/academic-years/{id}', [AcademicYearController::class, 'show']);
+        Route::get('/terms',               [TermController::class, 'index']);
+    });
+
     // ── Academic Structure (admin + headmaster) ────────
     Route::middleware('role:admin,headmaster')->group(function () {
 
         // Academic Years
-        Route::get   ('/academic-years',               [AcademicYearController::class, 'index']);
         Route::post  ('/academic-years',               [AcademicYearController::class, 'store']);
-        Route::get   ('/academic-years/{id}',          [AcademicYearController::class, 'show']);
         Route::put   ('/academic-years/{id}',          [AcademicYearController::class, 'update']);
         Route::delete('/academic-years/{id}',          [AcademicYearController::class, 'destroy']);
-        Route::post  ('/academic-years/{id}/activate', [AcademicYearController::class, 'activate']);
 
         // Terms
-        Route::get   ('/terms',                        [TermController::class, 'index']);
         Route::post  ('/terms',                        [TermController::class, 'store']);
         Route::put   ('/terms/{id}',                   [TermController::class, 'update']);
         Route::delete('/terms/{id}',                   [TermController::class, 'destroy']);
-        Route::post  ('/terms/{id}/set-current',       [TermController::class, 'setCurrent']);
 
         // Forms
         Route::get('/forms',       [FormController::class, 'index']);
@@ -265,6 +284,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post  ('/teacher-allocations',          [TeacherAllocationController::class, 'store']);
         Route::delete('/teacher-allocations/{id}',     [TeacherAllocationController::class, 'destroy']);
         Route::get   ('/teacher-allocations/teachers', [TeacherAllocationController::class, 'teachers']);
+
+        // ── Which academic year / term is "current" (admin only) ───────
+        // Everyone can read the active term (see /current-term above for the header),
+        // but only admin can change it — changing it affects billing, report cards,
+        // and every "current term" default across the whole app.
+        Route::middleware('role:admin')->group(function () {
+            Route::post('/academic-years/{id}/activate', [AcademicYearController::class, 'activate']);
+            Route::post('/terms/{id}/set-current',       [TermController::class, 'setCurrent']);
+        });
 
         // ── Roles & Permissions (admin only) ──────────────────────────
         Route::get   ('/permissions',                    [RolePermissionController::class, 'permissions']);
@@ -323,8 +351,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post  ('/finance/bills/{id}/cancel',              [StudentBillController::class, 'cancelBill']);
     });
 
-    // ── Finance Module (day-to-day money handling — bursar's actual job) ──
-    Route::middleware('role:admin,headmaster,bursar')->group(function () {
+    // ── Finance Module (day-to-day money handling — bursar's and the clerk/cashier's job) ──
+    Route::middleware('role:admin,headmaster,bursar,clerk')->group(function () {
         Route::get   ('/finance/bills',                          [StudentBillController::class, 'index']);
         Route::get   ('/finance/bills/status',                   [StudentBillController::class, 'billingStatus']);
         Route::get   ('/finance/bills/{id}',                     [StudentBillController::class, 'show']);
@@ -349,7 +377,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get   ('/finance/reports/fully-paid',             [FinanceReportController::class, 'fullyPaid']);
         Route::get   ('/finance/reports/partially-paid',         [FinanceReportController::class, 'partiallyPaid']);
         Route::get   ('/finance/reports/balances-by-form',       [FinanceReportController::class, 'balancesByForm']);
+        Route::get   ('/finance/reports/balances-by-class',      [FinanceReportController::class, 'balancesByClass']);
         Route::get   ('/finance/reports/student/{id}/statement', [FinanceReportController::class, 'studentStatement']);
+        Route::get   ('/finance/reports/opening-balances',       [FinanceReportController::class, 'openingBalancesStatement']);
     });
 
     Route::middleware('role:admin,headmaster,teacher,bursar')->prefix('stream-native')->group(function () {
@@ -367,7 +397,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // School Shop
-    Route::middleware('role:admin,bursar,storekeeper')->prefix('shop')->group(function () {
+    Route::middleware('role:admin,bursar,storekeeper,clerk')->prefix('shop')->group(function () {
+        // Categories and item catalog management stay admin/storekeeper only — the
+        // clerk (cashier) can see what's in stock to sell, but not manage the catalog.
         Route::get('/categories',                 [ShopCategoryController::class, 'index']);
         Route::post('/categories',                [ShopCategoryController::class, 'store'])->middleware('role:admin');
         Route::put('/categories/{id}',            [ShopCategoryController::class, 'update'])->middleware('role:admin');
@@ -384,21 +416,24 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/items/{id}/activate',       [ShopItemController::class, 'activate'])->middleware('role:admin,storekeeper');
         Route::post('/items/{id}/deactivate',     [ShopItemController::class, 'deactivate'])->middleware('role:admin,storekeeper');
 
-        Route::get('/purchases/search-students',  [StudentPurchaseController::class, 'searchStudents'])->middleware('role:admin,bursar,storekeeper');
-        Route::get('/purchases/preorders',        [StudentPurchaseController::class, 'preorders'])->middleware('role:admin,bursar,storekeeper');
+        // Recording sales/purchases and their payments IS the clerk's job.
+        Route::get('/purchases/search-students',  [StudentPurchaseController::class, 'searchStudents'])->middleware('role:admin,bursar,storekeeper,clerk');
+        Route::get('/purchases/preorders',        [StudentPurchaseController::class, 'preorders'])->middleware('role:admin,bursar,storekeeper,clerk');
         Route::get('/purchases',                  [StudentPurchaseController::class, 'index']);
-        Route::post('/purchases',                 [StudentPurchaseController::class, 'store'])->middleware('role:admin,bursar,storekeeper');
+        Route::post('/purchases',                 [StudentPurchaseController::class, 'store'])->middleware('role:admin,bursar,storekeeper,clerk');
         Route::get('/purchases/{id}',             [StudentPurchaseController::class, 'show']);
+        // Cancelling a sale is a correction action, not routine cashiering — stays out
+        // of the clerk's hands, same reasoning as payment reversal in Finance.
         Route::post('/purchases/{id}/cancel',     [StudentPurchaseController::class, 'cancel'])->middleware('role:admin,bursar');
-        Route::post('/purchases/{id}/collect',    [StudentPurchaseController::class, 'markCollected'])->middleware('role:admin,bursar,storekeeper');
-        Route::post('/purchases/{id}/fulfill',    [StudentPurchaseController::class, 'fulfillPreorder'])->middleware('role:admin,bursar,storekeeper');
+        Route::post('/purchases/{id}/collect',    [StudentPurchaseController::class, 'markCollected'])->middleware('role:admin,bursar,storekeeper,clerk');
+        Route::post('/purchases/{id}/fulfill',    [StudentPurchaseController::class, 'fulfillPreorder'])->middleware('role:admin,bursar,storekeeper,clerk');
         Route::get('/student/{id}/purchases',     [StudentPurchaseController::class, 'studentPurchases']);
 
-        Route::post('/payments',                  [StudentPurchasePaymentController::class, 'store'])->middleware('role:admin,bursar');
+        Route::post('/payments',                  [StudentPurchasePaymentController::class, 'store'])->middleware('role:admin,bursar,clerk');
         Route::get('/purchases/{id}/payments',    [StudentPurchasePaymentController::class, 'purchasePayments']);
     });
 
-    Route::middleware('role:admin,bursar,headmaster')->prefix('shop')->group(function () {
+    Route::middleware('role:admin,bursar,headmaster,clerk')->prefix('shop')->group(function () {
         Route::get('/reports/summary',            [ShopReportController::class, 'dashboardSummary']);
         Route::get('/reports/today',              [ShopReportController::class, 'salesToday']);
         Route::get('/reports/date-range',         [ShopReportController::class, 'salesByDateRange']);

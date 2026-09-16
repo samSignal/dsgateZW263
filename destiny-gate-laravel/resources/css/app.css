@@ -5,6 +5,11 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Safety net: no page should ever be wider than the viewport on a phone. This only
+   restricts the x-axis (y stays 'visible'), so it doesn't interfere with the app's
+   sticky topbar/header elements. */
+html, body { max-width: 100%; overflow-x: hidden; }
+
 /* Print isolation for receipts (and anything else opting in with .print-area): when a
    .print-area exists on the page, printing shows ONLY that element — not the sidebar,
    modal chrome, or the Print button itself. Scoped with :has() so pages that print their
@@ -105,12 +110,24 @@ tbody tr:hover td { background: #fafafa !important; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 
+/* The <Grid cols={n}> component (forms/filters, used ~60 places app-wide) — same
+   collapsing behavior as the KPI .grid-* classes above, just keyed by an explicit
+   class per column count since cols can be 2 through 6. */
+.dg-grid { display: grid; gap: 16px; margin-bottom: 16px; }
+.dg-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.dg-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.dg-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.dg-grid-5 { grid-template-columns: repeat(5, 1fr); }
+.dg-grid-6 { grid-template-columns: repeat(6, 1fr); }
+
 /* ── Breakpoints ── */
 
 /* Tablet: ≤1200px — collapse 5→3, 4→2 */
 @media (max-width: 1200px) {
   .grid-5 { grid-template-columns: repeat(3, 1fr); }
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .dg-grid-5, .dg-grid-6 { grid-template-columns: repeat(3, 1fr); }
+  .dg-grid-4             { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* Small tablet: ≤900px — sidebar hidden, main full width */
@@ -122,14 +139,38 @@ tbody tr:hover td { background: #fafafa !important; }
   .grid-3          { grid-template-columns: repeat(2, 1fr); }
   .topbar-search   { display: none !important; }
   .topbar-term     { display: none !important; }
+  .dg-grid-3, .dg-grid-4, .dg-grid-5, .dg-grid-6 { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* Mobile: ≤600px — single column */
 @media (max-width: 600px) {
   .grid-5, .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+  .dg-grid-2, .dg-grid-3, .dg-grid-4, .dg-grid-5, .dg-grid-6 { grid-template-columns: 1fr; }
   .content-pad { padding: 14px 14px !important; }
   .topbar-user-name { display: none !important; }
   .page-header-row  { flex-direction: column; gap: 12px; align-items: flex-start !important; }
+}
+
+/* Narrow phones (iPhone SE, small Android — ≤420px): the topbar's title + bell/mail/
+   avatar cluster is tight enough that mail can go, leaving room for what matters. */
+@media (max-width: 420px) {
+  .topbar-mail  { display: none !important; }
+  .topbar-title { max-width: 32vw !important; }
+}
+
+/* Retrofit for the ~16 spots app-wide that hardcode a 2-column inline
+   gridTemplateColumns (side-by-side cards/charts). !important is required here
+   specifically because it's overriding an inline style, not another class. */
+@media (max-width: 700px) {
+  .two-col-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── Modal (shared across every "Add/Edit X" dialog app-wide) ── */
+.dg-modal-overlay { padding: 20px; }
+.dg-modal-box { border-radius: 16px; padding: 28px; }
+@media (max-width: 480px) {
+  .dg-modal-overlay { padding: 8px; }
+  .dg-modal-box { padding: 16px; border-radius: 12px; }
 }
 
 /* ── Mobile sidebar overlay ── */

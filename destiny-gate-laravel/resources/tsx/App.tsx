@@ -9,6 +9,8 @@ import VerifyPaymentPage from './pages/public/VerifyPaymentPage';
 // Pages
 import AdminDashboard    from './pages/admin/Dashboard';
 import Users             from './pages/admin/Users';
+import ResetPassword     from './pages/admin/ResetPassword';
+import SystemAudit       from './pages/admin/SystemAudit';
 import Staff             from './pages/admin/Staff';
 import Classes           from './pages/admin/Classes';
 import Applications      from './pages/admin/Applications';
@@ -36,6 +38,7 @@ import TeacherProfiles   from './pages/staff/TeacherProfiles';
 import RolesPermissions  from './pages/admin/RolesPermissions';
 // Finance Module
 import FinanceDashboard  from './pages/finance/FinanceDashboard';
+import OwingStudentsPage from './pages/finance/OwingStudentsPage';
 import FeeCategoriesPage from './pages/finance/FeeCategoriesPage';
 import FeeStructuresPage from './pages/finance/FeeStructuresPage';
 import StudentBillsPage  from './pages/finance/StudentBillsPage';
@@ -110,7 +113,7 @@ function dashboardPath(role: string): string {
   const map: Record<string, string> = {
     admin: '/app/admin', headmaster: '/app/headmaster',
     teacher: '/app/teacher', bursar: '/app/bursar',
-    storekeeper: '/app/shop/items',
+    storekeeper: '/app/shop/items', clerk: '/app/finance',
     parent: '/app/parent', student: '/app/student',
   };
   return map[role] ?? '/app/admin';
@@ -154,6 +157,8 @@ export default function App() {
         {/* Admin */}
         <Route path="/app/admin"              element={<AdminDashboard />} />
         <Route path="/app/admin/users"        element={<Users />} />
+        <Route path="/app/admin/reset-password" element={<ResetPassword />} />
+        <Route path="/app/admin/audit"        element={<SystemAudit />} />
         <Route path="/app/admin/staff"        element={<Staff />} />
         <Route path="/app/admin/classes"      element={<Classes />} />
         <Route path="/app/admin/applications" element={<Applications />} />
@@ -201,6 +206,7 @@ export default function App() {
 
         {/* Finance Module */}
         <Route path="/app/finance"              element={<FinanceDashboard />} />
+        <Route path="/app/finance/debtors"      element={<OwingStudentsPage />} />
         <Route path="/app/finance/categories"   element={<FeeCategoriesPage />} />
         <Route path="/app/finance/structures"   element={<FeeStructuresPage />} />
         <Route path="/app/finance/bills"        element={<StudentBillsPage />} />

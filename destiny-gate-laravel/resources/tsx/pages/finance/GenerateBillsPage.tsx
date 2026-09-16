@@ -92,7 +92,7 @@ export default function GenerateBillsPage() {
       {err    && <Alert type="error"   message={err} />}
       {result && <Alert type="success" message={result} />}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         <Card>
           <CardHeader title="Bill Generation Options" />
           <CardBody>

@@ -279,11 +279,11 @@ export function Modal({
 }) {
   if (!open) return null;
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div className="dg-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,.4)', backdropFilter: 'blur(2px)' }} />
-      <div style={{
-        position: 'relative', background: '#fff', borderRadius: 16,
-        padding: 28, width: '100%', maxWidth,
+      <div className="dg-modal-box" style={{
+        position: 'relative', background: '#fff',
+        width: '100%', maxWidth,
         maxHeight: '90vh', overflowY: 'auto',
         boxShadow: '0 24px 64px rgba(0,0,0,.15)',
         animation: 'fadeUp .2s ease',
@@ -304,9 +304,12 @@ export function Modal({
 }
 
 // ── Grid ──────────────────────────────────────────────────────────────────────
+// Column count comes from a CSS class (dg-grid-N), not an inline gridTemplateColumns,
+// so the responsive breakpoints in app.css can collapse it on phones/tablets — an
+// inline style can't respond to viewport width on its own.
 export function Grid({ cols = 2, children, style }: { cols?: number; children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 16, marginBottom: 16, ...style }}>
+    <div className={`dg-grid dg-grid-${cols}`} style={style}>
       {children}
     </div>
   );

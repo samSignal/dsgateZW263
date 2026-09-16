@@ -18,9 +18,12 @@ return Application::configure(basePath: dirname(__DIR__))
         \App\Console\Commands\ExpireStaleOffers::class,
         \App\Console\Commands\RenumberStudents::class,
         \App\Console\Commands\BackfillStudentLogins::class,
+        \App\Console\Commands\BackupDatabase::class,
     ])
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('dgi:expire-stale-offers')->daily();
+        $schedule->command('dgi:backup-database')->cron('0 */5 * * *')
+            ->emailOutputOnFailure(config('backup.email'));
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
@@ -28,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         ]);
         $middleware->statefulApi();
+        $middleware->api(append: [\App\Http\Middleware\LogAuditTrail::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
     })->create();

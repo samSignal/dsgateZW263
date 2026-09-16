@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import type { User } from '../types';
@@ -109,6 +109,16 @@ export default function Login({ onLogin }: Props) {
   const [loading, setLoading]     = useState(false);
   const [forgotMsg, setForgotMsg] = useState('');
   const [forgotBusy, setForgotBusy] = useState(false);
+  const [idleNotice, setIdleNotice] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('logout_reason') === 'idle') {
+        setIdleNotice(true);
+        sessionStorage.removeItem('logout_reason');
+      }
+    } catch {}
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,6 +265,15 @@ export default function Login({ onLogin }: Props) {
             <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', margin: 0 }}>Welcome Back! <span>👋</span></h2>
             <p style={{ fontSize: 13, color: '#64748b', marginTop: 4, marginBottom: 22 }}>Sign in to access your portal</p>
 
+            {idleNotice && (
+              <div style={{
+                background: '#fffbeb', color: '#92400e', border: '1px solid #fde68a',
+                borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 16,
+              }}>
+                You were automatically signed out after a period of inactivity, for security.
+              </div>
+            )}
+
             {error && (
               <div style={{
                 background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca',
@@ -361,7 +380,18 @@ export default function Login({ onLogin }: Props) {
               </button>
             </div>
 
-            <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 11, color: '#94a3b8', marginTop: 18 }}>
+            <div style={{
+              display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 18,
+              background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 12px',
+            }}>
+              <span style={{ color: '#b45309', flexShrink: 0, marginTop: 1 }}>{I.shieldSmall}</span>
+              <span style={{ fontSize: 11, color: '#92400e', lineHeight: 1.5 }}>
+                <strong>Do not share your login with anyone.</strong> Every account is personal — you are responsible
+                for all actions taken under your username and password. For inactivity, you'll be signed out automatically.
+              </span>
+            </div>
+
+            <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 11, color: '#94a3b8', marginTop: 14 }}>
               <span style={{ color: '#1a6b3c' }}>{I.shieldSmall}</span> Secure login · Your information is protected
             </p>
 

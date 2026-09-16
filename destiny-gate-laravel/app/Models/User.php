@@ -48,11 +48,12 @@ class User extends Authenticatable
     public function isHeadmaster(): bool   { return $this->role === 'headmaster'; }
     public function isTeacher(): bool      { return $this->role === 'teacher'; }
     public function isBursar(): bool       { return $this->role === 'bursar'; }
+    public function isClerk(): bool        { return $this->role === 'clerk'; }
     public function isParent(): bool       { return $this->role === 'parent'; }
     public function isStudent(): bool      { return $this->role === 'student'; }
 
     public function isStaff(): bool
     {
-        return in_array($this->role, ['admin', 'headmaster', 'teacher', 'bursar']);
+        return in_array($this->role, ['admin', 'headmaster', 'teacher', 'bursar', 'storekeeper', 'clerk']);
     }
 }

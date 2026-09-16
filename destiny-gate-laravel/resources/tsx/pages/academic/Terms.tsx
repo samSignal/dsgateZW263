@@ -3,12 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { toastSuccess, toastError, confirmDelete, confirmAction } from '../../lib/toast';
 import { Card, Table, Td, Spinner, PageHeader, Btn, Badge, Modal, FormGroup, Input, Select, Grid, Alert } from '../../components/UI';
+import { useAuth } from '../../hooks/useAuth';
 
 interface AcademicYear { id: number; name: string }
 interface Term { id: number; academic_year_id: number; name: string; start_date: string; end_date: string; is_current: boolean; academic_year_name: string }
 const empty = { academic_year_id: '', name: '', start_date: '', end_date: '' };
 
 export default function Terms() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const qc = useQueryClient();
   const [open, setOpen]       = useState(false);
   const [editing, setEditing] = useState<Term | null>(null);
@@ -77,7 +80,7 @@ export default function Terms() {
               <Td>{t.is_current ? <Badge variant="green">Current</Badge> : <Badge variant="gray">—</Badge>}</Td>
               <Td>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  {!t.is_current && <Btn size="sm" variant="outline" onClick={() => handleSetCurrent(t)}>Set Current</Btn>}
+                  {!t.is_current && isAdmin && <Btn size="sm" variant="outline" onClick={() => handleSetCurrent(t)}>Set Current</Btn>}
                   <Btn size="sm" variant="outline" onClick={() => openEdit(t)}>Edit</Btn>
                   <Btn size="sm" variant="danger"  onClick={() => handleDelete(t)}>Delete</Btn>
                 </div>

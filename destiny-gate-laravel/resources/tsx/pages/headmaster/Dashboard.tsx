@@ -22,7 +22,7 @@ export default function HeadmasterDashboard() {
       <PageHeader title="Headmaster Dashboard" subtitle="School overview and management" />
       {msg && <Alert type="success" message={msg} />}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
+      <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
         <StatCard label="Active Students"  value={data.total_students}  icon="🎓" color="green" />
         <StatCard label="Staff Members"    value={data.total_staff}     icon="🧑‍💼" color="blue" />
         <StatCard label="Fees Collected"   value={`$${Number(data.fees_collected).toLocaleString()}`} icon="💰" color="green" />

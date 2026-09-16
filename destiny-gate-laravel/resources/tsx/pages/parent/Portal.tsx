@@ -34,7 +34,7 @@ export default function ParentPortal() {
         subtitle={`Monitoring: ${child?.name ?? ''} · ${child?.form_name ?? child?.resolved_form_name ?? ''} ${child?.stream_name ?? child?.resolved_stream_name ?? ''}`.trim()}
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
+      <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
         <StatCard label="Outstanding Fees"  value={`$${Number(stats.outstanding_fees).toLocaleString()}`} icon="💰" color="red" />
         <StatCard label="Attendance Rate"   value={`${stats.attendance_rate}%`} icon="📅" color="green" />
         <StatCard label="Average Grade"     value={stats.avg_grade} icon="📚" color="blue" />
@@ -52,7 +52,7 @@ export default function ParentPortal() {
         </CardBody>
       </Card>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+      <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
         <Card>
           <CardHeader title="Fee Statement" />
           <Table headers={['Year', 'Term', 'Amount', 'Paid', 'Balance', 'Status']}>

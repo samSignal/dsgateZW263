@@ -103,7 +103,7 @@ export default function RecordPaymentPage() {
       <PageHeader title="Record Payment" subtitle="Record fee payment for a student" />
       {err && <Alert type="error" message={err} />}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* Left: Student selection + bills */}
         <div>
           <Card style={{ marginBottom: 16 }}>

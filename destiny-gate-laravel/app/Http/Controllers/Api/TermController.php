@@ -8,6 +8,22 @@ use Illuminate\Support\Facades\DB;
 
 class TermController extends Controller
 {
+    /**
+     * The active term for the header/topbar — any authenticated role can read this,
+     * unlike the rest of this controller which is admin/headmaster-only.
+     */
+    public function current()
+    {
+        $term = DB::table('terms')
+            ->join('academic_years', 'terms.academic_year_id', '=', 'academic_years.id')
+            ->select('terms.*', 'academic_years.name as academic_year_name')
+            ->where('terms.is_current', true)
+            ->where('academic_years.is_active', true)
+            ->first();
+
+        return response()->json($term);
+    }
+
     public function index(Request $request)
     {
         $query = DB::table('terms')

@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { User } from '../types';
 import api from '../lib/api';
 import { statusBadge } from './UI';
+import IdleLogoutGuard from './IdleLogoutGuard';
+import ChangePasswordModal from './ChangePasswordModal';
 
 // ── Icon map ──────────────────────────────────────────────────────────────────
 
@@ -72,6 +74,7 @@ function navForRole(role: string): NavGroup[] {
         { label: 'Teacher Schedules', path: '/app/timetable/teachers', icon: Ic.user },
       ]},      { section: 'FINANCE', items: [
         { label: 'Finance Dashboard',  path: '/app/finance',             icon: Ic.dollar },
+        { label: 'Owing Students',     path: '/app/finance/debtors',     icon: Ic.alert },
         { label: 'Fee Categories',     path: '/app/finance/categories',  icon: Ic.clip },
         { label: 'Fee Structures',     path: '/app/finance/structures',  icon: Ic.clip },
         { label: 'Student Bills',      path: '/app/finance/bills',       icon: Ic.clip },
@@ -112,8 +115,9 @@ function navForRole(role: string): NavGroup[] {
       ]},
       { section: 'SETTINGS', items: [
         { label: 'Roles & Permissions', path: '/app/admin/roles', icon: Ic.key },
+        { label: 'Reset Password',      path: '/app/admin/reset-password', icon: Ic.key },
         { label: 'Settings',            path: '/app/admin/users', icon: Ic.gear },
-        { label: 'System Logs',         path: '/app/admin/users', icon: Ic.log },
+        { label: 'System Audit',        path: '/app/admin/audit', icon: Ic.log },
       ]},
     ];
     case 'headmaster': return [
@@ -159,6 +163,7 @@ function navForRole(role: string): NavGroup[] {
         { label: 'Teacher Schedules', path: '/app/timetable/teachers', icon: Ic.user },
       ]},      { section: 'FINANCE', items: [
         { label: 'Finance Overview', path: '/app/finance',          icon: Ic.dollar },
+        { label: 'Owing Students',   path: '/app/finance/debtors',  icon: Ic.alert },
         { label: 'Student Bills',    path: '/app/finance/bills',    icon: Ic.clip },
         { label: 'Record Payment',   path: '/app/finance/payments', icon: Ic.dollar },
         { label: 'Payment History',  path: '/app/finance/history',  icon: Ic.bar },
@@ -180,6 +185,21 @@ function navForRole(role: string): NavGroup[] {
       { label: 'Assessments', path: '/app/assessments/parent', icon: Ic.chart },
       { label: 'Report Cards', path: '/app/parent/reports', icon: Ic.log },
     ]}];
+    case 'clerk': return [
+      { section: '', items: [{ label: 'Dashboard', path: '/app/finance', icon: Ic.grid }] },
+      { section: 'FINANCE (CASHIER)', items: [
+        { label: 'Record Payment',   path: '/app/finance/payments', icon: Ic.dollar },
+        { label: 'Payment History',  path: '/app/finance/history',  icon: Ic.bar },
+        { label: 'Owing Students',   path: '/app/finance/debtors',  icon: Ic.alert },
+        { label: 'Student Bills',    path: '/app/finance/bills',    icon: Ic.clip },
+      ]},
+      { section: 'SCHOOL SHOP', items: [
+        { label: 'Shop Dashboard',  path: '/app/shop',           icon: Ic.shop },
+        { label: 'Record Purchase', path: '/app/shop/record',    icon: Ic.shop },
+        { label: 'Preorders',       path: '/app/shop/preorders', icon: Ic.clip },
+        { label: 'Shop Reports',    path: '/app/shop/reports',   icon: Ic.bar },
+      ]},
+    ];
     case 'storekeeper': return [
       { section: '', items: [{ label: 'Items & Stock', path: '/app/shop/items', icon: Ic.clip }] },
       { section: 'SCHOOL SHOP', items: [
@@ -203,6 +223,7 @@ export function RoleBadge({ role }: { role: string }) {
   const m: Record<string, [string,string]> = {
     admin:['#fef2f2','#991b1b'], headmaster:['#f5f3ff','#5b21b6'],
     teacher:['#eff6ff','#1e40af'], bursar:['#fffbeb','#92400e'],
+    clerk:['#fffbeb','#92400e'], storekeeper:['#f0fdfa','#0f766e'],
     parent:['#ecfdf5','#065f46'], student:['#e0f2fe','#0369a1'], user:['#f3f4f6','#374151'],
   };
   const [bg,color] = m[role]??m.user;
@@ -218,7 +239,7 @@ const STUDENT_SEARCH_ROLES = ['admin', 'headmaster', 'teacher', 'bursar'];
    An inline component recreated each render gets a new type identity, which makes React
    unmount + remount this whole subtree on every click, wiping the sidebar's scroll position. */
 function SidebarContent({
-  nav, isActivePath, userName, userRole, initials, onLogoutClick, loggingOut, onClose,
+  nav, isActivePath, userName, userRole, initials, onLogoutClick, loggingOut, onClose, onChangePasswordClick,
 }: {
   nav: NavGroup[];
   isActivePath: (path: string) => boolean;
@@ -228,6 +249,7 @@ function SidebarContent({
   onLogoutClick: () => void;
   loggingOut: boolean;
   onClose?: () => void;
+  onChangePasswordClick: () => void;
 }) {
   return (
     <>
@@ -297,7 +319,10 @@ function SidebarContent({
               {userRole === 'admin' ? 'Super Admin' : userRole}
             </div>
           </div>
-          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2,flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
+            <button onClick={onChangePasswordClick} title="Change Password" style={{background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,.4)', padding:2, display:'flex'}}>
+              {Ic.key}
+            </button>
             <button onClick={onLogoutClick} disabled={loggingOut} title="Sign out" style={{background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,.4)', padding:2, display:'flex'}}>
               {Ic.logout}
             </button>
@@ -312,6 +337,7 @@ export default function Layout({ user, onLogout, children }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);   // desktop: open by default
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
   const [searchQuery, setSearchQuery] = useState('');
@@ -322,6 +348,17 @@ export default function Layout({ user, onLogout, children }: Props) {
   const nav = navForRole(user.role);
   const initials = user.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
   const canSearchStudents = STUDENT_SEARCH_ROLES.includes(user.role);
+  const [currentTerm, setCurrentTerm] = useState<{ name: string; academic_year_name: string; start_date: string; end_date: string } | null>(null);
+
+  useEffect(() => {
+    api.get('/current-term').then(r => setCurrentTerm(r.data ?? null)).catch(() => setCurrentTerm(null));
+  }, []);
+
+  const fmtRange = (start: string, end: string) => {
+    const s = new Date(start), e = new Date(end);
+    const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+    return `${s.toLocaleDateString('en-US', opts)} – ${e.toLocaleDateString('en-US', opts)}, ${e.getFullYear()}`;
+  };
 
   // Debounced live student search — name, surname, or student/admission number all hit the
   // same backend `search` param already used by the Students list page.
@@ -379,6 +416,12 @@ export default function Layout({ user, onLogout, children }: Props) {
     onLogout(); navigate('/app');
   };
 
+  const handleIdleLogout = async () => {
+    try { sessionStorage.setItem('logout_reason', 'idle'); } catch {}
+    try { await api.post('/logout'); } catch {}
+    onLogout(); navigate('/app');
+  };
+
   const pageTitle = nav.flatMap(g=>g.items).find(i=>isActive(i.path))?.label ?? 'Dashboard';
 
   return (
@@ -395,6 +438,7 @@ export default function Layout({ user, onLogout, children }: Props) {
           <SidebarContent
             nav={nav} isActivePath={isActive} userName={user.name} userRole={user.role}
             initials={initials} onLogoutClick={handleLogout} loggingOut={loggingOut}
+            onChangePasswordClick={() => setChangePasswordOpen(true)}
           />
         </aside>
       )}
@@ -408,6 +452,7 @@ export default function Layout({ user, onLogout, children }: Props) {
               nav={nav} isActivePath={isActive} userName={user.name} userRole={user.role}
               initials={initials} onLogoutClick={handleLogout} loggingOut={loggingOut}
               onClose={() => setSidebarOpen(false)}
+              onChangePasswordClick={() => setChangePasswordOpen(true)}
             />
           </aside>
         </>
@@ -433,7 +478,7 @@ export default function Layout({ user, onLogout, children }: Props) {
               onClick={() => setSidebarOpen(s => !s)}
               style={{background:'none',border:'none',cursor:'pointer',color:'#6b7280',display:'flex',padding:4,borderRadius:6,flexShrink:0}}
             >{Ic.menu}</button>
-            <span style={{fontSize:15,fontWeight:700,color:'#111827',whiteSpace:'nowrap'}}>{pageTitle}</span>
+            <span className="topbar-title" style={{fontSize:15,fontWeight:700,color:'#111827',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:'40vw'}}>{pageTitle}</span>
           </div>
 
           {/* Search — hidden on small screens via CSS */}
@@ -497,8 +542,14 @@ export default function Layout({ user, onLogout, children }: Props) {
             {/* Term selector — hidden on small screens */}
             <div className="topbar-term" style={{display:'flex',alignItems:'center',gap:5,padding:'5px 10px',border:'1px solid #e8eaed',borderRadius:7,cursor:'pointer',fontSize:11.5,color:'#374151',background:'#fff',whiteSpace:'nowrap'}}>
               <span style={{color:'#9ca3af'}}>{Ic.cal}</span>
-              <span style={{fontWeight:600}}>Term 2, {new Date().getFullYear()}</span>
-              <span style={{color:'#9ca3af',fontSize:10}}>Apr 14 – Jul 18, {new Date().getFullYear()}</span>
+              {currentTerm?.name ? (
+                <>
+                  <span style={{fontWeight:600}}>{currentTerm.name}, {currentTerm.academic_year_name}</span>
+                  <span style={{color:'#9ca3af',fontSize:10}}>{fmtRange(currentTerm.start_date, currentTerm.end_date)}</span>
+                </>
+              ) : (
+                <span style={{fontWeight:600,color:'#9ca3af'}}>No active term set</span>
+              )}
               <span style={{color:'#9ca3af'}}>{Ic.down}</span>
             </div>
 
@@ -516,8 +567,8 @@ export default function Layout({ user, onLogout, children }: Props) {
               }}>3</span>
             </div>
 
-            {/* Mail with badge */}
-            <div style={{position:'relative',cursor:'pointer'}}>
+            {/* Mail with badge — hidden on very narrow phones to keep the topbar from crowding */}
+            <div className="topbar-mail" style={{position:'relative',cursor:'pointer'}}>
               <div style={{width:34,height:34,borderRadius:8,border:'1px solid #e8eaed',display:'flex',alignItems:'center',justifyContent:'center',color:'#6b7280',background:'#fff'}}>{Ic.mail}</div>
               <span style={{
                 position:'absolute',top:-4,right:-4,
@@ -549,6 +600,12 @@ export default function Layout({ user, onLogout, children }: Props) {
           {children}
         </main>
 
+        {/* Account accountability reminder — quiet, but on every page while logged in,
+            not just at login. */}
+        <div style={{padding:'6px 24px',background:'#fffbeb',borderTop:'1px solid #fde68a',fontSize:10.5,color:'#92400e',textAlign:'center'}}>
+          Do not share your login — you are responsible for all actions taken under your account.
+        </div>
+
         {/* Footer */}
         <footer style={{padding:'10px 24px',borderTop:'1px solid #f0f0f0',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:6,fontSize:11,color:'#9ca3af',background:'#fff'}}>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -566,6 +623,8 @@ export default function Layout({ user, onLogout, children }: Props) {
         </footer>
       </div>
 
+      <IdleLogoutGuard onIdleLogout={handleIdleLogout} />
+      <ChangePasswordModal open={changePasswordOpen} onClose={() => setChangePasswordOpen(false)} />
     </div>
   );
 }

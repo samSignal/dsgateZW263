@@ -26,7 +26,7 @@ export default function TeacherDashboard() {
       />
       {msg && <Alert type="success" message={msg} />}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
+      <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
         <StatCard label="My Classes"     value={data.my_classes}     icon="🏫" color="blue" />
         <StatCard label="Total Students" value={data.total_students} icon="🎓" color="green" />
         <StatCard label="Marks Recorded" value={data.marks_recorded} icon="📝" color="green" />

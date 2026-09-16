@@ -42,7 +42,7 @@ export default function AssessmentDetailsPage() {
       />
 
       {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div className="grid-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
           { label: 'Total Students', value: marks.length, color: '#2563eb' },
           { label: 'Marks Entered',  value: entered.length, color: '#1a6b3c' },

@@ -2,12 +2,13 @@
 @include('reports.shared._header')
 
 <table class="report-table">
-    <thead><tr><th>Student</th><th>Student #</th><th>Form</th><th class="text-right">Billed</th><th class="text-right">Paid</th><th class="text-right">Balance</th></tr></thead>
+    <thead><tr><th>#</th><th>Student</th><th>Student #</th><th>Form</th><th class="text-right">Billed</th><th class="text-right">Paid</th><th class="text-right">Balance</th></tr></thead>
     <tbody>
-    @php $total = 0; @endphp
+    @php $n = 0; $total = 0; @endphp
     @foreach($rows as $r)
-        @php $total += $r->total_balance; @endphp
+        @php $n++; $total += $r->total_balance; @endphp
         <tr>
+            <td>{{ $n }}</td>
             <td>{{ $r->student_name }}</td>
             <td>{{ $r->student_number ?: $r->admission_number }}</td>
             <td>{{ $r->form_name ?? '-' }}</td>
@@ -17,9 +18,9 @@
         </tr>
     @endforeach
     @if(count($rows) === 0)
-        <tr><td colspan="6" style="text-align:center; color:#9ca3af;">No debtors found.</td></tr>
+        <tr><td colspan="7" style="text-align:center; color:#9ca3af;">No debtors found.</td></tr>
     @endif
-    <tr class="total-row"><td colspan="5">Total Outstanding</td><td class="text-right">${{ number_format($total, 2) }}</td></tr>
+    <tr class="total-row"><td colspan="6">Total Outstanding</td><td class="text-right">${{ number_format($total, 2) }}</td></tr>
     </tbody>
 </table>
 

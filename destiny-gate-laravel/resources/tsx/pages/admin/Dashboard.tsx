@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   ComposedChart, Bar, Line,
   XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -47,6 +47,7 @@ function PanelHead({ title, action }: { title:string; action?:React.ReactNode })
 
 /* ── Main component ───────────────────────────────────────────────────────── */
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ['admin-dashboard'],
     queryFn: () => api.get('/admin/dashboard').then(r => r.data),
@@ -62,6 +63,23 @@ export default function AdminDashboard() {
   const reminders: any[] = data?.reminders ?? [];
   const pendingActions: any[] = data?.pending_actions ?? [];
   const unbilled = data?.unbilled ?? { count: 0, students: [] };
+  const currentYearId = data?.current_academic_year_id;
+  const currentTermId = data?.current_term_id;
+
+  // Click a month's bar → Payment History for that whole calendar month.
+  const onMonthBarClick = (bar: any) => {
+    const ym = bar?.ym;
+    if (!ym) return;
+    const [y, m] = ym.split('-').map(Number);
+    const lastDay = new Date(y, m, 0).getDate();
+    navigate(`/app/finance/history?date_from=${ym}-01&date_to=${ym}-${String(lastDay).padStart(2, '0')}`);
+  };
+
+  // Click a class row → its Stream Ranking, prefilled with the current term.
+  const onClassRowClick = (c: any) => {
+    if (!c.stream_id || !currentYearId || !currentTermId) return;
+    navigate(`/app/reports/rankings/stream?stream_id=${c.stream_id}&academic_year_id=${currentYearId}&term_id=${currentTermId}`);
+  };
 
   const kpis = [
     { label:'Total Students',  value: data?.total_students ?? 0, color:'#1a6b3c', icon:'👥' },
@@ -132,12 +150,13 @@ export default function AdminDashboard() {
             <span style={{fontSize:11,color:'#374151',display:'flex',alignItems:'center',gap:5}}><span style={{width:14,height:2,background:'#f59e0b',display:'inline-block',borderRadius:2,borderTop:'2px dashed #f59e0b'}}/> Billed</span>
           </div>
           <div style={{padding:'0 8px 14px'}}>
+            <div style={{fontSize:11,color:'#9ca3af',padding:'0 8px 6px'}}>Click a bar to see that month's payments.</div>
             <ResponsiveContainer width="100%" height={155}>
               <ComposedChart data={monthlyCollections} barSize={20}>
                 <XAxis dataKey="month" tick={{fontSize:11,fill:'#9ca3af'}} axisLine={false} tickLine={false}/>
                 <YAxis tick={{fontSize:10,fill:'#9ca3af'}} axisLine={false} tickLine={false} tickFormatter={v=>`$${v/1000}k`}/>
                 <Tooltip formatter={(v:number)=>`$${Number(v).toLocaleString()}`} contentStyle={{fontSize:12,borderRadius:8,border:'1px solid #e8eaed',boxShadow:'0 4px 12px rgba(0,0,0,.08)'}}/>
-                <Bar dataKey="collected" fill="#1a6b3c" radius={[4,4,0,0]}/>
+                <Bar dataKey="collected" fill="#1a6b3c" radius={[4,4,0,0]} cursor="pointer" onClick={onMonthBarClick}/>
                 <Line type="monotone" dataKey="target" stroke="#f59e0b" strokeWidth={2} strokeDasharray="4 3" dot={false}/>
               </ComposedChart>
             </ResponsiveContainer>
@@ -149,7 +168,7 @@ export default function AdminDashboard() {
           <PanelHead title="Top Performing Classes (This Term)"/>
           <div style={{padding:'0 16px 14px'}}>
             {topClasses.length === 0 ? <Empty label="No assessment results recorded yet this term." /> : topClasses.map((c: any,i: number)=>(
-              <div key={c.name} style={{marginBottom:10}}>
+              <div key={c.name} onClick={() => onClassRowClick(c)} style={{marginBottom:10,cursor:c.stream_id?'pointer':'default'}} title={c.stream_id ? "View this class's ranking" : undefined}>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
                   <span style={{fontSize:12,color:'#374151',display:'flex',alignItems:'center',gap:7}}>
                     <span style={{fontSize:11,fontWeight:700,color:'#9ca3af',width:14,textAlign:'right'}}>{i+1}</span>
@@ -171,7 +190,8 @@ export default function AdminDashboard() {
           <div style={{padding:'0 14px 14px'}}>
             {attendanceBreakdown.length === 0 ? <Empty label="No attendance has been recorded yet." /> : (
               <>
-                <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',height:130}}>
+                <div style={{fontSize:11,color:'#9ca3af',padding:'0 4px 2px'}}>Click the chart for the full attendance report.</div>
+                <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',height:130,cursor:'pointer'}} onClick={() => navigate('/app/discipline/attendance/reports')}>
                   <ResponsiveContainer width="100%" height={130}>
                     <PieChart>
                       <Pie data={attendanceBreakdown} cx="50%" cy="50%" innerRadius={42} outerRadius={58} dataKey="value" startAngle={90} endAngle={-270}>
@@ -252,7 +272,7 @@ export default function AdminDashboard() {
         {/* Quick Actions */}
         <Panel>
           <PanelHead title="Quick Actions"/>
-          <div style={{padding:'0 14px 16px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+          <div className="two-col-grid" style={{padding:'0 14px 16px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
             {quickActions.map(a=>(
               <Link key={a.label} to={a.to} style={{
                 display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',

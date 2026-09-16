@@ -50,11 +50,21 @@ class StudentApiController extends Controller
             });
         }
 
+        $formLevels = DB::table('forms')->pluck('level', 'id');
+
         $items = $query->orderBy('students.first_name')->get();
         $items = collect(StudentStreamResolver::attachResolvedFieldsToCollection($items))->map(function ($s) {
             $s->guardian_name = trim(($s->guardian_first_name ?? '') . ' ' . ($s->guardian_last_name ?? '')) ?: null;
             return $s;
-        })->values();
+        })
+            // Grouped by class (form, then stream) rather than a flat alphabetical list, so a
+            // download of "all students" reads as one section per class, like a register.
+            ->sortBy(fn ($s) => sprintf('%03d-%s-%s',
+                $formLevels[$s->resolved_form_id] ?? 999,
+                $s->resolved_stream_name ?? '',
+                $s->first_name
+            ))
+            ->values();
 
         $formName = $request->form_id ? DB::table('forms')->where('id', $request->form_id)->value('name') : null;
         $streamName = $request->stream_id ? DB::table('streams')->where('id', $request->stream_id)->value('name') : null;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
-import { toastSuccess, toastError, confirmDelete } from '../../lib/toast';
+import { toastSuccess, toastError } from '../../lib/toast';
 import { Card, CardHeader, Table, Td, Spinner, PageHeader, Alert, Badge } from '../../components/UI';
 import { RoleBadge } from '../../components/Layout';
 

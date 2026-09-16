@@ -218,6 +218,8 @@ export default function StaffPage() {
                   <option value="teacher">Teacher</option>
                   <option value="headmaster">Headmaster</option>
                   <option value="bursar">Bursar</option>
+                  <option value="clerk">Clerk (Cashier — fees &amp; shop)</option>
+                  <option value="storekeeper">Storekeeper</option>
                   <option value="admin">Admin</option>
                   <option value="user">User (no special access)</option>
                 </Select>

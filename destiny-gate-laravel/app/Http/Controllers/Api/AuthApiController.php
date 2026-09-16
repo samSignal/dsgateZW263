@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -26,12 +27,16 @@ class AuthApiController extends Controller
             ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            // No user_id yet — record the attempted login string itself so a string of
+            // failed attempts against one account (or one being guessed) is visible.
+            AuditLogger::log(null, $login, null, 'login_failed', "Failed login attempt for \"{$login}\"", $request, 422);
             throw ValidationException::withMessages([
                 'login' => ['The provided credentials are incorrect.'],
             ]);
         }
 
         if (!$user->is_active) {
+            AuditLogger::log($user->id, $user->name, $user->role, 'login_failed', 'Login blocked — account deactivated', $request, 422);
             throw ValidationException::withMessages([
                 'login' => ['Your account has been deactivated. Please contact the school office.'],
             ]);
@@ -43,6 +48,8 @@ class AuthApiController extends Controller
         // Create Sanctum token via User model (needed for createToken)
         $userModel = \App\Models\User::find($user->id);
         $token = $userModel->createToken('spa-token')->plainTextToken;
+
+        AuditLogger::log($user->id, $user->name, $user->role, 'login', 'Logged in', $request, 200);
 
         return response()->json([
             'token' => $token,
@@ -73,7 +80,9 @@ class AuthApiController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        AuditLogger::log($user->id, $user->name, $user->role, 'logout', 'Logged out', $request, 200);
+        $user->currentAccessToken()->delete();
         return response()->json(['message' => 'Logged out successfully.']);
     }
 

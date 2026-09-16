@@ -15,10 +15,13 @@
 @endif
 
 <table class="report-table">
-    <thead><tr><th>Date</th><th>Description</th><th>Type</th><th class="text-right">Debit</th><th class="text-right">Credit</th><th class="text-right">Balance</th></tr></thead>
+    <thead><tr><th>#</th><th>Date</th><th>Description</th><th>Type</th><th class="text-right">Debit</th><th class="text-right">Credit</th><th class="text-right">Balance</th></tr></thead>
     <tbody>
+    @php $n = 0; @endphp
     @foreach($transactions as $t)
+        @php $n++; @endphp
         <tr>
+            <td>{{ $n }}</td>
             <td>{{ \Illuminate\Support\Carbon::parse($t->created_at)->format('d M Y') }}</td>
             <td>{{ $t->description }}</td>
             <td>{{ ucfirst($t->transaction_type) }}</td>
@@ -28,7 +31,7 @@
         </tr>
     @endforeach
     @if(count($transactions) === 0)
-        <tr><td colspan="6" style="text-align:center; color:#9ca3af;">No transactions found.</td></tr>
+        <tr><td colspan="7" style="text-align:center; color:#9ca3af;">No transactions found.</td></tr>
     @endif
     </tbody>
 </table>
